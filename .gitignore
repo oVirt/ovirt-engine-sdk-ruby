@@ -1,0 +1,11 @@
+*.class
+*.gem
+*.iml
+*.so
+.bash_history
+.idea/
+sdk/doc/
+sdk/lib/ovirt/
+sdk/pkg/
+sdk/tmp/
+target/
