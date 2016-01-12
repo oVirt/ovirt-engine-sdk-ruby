@@ -32,9 +32,11 @@ import org.ovirt.api.metamodel.concepts.Model;
 import org.ovirt.api.metamodel.concepts.Name;
 import org.ovirt.api.metamodel.concepts.NameParser;
 import org.ovirt.api.metamodel.concepts.Parameter;
+import org.ovirt.api.metamodel.concepts.PrimitiveType;
 import org.ovirt.api.metamodel.concepts.Service;
 import org.ovirt.api.metamodel.concepts.StructType;
 import org.ovirt.api.metamodel.concepts.Type;
+import org.ovirt.api.metamodel.tool.SchemaNames;
 
 /**
  * This class is responsible for generating the classes that represent the services of the model.
@@ -51,6 +53,7 @@ public class ServicesGenerator implements RubyGenerator {
 
     // Reference to the objects used to generate the code:
     @Inject private RubyNames rubyNames;
+    @Inject private SchemaNames schemaNames;
 
     // The buffer used to generate the Ruby code:
     private RubyBuffer buffer;
@@ -138,12 +141,23 @@ public class ServicesGenerator implements RubyGenerator {
         // Get the output parameter:
         Parameter outParameter = method.parameters().filter(Parameter::isOut).findFirst().orElse(null);
 
-        // Generate the method:
+        // Begin method:
         Name methodName = method.getName();
-        buffer.addLine("def %s", rubyNames.getMemberStyleName(methodName));
+        buffer.addLine("def %s(opts = {})", rubyNames.getMemberStyleName(methodName));
+
+        // Generate the input parameters, both as matrix and query parameters, as some versions of the server use
+        // matrix parameters and some other use query parameters:
+        buffer.addLine("query = {}");
+        buffer.addLine("matrix = {}");
+        method.parameters()
+            .filter(Parameter::isIn)
+            .sorted()
+            .forEach(this::generateHttpGetParameter);
+
+        // Body:
         if (outParameter != null) {
             Type outType = outParameter.getType();
-            buffer.addLine("body = @connection.request({:method => :GET, :path => @path})");
+            buffer.addLine("body = @connection.request({:method => :GET, :path => @path, :query => query, :matrix => matrix})");
             buffer.addLine("if body then");
             buffer.addLine(  "begin");
             buffer.addLine(    "io = StringIO.new(body)");
@@ -165,10 +179,34 @@ public class ServicesGenerator implements RubyGenerator {
             buffer.addLine("end");
         }
         else {
-            buffer.addLine("@connection.request({:method => :GET, :path => @path})");
+            buffer.addLine("@connection.request({:method => :GET, :path => @path, :query => query, :matrix => matrix})");
         }
+
+        // End method:
         buffer.addLine("end");
         buffer.addLine();
+    }
+
+    private void generateHttpGetParameter(Parameter parameter) {
+        // Note that parameters are currently generated as both as matrix and query parameters. This is because some of
+        // the services expect them as matrix parameters and some as query parameters. In the future this will fixed
+        // in the server side, so that both query and matrix parameters are accepted by all the services. Once that is
+        // done this method will be simplified.
+        Type type = parameter.getType();
+        Name name = parameter.getName();
+        String symbol = rubyNames.getMemberStyleName(name);
+        String tag = schemaNames.getSchemaTagName(name);
+        buffer.addLine("value = opts[:%1$s]", symbol);
+        buffer.addLine("if !value.nil?");
+        if (type instanceof PrimitiveType) {
+            Model model = type.getModel();
+            if (type == model.getBooleanType()) {
+                buffer.addLine("value = XmlFormatter.format_boolean(value)", tag);
+            }
+        }
+        buffer.addLine(  "query['%1$s'] = value", tag);
+        buffer.addLine(  "matrix['%1$s'] = value", tag);
+        buffer.addLine("end");
     }
 
     private void generateHttpPut(Method method) {

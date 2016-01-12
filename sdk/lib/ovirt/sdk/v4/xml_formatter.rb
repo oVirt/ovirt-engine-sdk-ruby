@@ -13,25 +13,29 @@
 # limitations under the License.
 #++
 
-##
-# Library requirements.
-#
-require 'date'
-require 'stringio'
+module Ovirt
+  module SDK
+    module V4
 
-##
-# Load the extension:
-require 'ovirtsdk'
+      ##
+      # This is an utility class used to format objects for use in HTTP requests. It is inteded for use by other
+      # components of the SDK. Refrain from using it directly, as backwards compatibility isn't guaranteed.
+      #
+      class XmlFormatter
 
-##
-# Own requirements.
-#
-require 'ovirt/sdk/v4/version.rb'
-require 'ovirt/sdk/v4/xml_formatter.rb'
-require 'ovirt/sdk/v4/xml_reader.rb'
-require 'ovirt/sdk/v4/xml_writer.rb'
-require 'ovirt/sdk/v4/types.rb'
-require 'ovirt/sdk/v4/readers.rb'
-require 'ovirt/sdk/v4/writers.rb'
-require 'ovirt/sdk/v4/services.rb'
-require 'ovirt/sdk/v4/connection.rb'
+        ##
+        # Formats a boolean value.
+        #
+        def self.format_boolean(value)
+          if value
+            return 'true'
+          else
+            return 'false'
+          end
+        end
+
+      end
+
+    end
+  end
+end

@@ -17,7 +17,9 @@
 
 require 'ovirt/sdk/v4'
 
-# This example will connect to the server and print the names and identifiers of all the virtual machines:
+# This example will connect to the server and print the names and
+# identifiers of the virtual machines that match a given search
+# criteria:
 
 # Create the connection to the server:
 connection = Ovirt::SDK::V4::Connection.new({
@@ -31,8 +33,15 @@ connection = Ovirt::SDK::V4::Connection.new({
 # Get the reference to the "vms" service:
 vms_service = connection.system.vms
 
-# Use the "list" method of the "vms" service to list all the virtual machines of the system:
-vms = vms_service.list
+# Use the "list" method of the "vms" service to search the virtual
+# machines that match a search query:
+vms = vms_service.list({
+  :search => 'name=MYVM',
+  :case_sensitive => false,
+})
+
+# Note that the format of the search query is the same that is supported
+# by the GUI search bar.
 
 # Print the virtual machine names and identifiers:
 vms.each do |vm|

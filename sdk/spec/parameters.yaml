@@ -1,4 +1,4 @@
-#--
+#
 # Copyright (c) 2015 Red Hat, Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,27 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#++
-
-##
-# Library requirements.
 #
-require 'date'
-require 'stringio'
 
-##
-# Load the extension:
-require 'ovirtsdk'
-
-##
-# Own requirements.
-#
-require 'ovirt/sdk/v4/version.rb'
-require 'ovirt/sdk/v4/xml_formatter.rb'
-require 'ovirt/sdk/v4/xml_reader.rb'
-require 'ovirt/sdk/v4/xml_writer.rb'
-require 'ovirt/sdk/v4/types.rb'
-require 'ovirt/sdk/v4/readers.rb'
-require 'ovirt/sdk/v4/writers.rb'
-require 'ovirt/sdk/v4/services.rb'
-require 'ovirt/sdk/v4/connection.rb'
+default_url: https://engine40.example.com/ovirt-engine/api
+default_user: admin@internal
+default_password: redhat123
+default_debug: false

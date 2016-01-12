@@ -146,6 +146,14 @@ module Ovirt
         # strings containing the names of the headers, and the values should be strings containing the
         # values. The default is an empty hash.
         #
+        # `:query` - A hash containing the query parameters to add to the request. The keys of the hash should be
+        # strings containing the names of the parameters, and the values should be strings containing the values. The
+        # default is an empty hash.
+        #
+        # `:matrix` - A hash containing the matrix parameters to add to the request. The keys of the hash should be
+        # strings containing the names of the parameters, and the values should be strings containing the values. The
+        # default is an empty hash.
+        #
         # `:last` - Boolean flag indicating if this is the last request of a session. This will disable the use of
         # the `Prefer: persistent-auth` header, thus indicating to the server that the session should be closed.
         # The default is `false`.
@@ -160,11 +168,19 @@ module Ovirt
           method = opts[:method]
           path = opts[:path]
           headers = opts[:headers] || {}
+          query = opts[:query] || {}
+          matrix = opts[:matrix] || {}
           last = opts[:last] || false
           persistent_auth = opts[:persistent_auth] || true
 
-          # Set the URL:
-          @curl.url = @url.to_s + path
+          # Build the URL:
+          url = self.class.build_url({
+            :base => @url.to_s,
+            :path => path,
+            :query => query,
+            :matrix => matrix,
+          })
+          @curl.url = url
 
           # Add headers, avoiding those that have no value:
           @curl.headers.clear
@@ -203,6 +219,45 @@ module Ovirt
 
           # Release resources used by the cURL handle:
           @curl.close
+        end
+
+        ##
+        # Builds a request URL from a base URL, a path, and the sets of matrix and query parameters.
+        #
+        # This method supports the following parameters, provided as an optional hash:
+        #
+        # `:base` - The base URL.
+        #
+        # `:path` - The path that will be added to the base URL.
+        #
+        # `:query` - A hash containing the query parameters to add to the URL. The keys of the hash should be strings
+        # containing the names of the parameters, and the values should be strings containing the values. The default
+        # is an empty hash.
+        #
+        # `:matrix` - A hash containing the matrix parameters to add to the URL. The keys of the hash should be strings
+        # containing the names of the parameters, and the values should be strings containing the values. The default
+        # is an empty hash.
+        #
+        # The returned value is an string containing the URL.
+        #
+        def self.build_url(opts = {})
+          # Get the values of the parameters and assign default values:
+          base = opts[:base]
+          path = opts[:path] || ''
+          query = opts[:query] || {}
+          matrix = opts[:matrix] || {}
+
+          # Add the path and the parameters:
+          url = base + path
+          if not matrix.empty?
+            matrix.each do |key, value|
+              url = url + ';' + URI.encode_www_form({key => value})
+            end
+          end
+          if not query.empty?
+            url = url + '?' + URI.encode_www_form(query)
+          end
+          return url
         end
 
       end

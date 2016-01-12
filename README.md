@@ -40,3 +40,31 @@ The generated `.gem` file will be located in the `sdk` directory:
 $ ls sdk/*.gem
 sdk/ovirt-engine-sdk-4.0.0.alpha0.gem
 ```
+
+## Testing
+
+The test suite of the project is inside the `sdk/spec` directory. By
+default, when the project is built, only a subset of the tests is
+executed, those that don't require a live engine and network
+connectivity.
+
+To run the tests that require a live engine you will need to have an
+oVirt engine up and running, put the connection details into the
+`spec/parameters.yaml` file and run the `rspec` command line tool with
+the the `--tag integration` option:
+
+```
+$ cd sdk
+$ cat > spec/parameters.yaml <<.
+default_url: https://myengine.example.com/ovirt-engine/api
+default_user: admin@internal
+default_password: mypassword
+default_debug: false
+.
+$ rspec --tag integration
+```
+
+The `default_debug` option is translated into the `:debug` parameter of
+the constructor of the `Connection` class used for the integration tests
+that perform actual HTTP requests. If set to `true` all the sent and
+received HTTP messages will be sent to the standard output.
