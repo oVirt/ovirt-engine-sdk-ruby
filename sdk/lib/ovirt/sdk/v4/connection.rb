@@ -180,6 +180,8 @@ module Ovirt
 
           # Send the request and wait for the response:
           case method
+          when :DELETE
+            @curl.http_delete
           when :GET
             @curl.http_get
           when :PUT

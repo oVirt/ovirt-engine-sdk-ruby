@@ -43,6 +43,7 @@ public class ServicesGenerator implements RubyGenerator {
     // Well known method names:
     private static final Name GET = NameParser.parseUsingCase("Get");
     private static final Name LIST = NameParser.parseUsingCase("List");
+    private static final Name REMOVE = NameParser.parseUsingCase("Remove");
     private static final Name UPDATE = NameParser.parseUsingCase("Update");
 
     // The directory were the output will be generated:
@@ -124,6 +125,9 @@ public class ServicesGenerator implements RubyGenerator {
         Name name = method.getName();
         if (GET.equals(name) || LIST.equals(name)) {
             generateHttpGet(method);
+        }
+        else if (REMOVE.equals(name)) {
+            generateHttpDelete(method);
         }
         else if (UPDATE.equals(name)) {
             generateHttpPut(method);
@@ -224,6 +228,15 @@ public class ServicesGenerator implements RubyGenerator {
         else {
             buffer.addLine("@connection.request({:method => :PUT, :path => @path, :body => body})");
         }
+        buffer.addLine("end");
+        buffer.addLine();
+    }
+
+    private void generateHttpDelete(Method method) {
+        // Generate the method:
+        Name methodName = method.getName();
+        buffer.addLine("def %s()", rubyNames.getMemberStyleName(methodName));
+        buffer.addLine(  "@connection.request({:method => :DELETE, :path => @path})");
         buffer.addLine("end");
         buffer.addLine();
     }
