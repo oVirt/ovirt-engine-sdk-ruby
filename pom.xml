@@ -46,11 +46,11 @@ limitations under the License.
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- Version of the metamodel and model used to generate the SDK: -->
-    <metamodel.version>1.0.1</metamodel.version>
-    <model.version>4.0.0</model.version>
+    <metamodel.version>1.0.2</metamodel.version>
+    <model.version>4.0.1</model.version>
 
     <!-- The version of the gem: -->
-    <gem.suffix>.alpha0</gem.suffix>
+    <gem.suffix>.alpha1</gem.suffix>
     <gem.version>4.0.0${gem.suffix}</gem.version>
 
   </properties>
