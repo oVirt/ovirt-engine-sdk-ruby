@@ -152,7 +152,7 @@ public class ServicesGenerator implements RubyGenerator {
         method.parameters()
             .filter(Parameter::isIn)
             .sorted()
-            .forEach(this::generateHttpGetParameter);
+            .forEach(this::generateUrlParameter);
 
         // Body:
         if (outParameter != null) {
@@ -185,28 +185,6 @@ public class ServicesGenerator implements RubyGenerator {
         // End method:
         buffer.addLine("end");
         buffer.addLine();
-    }
-
-    private void generateHttpGetParameter(Parameter parameter) {
-        // Note that parameters are currently generated as both as matrix and query parameters. This is because some of
-        // the services expect them as matrix parameters and some as query parameters. In the future this will fixed
-        // in the server side, so that both query and matrix parameters are accepted by all the services. Once that is
-        // done this method will be simplified.
-        Type type = parameter.getType();
-        Name name = parameter.getName();
-        String symbol = rubyNames.getMemberStyleName(name);
-        String tag = schemaNames.getSchemaTagName(name);
-        buffer.addLine("value = opts[:%1$s]", symbol);
-        buffer.addLine("if !value.nil?");
-        if (type instanceof PrimitiveType) {
-            Model model = type.getModel();
-            if (type == model.getBooleanType()) {
-                buffer.addLine("value = XmlFormatter.format_boolean(value)", tag);
-            }
-        }
-        buffer.addLine(  "query['%1$s'] = value", tag);
-        buffer.addLine(  "matrix['%1$s'] = value", tag);
-        buffer.addLine("end");
     }
 
     private void generateHttpPut(Method method) {
@@ -271,13 +249,46 @@ public class ServicesGenerator implements RubyGenerator {
     }
 
     private void generateHttpDelete(Method method) {
+        // Begin method:
+        Name name = method.getName();
+        buffer.addLine("def %s()", rubyNames.getMemberStyleName(name));
+
+        // Generate the input parameters:
+        buffer.addLine("query = {}");
+        buffer.addLine("matrix = {}");
+        method.parameters()
+            .filter(Parameter::isIn)
+            .sorted()
+            .forEach(this::generateUrlParameter);
+
         // Generate the method:
-        Name methodName = method.getName();
-        buffer.addLine("def %s()", rubyNames.getMemberStyleName(methodName));
-        buffer.addLine(  "@connection.request({:method => :DELETE, :path => @path})");
+        buffer.addLine(  "@connection.request({:method => :DELETE, :path => @path, :query => query, :matrix => matrix})");
         buffer.addLine("end");
         buffer.addLine();
     }
+
+    private void generateUrlParameter(Parameter parameter) {
+        // Note that parameters are currently generated as both as matrix and query parameters. This is because some of
+        // the services expect them as matrix parameters and some as query parameters. In the future this will fixed
+        // in the server side, so that both query and matrix parameters are accepted by all the services. Once that is
+        // done this method will be simplified.
+        Type type = parameter.getType();
+        Name name = parameter.getName();
+        String symbol = rubyNames.getMemberStyleName(name);
+        String tag = schemaNames.getSchemaTagName(name);
+        buffer.addLine("value = opts[:%1$s]", symbol);
+        buffer.addLine("if !value.nil?");
+        if (type instanceof PrimitiveType) {
+            Model model = type.getModel();
+            if (type == model.getBooleanType()) {
+                buffer.addLine("value = XmlFormatter.format_boolean(value)", tag);
+            }
+        }
+        buffer.addLine(  "query['%1$s'] = value", tag);
+        buffer.addLine(  "matrix['%1$s'] = value", tag);
+        buffer.addLine("end");
+    }
+
 
     private void generateToS(Service service) {
         RubyName serviceName = rubyNames.getServiceName(service);
