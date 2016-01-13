@@ -1,7 +1,9 @@
 *.class
 *.gem
 *.iml
+*.rpm
 *.so
+*.spec
 .bash_history
 .idea/
 sdk/doc/
