@@ -41,8 +41,20 @@ suffix=".${date}git${commit}"
 # Build the SDK code generator, run it, and build the gem:
 mvn package -s "${settings}" -Dgem.suffix="${suffix}"
 
-# Copy the gem to the artifacts directory:
-for file in $(find . -name '*.gem'); do
+# Find the generated .gem file:
+gem_file="$(find . -type f -name "*-*${suffix}.gem" -print -quit)"
+
+# Build the RPM:
+cp "${gem_file}" packaging/
+pushd packaging
+  export gem_version="$(echo ${gem_file} | sed -e 's/^.*-//' -e 's/\.gem//')"
+  export gem_url="$(basename ${gem_file})"
+  export rpm_release="0.0${suffix}$(rpm --eval '%dist')"
+  ./build.sh
+popd
+
+# Copy the .gem and .rpm files to the exported artifacts directory:
+for file in $(find . -type f -regex '.*\.\(gem\|rpm\)'); do
   echo "Archiving file \"$file\"."
   mv "$file" exported-artifacts/
 done
