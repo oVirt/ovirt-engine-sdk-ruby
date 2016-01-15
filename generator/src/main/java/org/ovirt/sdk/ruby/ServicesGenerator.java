@@ -23,8 +23,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.List;
 import javax.inject.Inject;
 
+import org.ovirt.api.metamodel.concepts.EnumType;
 import org.ovirt.api.metamodel.concepts.ListType;
 import org.ovirt.api.metamodel.concepts.Locator;
 import org.ovirt.api.metamodel.concepts.Method;
@@ -43,6 +45,7 @@ import org.ovirt.api.metamodel.tool.SchemaNames;
  */
 public class ServicesGenerator implements RubyGenerator {
     // Well known method names:
+    private static final Name ADD = NameParser.parseUsingCase("Add");
     private static final Name GET = NameParser.parseUsingCase("Get");
     private static final Name LIST = NameParser.parseUsingCase("List");
     private static final Name REMOVE = NameParser.parseUsingCase("Remove");
@@ -126,7 +129,10 @@ public class ServicesGenerator implements RubyGenerator {
 
     private void generateMethod(Method method) {
         Name name = method.getName();
-        if (GET.equals(name) || LIST.equals(name)) {
+        if (ADD.equals(name)) {
+            generateAddHttpPost(method);
+        }
+        else if (GET.equals(name) || LIST.equals(name)) {
             generateHttpGet(method);
         }
         else if (REMOVE.equals(name)) {
@@ -134,6 +140,126 @@ public class ServicesGenerator implements RubyGenerator {
         }
         else if (UPDATE.equals(name)) {
             generateHttpPut(method);
+        }
+        else {
+            generateActionHttpPost(method);
+        }
+    }
+
+    private void generateAddHttpPost(Method method) {
+        // Get the main parameter:
+        Parameter parameter = method.parameters()
+            .filter(x -> x.isIn() && x.isOut())
+            .findFirst()
+            .orElse(null);
+
+        // Begin method:
+        Name methodName = method.getName();
+        Name parameterName = parameter.getName();
+        buffer.addLine(
+            "def %1$s(%2$s, opts = {})",
+            rubyNames.getMemberStyleName(methodName),
+            rubyNames.getMemberStyleName(parameterName)
+        );
+
+        // Body:
+        Type type = parameter.getType();
+        String tag = schemaNames.getSchemaTagName(parameterName);
+        buffer.addLine("io = StringIO.new");
+        buffer.addLine("writer = XmlWriter.new({:io => io, :indent => true})");
+        if (type instanceof StructType) {
+            RubyName writer = rubyNames.getWriterName(type);
+            buffer.addLine(
+                "%1$s.write_one(%2$s, writer, '%3$s')",
+                writer.getClassName(),
+                rubyNames.getMemberStyleName(parameterName),
+                tag
+            );
+        }
+        else if (type instanceof ListType) {
+            ListType listType = (ListType) type;
+            Type elementType = listType.getElementType();
+            RubyName writer = rubyNames.getWriterName(elementType);
+            buffer.addLine(
+                "%1$s.write_many(%2$s, writer, '%3$s')",
+                writer.getClassName(),
+                rubyNames.getMemberStyleName(parameterName),
+                tag
+            );
+        }
+        buffer.addLine("writer.close");
+        buffer.addLine("io.close");
+        buffer.addLine("body = io.string");
+        buffer.addLine("@connection.request({:method => :POST, :path => @path, :body => body})");
+
+        // End method:
+        buffer.addLine("end");
+        buffer.addLine();
+    }
+
+    private void generateActionHttpPost(Method method) {
+        // Begin method:
+        Name name = method.getName();
+        buffer.addLine("def %s(opts = {})", rubyNames.getMemberStyleName(name));
+
+        // Generate the method:
+        buffer.addLine("io = StringIO.new");
+        buffer.addLine("writer = XmlWriter.new({:io => io, :indent => true})");
+        buffer.addLine("writer.write_start('action')");
+        method.parameters()
+            .filter(Parameter::isIn)
+            .sorted()
+            .forEach(this::generateWriteActionParameter);
+        buffer.addLine("writer.write_end");
+        buffer.addLine("writer.close");
+        buffer.addLine("io.close");
+        buffer.addLine("body = io.string");
+        buffer.addLine(
+            "@connection.request({:method => :POST, :path => \"#{@path}/%1$s\", :body => body})",
+            getPath(name)
+        );
+
+        // End method:
+        buffer.addLine("end");
+        buffer.addLine();
+    }
+
+    private void generateWriteActionParameter(Parameter parameter) {
+        Type type = parameter.getType();
+        Name name = parameter.getName();
+        String symbol = rubyNames.getMemberStyleName(name);
+        String tag = schemaNames.getSchemaTagName(name);
+        buffer.addLine("value = opts[:%1$s]", symbol);
+        if (type instanceof PrimitiveType) {
+            Model model = type.getModel();
+            if (type == model.getStringType()) {
+                buffer.addLine("writer.write_string('%1$s', value) unless value.nil?", tag);
+            }
+            else if (type == model.getBooleanType()) {
+                buffer.addLine("writer.write_boolean('%1$s', value) unless value.nil?", tag);
+            }
+            else if (type == model.getIntegerType()) {
+                buffer.addLine("writer.write_integer('%1$s', value) unless value.nil?", tag);
+            }
+            else if (type == model.getDecimalType()) {
+                buffer.addLine("writer.write_decimal('%1$s', value) unless value.nil?", tag);
+            }
+            else if (type == model.getDateType()) {
+                buffer.addLine("writer.write_date('%1$s', value) unless value.nil?", tag);
+            }
+        }
+        else if (type instanceof EnumType) {
+            buffer.addLine("writer.write_string('%1$s', value) unless value.nil?", tag);
+        }
+        else if (type instanceof StructType) {
+            RubyName writer = rubyNames.getWriterName(type);
+            buffer.addLine("%1$s.write_one(value, writer) unless value.nil?", writer.getClassName());
+        }
+        else if (type instanceof ListType) {
+            ListType listType = (ListType) type;
+            Type elementType = listType.getElementType();
+            RubyName writer = rubyNames.getWriterName(elementType);
+            buffer.addLine("%1$s.write_many(value, writer) unless value.nil?", writer.getClassName());
         }
     }
 
@@ -402,5 +528,9 @@ public class ServicesGenerator implements RubyGenerator {
 
     private void generateLoadStatement(RubyName name) {
         buffer.addLine("load '%1$s.rb'", name.getFileName());
+    }
+
+    private String getPath(Name name) {
+        return name.words().map(String::toLowerCase).collect(joining());
     }
 }

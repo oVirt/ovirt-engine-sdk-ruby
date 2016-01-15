@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 
 #--
-# Copyright (c) 2015 Red Hat, Inc.
+# Copyright (c) 2016 Red Hat, Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -17,8 +17,7 @@
 
 require 'ovirt/sdk/v4'
 
-# This example will connect to the server, search for a VM by name and
-# remove it:
+# This example will connect to the server and start a virtual machine.
 
 # Create the connection to the server:
 connection = Ovirt::SDK::V4::Connection.new({
@@ -29,26 +28,18 @@ connection = Ovirt::SDK::V4::Connection.new({
   :debug => true,
 })
 
-# Find the service that manages VMs:
+# Get the reference to the "vms" service:
 vms_service = connection.system.vms
 
-# Find the VM:
+# Find the virtual machine:
 vm = vms_service.list({:search => 'name=myvm'})[0]
 
-# Note that the "vm" variable that we assigned above contains only the
-# data of the VM, it doesn't have any method like "remove". Methods are
-# defined in the services. So now that we have the description of the VM
-# we can find the service that manages it, calling the locator method
-# "vm" defined in the "vms" service. This locator method receives as
-# parameter the identifier of the VM and retursn a reference to the
-# service that manages that VM.
+# Locate the service that manages the virtual machine, as that is where
+# the action methods are defined:
 vm_service = vms_service.vm(vm.id)
 
-# Now that we have the reference to the service that manages the VM we
-# can use it to remove the VM. Note that this method doesn't need any
-# parameter, as the identifier of the VM is already known by the service
-# that we located in the previous step.
-vm_service.remove
+# Call the "start" method of the service to start it:
+vm_service.start
 
 # Close the connection to the server:
 connection.close

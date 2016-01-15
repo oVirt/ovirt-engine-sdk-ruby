@@ -154,6 +154,8 @@ module Ovirt
         # strings containing the names of the parameters, and the values should be strings containing the values. The
         # default is an empty hash.
         #
+        # `:body` - A string containing the request body.
+        #
         # `:last` - Boolean flag indicating if this is the last request of a session. This will disable the use of
         # the `Prefer: persistent-auth` header, thus indicating to the server that the session should be closed.
         # The default is `false`.
@@ -170,6 +172,7 @@ module Ovirt
           headers = opts[:headers] || {}
           query = opts[:query] || {}
           matrix = opts[:matrix] || {}
+          body = opts[:body] || {}
           last = opts[:last] || false
           persistent_auth = opts[:persistent_auth] || true
 
@@ -204,6 +207,8 @@ module Ovirt
             @curl.http_put(body)
           when :HEAD
             @curl.http_head
+          when :POST
+            @curl.http_post(body)
           end
 
           # Return the response body:

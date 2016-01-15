@@ -25,7 +25,7 @@ connection = Ovirt::SDK::V4::Connection.new({
   :username => 'admin@internal',
   :password => 'redhat123',
   :ca_file => 'ca.pem',
-  :debug => false,
+  :debug => true,
 })
 
 # Get the reference to the "vms" service:
