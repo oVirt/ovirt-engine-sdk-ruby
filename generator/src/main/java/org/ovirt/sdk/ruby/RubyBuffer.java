@@ -106,6 +106,7 @@ public class RubyBuffer {
             line.startsWith("if ") ||
             line.startsWith("loop ") ||
             line.startsWith("module ") ||
+            line.startsWith("unless ") ||
             line.startsWith("when ") ||
             line.startsWith("while ");
         boolean isEnd =
