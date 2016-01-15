@@ -100,4 +100,32 @@ describe SDK::XmlWriter do
 
   end
 
+  describe ".write_integer" do
+
+    context "given zero" do
+
+      it "writes the expected XML" do
+        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer.write_integer('value', 0)
+        writer.flush
+        result = writer.io.string
+        expect(result).to eql('<value>0</value>')
+      end
+
+    end
+
+    context "given one" do
+
+      it "writes the expected XML" do
+        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer.write_integer('value', 1)
+        writer.flush
+        result = writer.io.string
+        expect(result).to eql('<value>1</value>')
+      end
+
+    end
+
+  end
+
 end

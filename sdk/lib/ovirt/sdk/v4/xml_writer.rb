@@ -43,6 +43,13 @@ module Ovirt
           end
         end
 
+        ##
+        # Writes an integer value.
+        #
+        def write_integer(name, value)
+          write_element(name, value.to_s)
+        end
+
       end
 
     end
