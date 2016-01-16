@@ -24,9 +24,24 @@ module Ovirt
       class Struct
 
         ##
+        # Returns the value of the `href` attribute.
+        #
+        def href
+          return @href
+        end
+
+        ##
+        # Sets the value of the `href` attribute.
+        #
+        def href=(value)
+          @href = value
+        end
+
+        ##
         # Empty constructor.
         #
         def initialize(opts = {})
+          self.href = opts[:href]
         end
 
       end

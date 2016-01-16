@@ -111,12 +111,13 @@ public class ReadersGenerator implements RubyGenerator {
         // Generate the method that reads one instance:
         buffer.addLine("def self.read_one(reader)");
         buffer.addLine(  "# Do nothing if there aren't more tags:");
-            buffer.addLine(  "return nil unless reader.forward");
-            buffer.addLine();
+        buffer.addLine(  "return nil unless reader.forward");
+        buffer.addLine();
         buffer.addLine(  "# Create the object:");
         buffer.addLine(  "object = %s.new", typeName.getClassName());
         buffer.addLine();
         buffer.addLine(  "# Process the attributes:");
+        buffer.addLine(  "object.href = reader.get_attribute('href')");
         generateAttributesRead(type);
         buffer.addLine();
         buffer.addLine(  "# Discard the start tag:");
@@ -140,6 +141,9 @@ public class ReadersGenerator implements RubyGenerator {
         buffer.addLine(  "# Do nothing if there aren't more tags:");
         buffer.addLine(  "list = %1$s.new", rubyNames.getBaseListName().getClassName());
         buffer.addLine(  "return list unless reader.forward");
+        buffer.addLine();
+        buffer.addLine(  "# Process the attributes:");
+        buffer.addLine(  "list.href = reader.get_attribute('href')");
         buffer.addLine();
         buffer.addLine(  "# Discard the start tag:");
         buffer.addLine(  "empty = reader.empty_element?");

@@ -129,11 +129,23 @@ describe SDK::VmWriter do
 
     end
 
+    context "when the href attribute has a value" do
+
+      it "writes the expected XML" do
+        vm = SDK::Vm.new({:href => 'myhref'})
+        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        SDK::VmWriter.write_one(vm, writer)
+        writer.close
+        expect(writer.io.string).to eql('<vm href="myhref"/>')
+      end
+
+    end
+
   end
 
   describe ".write_many" do
 
-    context "when empty" do
+    context "when empty array" do
 
       it "writes the expected XML" do
         vms = []
@@ -145,7 +157,19 @@ describe SDK::VmWriter do
 
     end
 
-    context "when given one" do
+    context "when empty list" do
+
+      it "writes the expected XML" do
+        vms = SDK::List[]
+        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        SDK::VmWriter.write_many(vms, writer)
+        writer.close
+        expect(writer.io.string).to eql('<vms/>')
+      end
+
+    end
+
+    context "when given array with one element" do
 
       it "writes the expected XML" do
         vms = [
@@ -159,7 +183,21 @@ describe SDK::VmWriter do
 
     end
 
-    context "when given two" do
+    context "when given list with one element" do
+
+      it "writes the expected XML" do
+        vms = SDK::List[
+          SDK::Vm.new,
+        ]
+        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        SDK::VmWriter.write_many(vms, writer)
+        writer.close
+        expect(writer.io.string).to eql('<vms><vm/></vms>')
+      end
+
+    end
+
+    context "when given array with two elements" do
 
       it "writes the expected XML" do
         vms = [
@@ -174,6 +212,36 @@ describe SDK::VmWriter do
 
     end
 
+    context "when given list with two elements" do
+
+      it "writes the expected XML" do
+        vms = SDK::List[
+          SDK::Vm.new,
+          SDK::Vm.new,
+        ]
+        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        SDK::VmWriter.write_many(vms, writer)
+        writer.close
+        expect(writer.io.string).to eql('<vms><vm/><vm/></vms>')
+      end
+
+    end
+
+    context "when the href attribute has a value" do
+
+      it "writes the expected XML" do
+        vms = SDK::List[
+          SDK::Vm.new,
+          SDK::Vm.new,
+        ]
+        vms.href = "myhref"
+        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        SDK::VmWriter.write_many(vms, writer)
+        writer.close
+        expect(writer.io.string).to eql('<vms href="myhref"><vm/><vm/></vms>')
+      end
+
+    end
   end
 
 end

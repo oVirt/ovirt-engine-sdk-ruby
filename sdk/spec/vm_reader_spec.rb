@@ -91,6 +91,20 @@ describe SDK::VmReader do
 
     end
 
+    context "when the href attribute has a value" do
+
+      it "the href getter returns its value" do
+        reader = SDK::XmlReader.new({
+          :io => StringIO.new('<vm href="myhref"></vm>')
+        })
+        result = SDK::VmReader.read_one(reader)
+        expect(result).to_not be_nil
+        expect(result).to be_a(SDK::Vm)
+        expect(result.href).to eql('myhref')
+      end
+
+    end
+
   end
 
   describe ".read_many" do
@@ -157,6 +171,20 @@ describe SDK::VmReader do
         expect(result[0]).to be_a(Ovirt::SDK::V4::Vm)
         expect(result[1]).to_not be_nil
         expect(result[1]).to be_a(Ovirt::SDK::V4::Vm)
+      end
+
+    end
+
+    context "when the href attribute has a value" do
+
+      it "the href getter returns its value" do
+        reader = SDK::XmlReader.new({
+          :io => StringIO.new('<vms href="myhref"></vms>')
+        })
+        result = SDK::VmReader.read_many(reader)
+        expect(result).to_not be_nil
+        expect(result).to be_a(SDK::List)
+        expect(result.href).to eql('myhref')
       end
 
     end

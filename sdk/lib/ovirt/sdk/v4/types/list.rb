@@ -22,6 +22,21 @@ module Ovirt
       # them.
       #
       class List < Array
+
+        ##
+        # Returns the value of the `href` attribute.
+        #
+        def href
+          return @href
+        end
+
+        ##
+        # Sets the value of the `href` attribute.
+        #
+        def href=(value)
+          @href = value
+        end
+
       end
 
     end

@@ -120,6 +120,8 @@ public class WritersGenerator implements RubyGenerator {
         buffer.addLine("def self.write_one(object, writer, singular = nil)");
         buffer.addLine(  "singular ||= '%1$s'", singularName);
         buffer.addLine(  "writer.write_start(singular)");
+        buffer.addLine(  "href = object.href");
+        buffer.addLine(  "writer.write_attribute('href', href) unless href.nil?");
         generateMembersWrite(type);
         buffer.addLine(  "writer.write_end");
         buffer.addLine("end");
@@ -130,6 +132,10 @@ public class WritersGenerator implements RubyGenerator {
         buffer.addLine(  "singular ||= '%1$s'", singularName);
         buffer.addLine(  "plural ||= '%1$s'", pluralName);
         buffer.addLine(  "writer.write_start(plural)", pluralName);
+        buffer.addLine(  "if list.is_a?(%1$s)", rubyNames.getBaseListName().getClassName());
+        buffer.addLine(    "href = list.href");
+        buffer.addLine(    "writer.write_attribute('href', href) unless href.nil?");
+        buffer.addLine(  "end");
         buffer.addLine(  "list.each do |item|");
         buffer.addLine(    "write_one(item, writer, singular)");
         buffer.addLine(  "end");
