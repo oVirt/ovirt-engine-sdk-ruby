@@ -37,6 +37,20 @@ module Ovirt
           @href = value
         end
 
+        ##
+        # Returns the reference to the connection that created this list.
+        #
+        def connection
+          return @connection
+        end
+
+        ##
+        # Sets reference to the connection that created this list.
+        #
+        def connection=(value)
+          @connection = value
+        end
+
       end
 
     end

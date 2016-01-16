@@ -38,10 +38,25 @@ module Ovirt
         end
 
         ##
+        # Returns the reference to the connection that created this object.
+        #
+        def connection
+          return @connection
+        end
+
+        ##
+        # Sets reference to the connection that created this object.
+        #
+        def connection=(value)
+          @connection = value
+        end
+
+        ##
         # Empty constructor.
         #
         def initialize(opts = {})
           self.href = opts[:href]
+          self.connection = opts[:connection]
         end
 
       end

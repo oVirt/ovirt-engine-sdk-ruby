@@ -109,12 +109,13 @@ public class ReadersGenerator implements RubyGenerator {
         RubyName typeName = rubyNames.getTypeName(type);
 
         // Generate the method that reads one instance:
-        buffer.addLine("def self.read_one(reader)");
+        buffer.addLine("def self.read_one(reader, connection = nil)");
         buffer.addLine(  "# Do nothing if there aren't more tags:");
         buffer.addLine(  "return nil unless reader.forward");
         buffer.addLine();
         buffer.addLine(  "# Create the object:");
         buffer.addLine(  "object = %s.new", typeName.getClassName());
+        buffer.addLine(  "object.connection = connection");
         buffer.addLine();
         buffer.addLine(  "# Process the attributes:");
         buffer.addLine(  "object.href = reader.get_attribute('href')");
@@ -137,9 +138,10 @@ public class ReadersGenerator implements RubyGenerator {
         buffer.addLine();
 
         // Generate the method that reads many instances:
-        buffer.addLine("def self.read_many(reader)");
+        buffer.addLine("def self.read_many(reader, connection = nil)");
         buffer.addLine(  "# Do nothing if there aren't more tags:");
         buffer.addLine(  "list = %1$s.new", rubyNames.getBaseListName().getClassName());
+        buffer.addLine(  "list.connection = connection");
         buffer.addLine(  "return list unless reader.forward");
         buffer.addLine();
         buffer.addLine(  "# Process the attributes:");
@@ -152,7 +154,7 @@ public class ReadersGenerator implements RubyGenerator {
         buffer.addLine();
         buffer.addLine(  "# Process the inner elements:");
         buffer.addLine(  "while reader.forward do");
-        buffer.addLine(    "list << read_one(reader)");
+        buffer.addLine(    "list << read_one(reader, connection)");
         buffer.addLine(  "end");
         buffer.addLine();
         buffer.addLine(  "# Discard the end tag:");
@@ -250,7 +252,7 @@ public class ReadersGenerator implements RubyGenerator {
 
     private void generateReadStruct(StructType type, String variable) {
         RubyName readerName = rubyNames.getReaderName(type);
-        buffer.addLine("%1$s = %2$s.read_one(reader)", variable, readerName.getClassName());
+        buffer.addLine("%1$s = %2$s.read_one(reader, connection)", variable, readerName.getClassName());
     }
 
     private void generateReadList(ListType type, String variable) {
@@ -260,7 +262,7 @@ public class ReadersGenerator implements RubyGenerator {
         }
         else if (elementType instanceof StructType) {
             RubyName readerName = rubyNames.getReaderName(elementType);
-            buffer.addLine("%1$s = %2$s.read_many(reader)", variable, readerName.getClassName());
+            buffer.addLine("%1$s = %2$s.read_many(reader, connection)", variable, readerName.getClassName());
         }
         else {
             buffer.addLine("reader.next_element");

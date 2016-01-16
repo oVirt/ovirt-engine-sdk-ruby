@@ -290,13 +290,13 @@ public class ServicesGenerator implements RubyGenerator {
             buffer.addLine(    "reader = XmlReader.new({:io => io})");
             if (outType instanceof StructType) {
                 RubyName outReader = rubyNames.getReaderName(outType);
-                buffer.addLine("return %s.read_one(reader)", outReader.getClassName());
+                buffer.addLine("return %s.read_one(reader, @connection)", outReader.getClassName());
             }
             else if (outType instanceof ListType) {
                 ListType outListType = (ListType) outType;
                 Type outElementType = outListType.getElementType();
                 RubyName outReader = rubyNames.getReaderName(outElementType);
-                buffer.addLine("return %s.read_many(reader)", outReader.getClassName());
+                buffer.addLine("return %s.read_many(reader, @connection)", outReader.getClassName());
             }
             buffer.addLine(  "ensure");
             buffer.addLine(    "reader.close");
@@ -350,16 +350,15 @@ public class ServicesGenerator implements RubyGenerator {
             buffer.addLine(  "begin");
             buffer.addLine(    "io = StringIO.new(body)");
             buffer.addLine(    "reader = XmlReader.new({:io => io})");
-            buffer.addLine(    "reader.read");
             if (outType instanceof StructType) {
                 RubyName outReader = rubyNames.getReaderName(outType);
-                buffer.addLine("return %s.read_one(reader)", outReader.getClassName());
+                buffer.addLine("return %s.read_one(reader, @connection)", outReader.getClassName());
             }
             else if (outType instanceof ListType) {
                 ListType outListType = (ListType) outType;
                 Type outElementType = outListType.getElementType();
                 RubyName outReader = rubyNames.getReaderName(outElementType);
-                buffer.addLine("return %s.read_many(reader)", outReader.getClassName());
+                buffer.addLine("return %s.read_many(reader, @connection)", outReader.getClassName());
             }
             buffer.addLine(  "ensure");
             buffer.addLine(    "reader.close");

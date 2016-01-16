@@ -105,6 +105,31 @@ describe SDK::VmReader do
 
     end
 
+    context "when a connection is passed" do
+
+      it "it is copied to the created object" do
+        reader = SDK::XmlReader.new({
+          :io => StringIO.new('<vm/>')
+        })
+        connection = Object.new
+        result = SDK::VmReader.read_one(reader, connection)
+        expect(result.connection).to be(connection)
+      end
+
+      it "it is copied to nested objects" do
+        reader = SDK::XmlReader.new({
+          :io => StringIO.new('<vm><disks><disk/><disk/></disks></vm>')
+        })
+        connection = Object.new
+        result = SDK::VmReader.read_one(reader, connection)
+        expect(result.connection).to be(connection)
+        expect(result.disks.connection).to be(connection)
+        expect(result.disks[0].connection).to be(connection)
+        expect(result.disks[1].connection).to be(connection)
+      end
+
+    end
+
   end
 
   describe ".read_many" do
@@ -185,6 +210,30 @@ describe SDK::VmReader do
         expect(result).to_not be_nil
         expect(result).to be_a(SDK::List)
         expect(result.href).to eql('myhref')
+      end
+
+    end
+
+    context "when a connection is passed" do
+
+      it "it is copied to the created list" do
+        reader = SDK::XmlReader.new({
+          :io => StringIO.new('<vms/>')
+        })
+        connection = Object.new
+        result = SDK::VmReader.read_many(reader, connection)
+        expect(result.connection).to be(connection)
+      end
+
+      it "it is copied to the the elements of the list" do
+        reader = SDK::XmlReader.new({
+          :io => StringIO.new('<vms><vm/><vm/></vms>')
+        })
+        connection = Object.new
+        result = SDK::VmReader.read_many(reader, connection)
+        expect(result.connection).to be(connection)
+        expect(result[0].connection).to be(connection)
+        expect(result[1].connection).to be(connection)
       end
 
     end
