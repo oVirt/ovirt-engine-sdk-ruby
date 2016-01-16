@@ -103,7 +103,7 @@ describe SDK::VmReader do
         })
         result = SDK::VmReader.read_many(reader)
         expect(result).to_not be_nil
-        expect(result).to be_a(Array)
+        expect(result).to be_a(SDK::List)
         expect(result.size).to eql(0)
       end
 
@@ -117,7 +117,7 @@ describe SDK::VmReader do
         })
         result = SDK::VmReader.read_many(reader)
         expect(result).to_not be_nil
-        expect(result).to be_a(Array)
+        expect(result).to be_a(SDK::List)
         expect(result.size).to eql(1)
         expect(result[0]).to_not be_nil
         expect(result[0]).to be_a(SDK::Vm)
@@ -133,7 +133,7 @@ describe SDK::VmReader do
         })
         result = SDK::VmReader.read_many(reader)
         expect(result).to_not be_nil
-        expect(result).to be_a(Array)
+        expect(result).to be_a(SDK::List)
         expect(result.size).to eql(2)
         expect(result[0]).to_not be_nil
         expect(result[0]).to be_a(SDK::Vm)
@@ -151,7 +151,7 @@ describe SDK::VmReader do
         })
         result = SDK::VmReader.read_many(reader)
         expect(result).to_not be_nil
-        expect(result).to be_a(Array)
+        expect(result).to be_a(SDK::List)
         expect(result.size).to eql(2)
         expect(result[0]).to_not be_nil
         expect(result[0]).to be_a(Ovirt::SDK::V4::Vm)

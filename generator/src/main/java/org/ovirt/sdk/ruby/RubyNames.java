@@ -38,9 +38,10 @@ import org.ovirt.api.metamodel.tool.Words;
 @ApplicationScoped
 public class RubyNames {
     // The names of the base classes:
+    public static final Name LIST_NAME = NameParser.parseUsingCase("List");
     public static final Name READER_NAME = NameParser.parseUsingCase("Reader");
     public static final Name SERVICE_NAME = NameParser.parseUsingCase("Service");
-    public static final Name TYPE_NAME = NameParser.parseUsingCase("Type");
+    public static final Name STRUCT_NAME = NameParser.parseUsingCase("Struct");
     public static final Name WRITER_NAME = NameParser.parseUsingCase("Writer");
 
     // The names of the directories:
@@ -106,13 +107,20 @@ public class RubyNames {
     }
 
     /**
-     * Calculates the Ruby name of the base class of the types.
+     * Calculates the Ruby name of the base class of the struct types.
      */
-    public RubyName getBaseTypeName() {
-        return buildName(TYPE_NAME, null, TYPES_DIR);
+    public RubyName getBaseStructName() {
+        return buildName(STRUCT_NAME, null, TYPES_DIR);
     }
 
-   /**
+    /**
+     * Calculates the Ruby name of the base class of the list types.
+     */
+    public RubyName getBaseListName() {
+        return buildName(LIST_NAME, null, TYPES_DIR);
+    }
+
+    /**
      * Calculates the Ruby name that corresponds to the given type.
      */
     public RubyName getTypeName(Type type) {

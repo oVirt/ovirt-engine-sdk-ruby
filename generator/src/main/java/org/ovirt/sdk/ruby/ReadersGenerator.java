@@ -138,7 +138,7 @@ public class ReadersGenerator implements RubyGenerator {
         // Generate the method that reads many instances:
         buffer.addLine("def self.read_many(reader)");
         buffer.addLine(  "# Do nothing if there aren't more tags:");
-        buffer.addLine(  "list = []");
+        buffer.addLine(  "list = %1$s.new", rubyNames.getBaseListName().getClassName());
         buffer.addLine(  "return list unless reader.forward");
         buffer.addLine();
         buffer.addLine(  "# Discard the start tag:");

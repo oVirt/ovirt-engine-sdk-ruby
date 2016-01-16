@@ -18,9 +18,10 @@ module Ovirt
     module V4
 
       ##
-      # This is the base class for all the types of the SDK. It contains the utility methods used by all of them.
+      # This is the base class for all the struct types of the SDK. It contains the utility methods used by all of
+      # them.
       #
-      class Type
+      class Struct
 
         ##
         # Empty constructor.

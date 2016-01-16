@@ -286,20 +286,18 @@ public class TypesGenerator implements RubyGenerator {
             else if (elementType instanceof StructType) {
                 RubyName elementTypeName = rubyNames.getTypeName(elementType);
                 buffer.addLine("##");
-                buffer.addLine("# Sets the values from an array of objects of type %1$s.", elementTypeName);
+                buffer.addLine("# Sets the values from a list or array of objects of type %1$s.", elementTypeName);
                 buffer.addLine("#");
                 buffer.addLine("def %1$s=(list)", property);
-                buffer.addLine(  "if list.nil?");
-                buffer.addLine(    "@%1$s = nil", property);
-                buffer.addLine(  "else");
-                buffer.addLine(    "@%1$s = list.map do |item|", property);
-                buffer.addLine(      "if item.is_a?(Hash)");
-                buffer.addLine(        "%1$s.new(item)", elementTypeName.getClassName());
-                buffer.addLine(      "else");
-                buffer.addLine(        "item");
+                buffer.addLine(  "if list.class == Array");
+                buffer.addLine(    "list = List.new(list)");
+                buffer.addLine(    "list.each_with_index do |value, index|");
+                buffer.addLine(      "if value.is_a?(Hash)");
+                buffer.addLine(        "list[index] = %1$s.new(value)", elementTypeName.getClassName());
                 buffer.addLine(      "end");
                 buffer.addLine(    "end");
                 buffer.addLine(  "end");
+                buffer.addLine(  "@%1$s = list", property);
                 buffer.addLine("end");
             }
         }
@@ -358,7 +356,7 @@ public class TypesGenerator implements RubyGenerator {
         }
 
         // Generate the forward declarations using the order calculated in the previous step:
-        buffer.addLine("class %1$s", rubyNames.getBaseTypeName().getClassName());
+        buffer.addLine("class %1$s", rubyNames.getBaseStructName().getClassName());
         buffer.addLine("end");
         buffer.addLine();
         sorted.forEach(x -> {
@@ -375,7 +373,8 @@ public class TypesGenerator implements RubyGenerator {
         buffer.addLine("##");
         buffer.addLine("# Load all the types.");
         buffer.addLine("#");
-        buffer.addLine("load '%1$s.rb'", rubyNames.getBaseTypeName().getFileName());
+        buffer.addLine("load '%1$s.rb'", rubyNames.getBaseStructName().getFileName());
+        buffer.addLine("load '%1$s.rb'", rubyNames.getBaseListName().getFileName());
         model.types()
             .filter(x -> x instanceof StructType || x instanceof EnumType)
             .sorted()
@@ -394,7 +393,7 @@ public class TypesGenerator implements RubyGenerator {
     private void generateClassDeclaration(StructType type) {
         RubyName typeName = rubyNames.getTypeName(type);
         Type base = type.getBase();
-        RubyName baseName = base != null? rubyNames.getTypeName(base): rubyNames.getBaseTypeName();
+        RubyName baseName = base != null? rubyNames.getTypeName(base): rubyNames.getBaseStructName();
         buffer.addLine("class %1$s < %2$s", typeName.getClassName(), baseName.getClassName());
     }
 
