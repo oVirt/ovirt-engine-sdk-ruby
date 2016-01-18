@@ -66,6 +66,34 @@ module Ovirt
           @is_link = value
         end
 
+        ##
+        # Follows the `href` attribute of this structure, retrieves the list and returns it.
+        #
+        def follow_link
+          # Check that the "href" and "connection" attributes have values, as both are needed in order to retrieve
+          # the representation of the object:
+          if href.nil?
+            raise Error.new("Can't follow link because the \"href\" attribute does't have a value")
+          end
+          if connection.nil?
+            raise Error.new("Can't follow link because the \"connection\" attribute does't have a value")
+          end
+
+          # Check that the value of the "href" attribute is compatible with the base URL of the connection:
+          prefix = connection.url.path
+          if !prefix.end_with?('/')
+            prefix += '/'
+          end
+          if !href.start_with?(prefix)
+            raise Error.new("The URL \"#{href}\" isn't compatible with the base URL of the connection")
+          end
+
+          # Remove the prefix from the URL, follow the path to the relevant service and invoke the "list" method to
+          # retrieve its representation:
+          path = href[prefix.length..-1]
+          service = connection.service(path)
+          return service.list
+        end
       end
 
     end
