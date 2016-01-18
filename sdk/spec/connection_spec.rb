@@ -17,12 +17,25 @@ require 'spec_helper'
 
 describe SDK::Connection do
 
-  describe ".build_url" do
+  describe ".build_url", :integration => true do
+
+    before(:all) do
+      @connection = SDK::Connection.new({
+        :url => default_url,
+        :username => default_user,
+        :password => default_password,
+        :ca_file => default_ca_file,
+      })
+    end
+
+    after(:all) do
+      @connection.close
+    end
 
     context "when given only the base" do
 
       it "builds the expected URL" do
-        url = SDK::Connection.build_url({:base => default_url})
+        url = @connection.build_url
         expect(url).to eql(default_url)
       end
 
@@ -31,7 +44,7 @@ describe SDK::Connection do
     context "when given base and path" do
 
       it "builds the expected url" do
-        url = SDK::Connection.build_url({:base => default_url, :path => "/vms"})
+        url = @connection.build_url({:path => "/vms"})
         expect(url).to eql(default_url + "/vms")
       end
 
@@ -40,8 +53,7 @@ describe SDK::Connection do
     context "when given base, path and query parameter" do
 
       it "builds the expected URL" do
-        url = SDK::Connection.build_url({
-          :base => default_url,
+        url = @connection.build_url({
           :path => "/vms",
           :query => {'max' => '10'},
         })
@@ -53,8 +65,7 @@ describe SDK::Connection do
     context "when given base, path and multiple query parameters" do
 
       it "builds the expected URL" do
-        url = SDK::Connection.build_url({
-          :base => default_url,
+        url = @connection.build_url({
           :path => "/vms",
           :query => {'max' => '10', 'current' => 'true'},
         })
@@ -66,8 +77,7 @@ describe SDK::Connection do
     context "when given base, path and matrix parameter" do
 
       it "builds the expected URL" do
-        url = SDK::Connection.build_url({
-          :base => default_url,
+        url = @connection.build_url({
           :path => "/vms",
           :matrix => {'max' => '10'},
         })
@@ -79,8 +89,7 @@ describe SDK::Connection do
     context "when given base, path and multiple matrix parameters" do
 
       it "builds the expected URL" do
-        url = SDK::Connection.build_url({
-          :base => default_url,
+        url = @connection.build_url({
           :path => "/vms",
           :matrix => {'max' => '10', 'current' => 'true'},
         })
@@ -92,8 +101,7 @@ describe SDK::Connection do
     context "when given base, path and both query and matrix parameters" do
 
       it "builds the expected URL" do
-        url = SDK::Connection.build_url({
-          :base => default_url,
+        url = @connection.build_url({
           :path => "/vms",
           :matrix => {'current' => 'true'},
           :query => {'max' => '10'},
@@ -106,8 +114,7 @@ describe SDK::Connection do
     context "when given a query parameter with white space in the value" do
 
       it "the white space is encoded correctly" do
-        url = SDK::Connection.build_url({
-          :base => default_url,
+        url = @connection.build_url({
           :path => "/vms",
           :query => {'search' => 'My VM'},
         })
@@ -119,8 +126,7 @@ describe SDK::Connection do
     context "when given a matrix parameter with white space in the value" do
 
       it "the white space is encoded correctly" do
-        url = SDK::Connection.build_url({
-          :base => default_url,
+        url = @connection.build_url({
           :path => "/vms",
           :matrix => {'search' => 'My VM'},
         })
@@ -132,8 +138,7 @@ describe SDK::Connection do
     context "when given a query parameter with an equals sign inside the value" do
 
       it "the equals sign is encoded correctly" do
-        url = SDK::Connection.build_url({
-          :base => default_url,
+        url = @connection.build_url({
           :path => "/vms",
           :query => {'search' => 'name=myvm'},
         })
@@ -145,8 +150,7 @@ describe SDK::Connection do
     context "when given a matrix parameter with an equals sign inside the value" do
 
       it "the equals sign is encoded correctly" do
-        url = SDK::Connection.build_url({
-          :base => default_url,
+        url = @connection.build_url({
           :path => "/vms",
           :matrix => {'search' => 'name=myvm'},
         })
@@ -158,8 +162,7 @@ describe SDK::Connection do
     context "when given an empty set of query parameters" do
 
       it "the set is ignored and not added to the URL" do
-        url = SDK::Connection.build_url({
-          :base => default_url,
+        url = @connection.build_url({
           :path => "/vms",
           :query => {},
         })
@@ -171,8 +174,7 @@ describe SDK::Connection do
     context "when given an empty set of matrix parameters" do
 
       it "the set is ignored and not added to the URL" do
-        url = SDK::Connection.build_url({
-          :base => default_url,
+        url = @connection.build_url({
           :path => "/vms",
           :matrix => {},
         })
@@ -194,8 +196,7 @@ describe SDK::Connection do
           :password => default_password,
           :ca_file => default_ca_file,
         })
-        expect(connection.url).to be_a(String)
-        expect(connection.url).to eql(default_url.to_s)
+        expect(connection.url.to_s).to eql(default_url)
         connection.close
       end
 
@@ -246,7 +247,7 @@ describe SDK::Connection do
 
   end
 
-  describe ".request" do
+  describe ".send" do
 
     context "GET of root", :integration => true do
 
@@ -257,10 +258,9 @@ describe SDK::Connection do
           :password => default_password,
           :ca_file => default_ca_file,
         })
-        result = connection.request({
-          :method => :GET,
-          :path => "",
-        })
+        request = SDK::Request.new
+        response = connection.send(request)
+        expect(response.code).to eql(200)
         connection.close
       end
 

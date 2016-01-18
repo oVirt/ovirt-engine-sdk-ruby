@@ -192,7 +192,12 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addLine("writer.close");
         buffer.addLine("io.close");
         buffer.addLine("body = io.string");
-        buffer.addLine("@connection.request({:method => :POST, :path => @path, :body => body})");
+        buffer.addLine("request = Request.new({");
+        buffer.addLine(  ":method => :POST,");
+        buffer.addLine(  ":path => @path,");
+        buffer.addLine(  ":body => body,");
+        buffer.addLine("})");
+        buffer.addLine("@connection.send(request)");
 
         // End method:
         buffer.addLine("end");
@@ -216,10 +221,12 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addLine("writer.close");
         buffer.addLine("io.close");
         buffer.addLine("body = io.string");
-        buffer.addLine(
-            "@connection.request({:method => :POST, :path => \"#{@path}/%1$s\", :body => body})",
-            getPath(name)
-        );
+        buffer.addLine("request = Request.new({");
+        buffer.addLine(  ":method => :POST,");
+        buffer.addLine(  ":path => \"#{@path}/%1$s\",", getPath(name));
+        buffer.addLine(  ":body => body,");
+        buffer.addLine("})");
+        buffer.addLine("@connection.send(request)");
 
         // End method:
         buffer.addLine("end");
@@ -283,12 +290,18 @@ public class ServicesGenerator implements RubyGenerator {
             .forEach(this::generateUrlParameter);
 
         // Body:
+        buffer.addLine("request = Request.new({");
+        buffer.addLine(  ":method => :GET,");
+        buffer.addLine(  ":path => @path,");
+        buffer.addLine(  ":query => query,");
+        buffer.addLine(  ":matrix => matrix,");
+        buffer.addLine("})");
         if (outParameter != null) {
             Type outType = outParameter.getType();
-            buffer.addLine("body = @connection.request({:method => :GET, :path => @path, :query => query, :matrix => matrix})");
-            buffer.addLine("if body then");
+            buffer.addLine("response = @connection.send(request)");
+            buffer.addLine("if response.body then");
             buffer.addLine(  "begin");
-            buffer.addLine(    "io = StringIO.new(body)");
+            buffer.addLine(    "io = StringIO.new(response.body)");
             buffer.addLine(    "reader = XmlReader.new({:io => io})");
             if (outType instanceof StructType) {
                 RubyName outReader = rubyNames.getReaderName(outType);
@@ -307,7 +320,7 @@ public class ServicesGenerator implements RubyGenerator {
             buffer.addLine("end");
         }
         else {
-            buffer.addLine("@connection.request({:method => :GET, :path => @path, :query => query, :matrix => matrix})");
+            buffer.addLine("@connection.send(request)");
         }
 
         // End method:
@@ -347,7 +360,7 @@ public class ServicesGenerator implements RubyGenerator {
         }
         if (outParameter != null) {
             Type outType = outParameter.getType();
-            buffer.addLine("body = @connection.request({:method => :PUT, :path => @path, :body => body})");
+            buffer.addLine("body = @connection.send({:method => :PUT, :path => @path, :body => body})");
             buffer.addLine("if body then");
             buffer.addLine(  "begin");
             buffer.addLine(    "io = StringIO.new(body)");
@@ -369,7 +382,7 @@ public class ServicesGenerator implements RubyGenerator {
             buffer.addLine("end");
         }
         else {
-            buffer.addLine("@connection.request({:method => :PUT, :path => @path, :body => body})");
+            buffer.addLine("@connection.send({:method => :PUT, :path => @path, :body => body})");
         }
         buffer.addLine("end");
         buffer.addLine();
@@ -389,7 +402,13 @@ public class ServicesGenerator implements RubyGenerator {
             .forEach(this::generateUrlParameter);
 
         // Generate the method:
-        buffer.addLine(  "@connection.request({:method => :DELETE, :path => @path, :query => query, :matrix => matrix})");
+        buffer.addLine(  "request = Request.new({");
+        buffer.addLine(    ":method => :DELETE,");
+        buffer.addLine(    ":path => @path,");
+        buffer.addLine(    ":query => query,");
+        buffer.addLine(    ":matrix => matrix,");
+        buffer.addLine(  "})");
+        buffer.addLine(  "@connection.send(request)");
         buffer.addLine("end");
         buffer.addLine();
     }

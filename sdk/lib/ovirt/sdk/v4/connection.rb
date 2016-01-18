@@ -21,6 +21,57 @@ module Ovirt
     module V4
 
       ##
+      # This class represents an HTTP request.
+      #
+      # This class is intended for internal use by other components of the SDK. Refrain from using it directly as there
+      # is no backwards compatibility guarantee.
+      #
+      class Request
+        attr_accessor :method
+        attr_accessor :path
+        attr_accessor :matrix
+        attr_accessor :query
+        attr_accessor :headers
+        attr_accessor :body
+
+        ##
+        # Creates a new HTTP request.
+        #
+        def initialize(opts = {})
+          self.method = opts[:method] || :GET
+          self.path = opts[:path] || ''
+          self.headers = opts[:headers] || {}
+          self.matrix = opts[:matrix] || {}
+          self.query = opts[:query] || {}
+          self.body = opts[:body]
+        end
+
+      end
+
+      ##
+      # This class represents an HTTP response.
+      #
+      # This class is intended for internal use by other components of the SDK. Refrain from using it directly as there
+      # is no backwards compatibility guarantee.
+      #
+      class Response
+        attr_accessor :body
+        attr_accessor :code
+        attr_accessor :headers
+        attr_accessor :message
+
+        ##
+        # Creates a new HTTP response.
+        #
+        def initialize(opts = {})
+          self.body = opts[:body]
+          self.code = opts[:code]
+          self.headers = opts[:headers]
+          self.message = opts[:message]
+        end
+      end
+
+      ##
       # This class is responsible for managing an HTTP connection to the engine server. It is intended as the entry
       # point for the SDK, and it provides access to the `system` service and, from there, to the rest of the services
       # provided by the API.
@@ -148,91 +199,57 @@ module Ovirt
         end
 
         ##
-        # Performs an HTTP request.
+        # Sends an HTTP request and waits for the response.
         #
-        # This method is intended for internal use by other components of the SDK, refrain from using it directly, as
+        # This method is intended for internal use by other components of the SDK. Refrain from using it directly, as
         # backwards compatibility isn't guaranteed.
         #
-        # This method supports the following parameters, provided as an optional hash:
+        # This method supports the following parameters.
         #
-        # `:method` - The HTTP method to execute. The value should be `:GET`, `:POST`, `:PUT`, `:DELETE` or
-        # `:HEAD`.
+        # `request` - The Request object containing the details of the HTTP request to send.
         #
-        # `:path` - The path that will be added to the URL used when the connection was created. For example, of the
-        # connection was created with `https://engine.example.com/ovirt-engine/api` and the value of `:path` is
-        # `vms/123` then the request will be sent to `https://engine.example.com/ovirt-engine/api/vms/123`.
+        # `last` - A boolean flag indicating if this is the last request.
         #
-        # `:headers` - A hash containing the HTTP headers to add to the request. The keys of the hash should be
-        # strings containing the names of the headers, and the values should be strings containing the
-        # values. The default is an empty hash.
+        # The returned value is a Request object containing the details of the HTTP response received.
         #
-        # `:query` - A hash containing the query parameters to add to the request. The keys of the hash should be
-        # strings containing the names of the parameters, and the values should be strings containing the values. The
-        # default is an empty hash.
-        #
-        # `:matrix` - A hash containing the matrix parameters to add to the request. The keys of the hash should be
-        # strings containing the names of the parameters, and the values should be strings containing the values. The
-        # default is an empty hash.
-        #
-        # `:body` - A string containing the request body.
-        #
-        # `:last` - Boolean flag indicating if this is the last request of a session. This will disable the use of
-        # the `Prefer: persistent-auth` header, thus indicating to the server that the session should be closed.
-        # The default is `false`.
-        #
-        # `:persistent_auth` - Boolean flag indicating if persistent authentication based on cookies should be used.
-        # The default is `true`.
-        #
-        # The returned value is an string containing the HTTP response body.
-        #
-        def request(opts = {})
-          # Get the values of the parameters and assign default values:
-          method = opts[:method]
-          path = opts[:path]
-          headers = opts[:headers] || {}
-          query = opts[:query] || {}
-          matrix = opts[:matrix] || {}
-          body = opts[:body] || {}
-          last = opts[:last] || false
-          persistent_auth = opts[:persistent_auth] || true
-
+        def send(request, last = false)
           # Build the URL:
-          url = self.class.build_url({
-            :base => @url.to_s,
-            :path => path,
-            :query => query,
-            :matrix => matrix,
+          @curl.url = build_url({
+            :path => request.path,
+            :query => request.query,
+            :matrix => request.matrix,
           })
-          @curl.url = url
 
           # Add headers, avoiding those that have no value:
           @curl.headers.clear
-          @curl.headers.merge!(headers)
+          @curl.headers.merge!(request.headers)
           @curl.headers['Content-Type'] = 'application/xml'
           @curl.headers['Accept'] = 'application/xml'
 
-          # Every request except the last one should indicate that we prefer
-          # to use persistent authentication:
-          if persistent_auth and not last
+          # All requests except the last one should indicate that we want to use persistent authentication:
+          if !last
             @curl.headers['Prefer'] = 'persistent-auth'
           end
 
           # Send the request and wait for the response:
-          case method
+          case request.method
           when :DELETE
             @curl.http_delete
           when :GET
             @curl.http_get
           when :PUT
-            @curl.http_put(body)
+            @curl.http_put(request.body)
           when :HEAD
             @curl.http_head
           when :POST
-            @curl.http_post(body)
+            @curl.http_post(request.body)
           end
 
-          # Return the response body:
-          return @curl.body_str
+          # Return the response:
+          response = Response.new
+          response.body = @curl.body_str
+          response.code = @curl.response_code
+          return response
         end
 
         ##
@@ -240,20 +257,24 @@ module Ovirt
         #
         def close
           # Send the last request to indicate the server that the session should be closed:
-          request({:method => :HEAD, :path => '', :last => true})
+          request = Request.new({
+            :method => :HEAD,
+          })
+          send(request, true)
 
           # Release resources used by the cURL handle:
           @curl.close
         end
 
         ##
-        # Builds a request URL from a base URL, a path, and the sets of matrix and query parameters.
+        # Builds a request URL from a path, and the sets of matrix and query parameters.
+        #
+        # This method is intended for internal use by other components of the SDK. Refrain from using it directly, as
+        # backwards compatibility isn't guaranteed.
         #
         # This method supports the following parameters, provided as an optional hash:
         #
-        # `:base` - The base URL.
-        #
-        # `:path` - The path that will be added to the base URL.
+        # `:path` - The path that will be added to the base URL. The default is an empty string.
         #
         # `:query` - A hash containing the query parameters to add to the URL. The keys of the hash should be strings
         # containing the names of the parameters, and the values should be strings containing the values. The default
@@ -265,15 +286,14 @@ module Ovirt
         #
         # The returned value is an string containing the URL.
         #
-        def self.build_url(opts = {})
+        def build_url(opts = {})
           # Get the values of the parameters and assign default values:
-          base = opts[:base]
           path = opts[:path] || ''
           query = opts[:query] || {}
           matrix = opts[:matrix] || {}
 
           # Add the path and the parameters:
-          url = base + path
+          url = @url.to_s + path
           if not matrix.empty?
             matrix.each do |key, value|
               url = url + ';' + URI.encode_www_form({key => value})
