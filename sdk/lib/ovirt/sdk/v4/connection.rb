@@ -128,6 +128,18 @@ module Ovirt
         end
 
         ##
+        # Returns a reference to the service corresponding to the given path. For example, if the `path` parameter
+        # is `vms/123/disks` then it will return a reference to the service that manages the disks for the virtual
+        # machine with identifier `123`.
+        #
+        # If there is no service corresponding to the given path an exception of type Ovirt::SDK::V4::Error will be
+        # raised.
+        #
+        def service(path)
+          return system.service(path)
+        end
+
+        ##
         # Performs an HTTP request.
         #
         # This method is intended for internal use by other components of the SDK, refrain from using it directly, as

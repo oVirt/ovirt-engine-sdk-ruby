@@ -248,4 +248,88 @@ describe SDK::Connection do
 
   end
 
+  describe ".service" do
+
+    context "given nil", :integration => true do
+
+      it "returns a reference to the system service" do
+        connection = SDK::Connection.new({
+          :url => default_url,
+          :username => default_user,
+          :password => default_password,
+          :ca_file => default_ca_file,
+        })
+        result = connection.service(nil)
+        expect(result).to be_a(SDK::SystemService)
+        connection.close
+      end
+
+    end
+
+    context "given empty string", :integration => true do
+
+      it "returns a reference to the system service" do
+        connection = SDK::Connection.new({
+          :url => default_url,
+          :username => default_user,
+          :password => default_password,
+          :ca_file => default_ca_file,
+        })
+        result = connection.service(nil)
+        expect(result).to be_a(SDK::SystemService)
+        connection.close
+      end
+
+    end
+
+    context "given 'vms'", :integration => true do
+
+      it "returns a reference to the virtual machines service" do
+        connection = SDK::Connection.new({
+          :url => default_url,
+          :username => default_user,
+          :password => default_password,
+          :ca_file => default_ca_file,
+        })
+        result = connection.service('vms')
+        expect(result).to be_a(SDK::VmsService)
+        connection.close
+      end
+
+    end
+
+    context "given 'vms/123'", :integration => true do
+
+      it "returns a reference to the virtual machine service" do
+        connection = SDK::Connection.new({
+          :url => default_url,
+          :username => default_user,
+          :password => default_password,
+          :ca_file => default_ca_file,
+        })
+        result = connection.service('vms/123')
+        expect(result).to be_a(SDK::VmService)
+        connection.close
+      end
+
+    end
+
+    context "given 'vms/123/disks'", :integration => true do
+
+      it "returns a reference to the virtual machine disks service" do
+        connection = SDK::Connection.new({
+          :url => default_url,
+          :username => default_user,
+          :password => default_password,
+          :ca_file => default_ca_file,
+        })
+        result = connection.service('vms/123/disks')
+        expect(result).to be_a(SDK::VmDisksService)
+        connection.close
+      end
+
+    end
+
+  end
+
 end

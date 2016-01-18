@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+import java.util.Optional;
 import javax.inject.Inject;
 
 import org.ovirt.api.metamodel.concepts.EnumType;
@@ -115,6 +116,7 @@ public class ServicesGenerator implements RubyGenerator {
         // Generate the methods and locators:
         service.methods().sorted().forEach(this::generateMethod);
         service.locators().sorted().forEach(this::generateLocator);
+        generatePathLocator(service);
 
         // Generate other methods that don't correspond to model methods or locators:
         generateToS(service);
@@ -414,7 +416,6 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addLine("end");
     }
 
-
     private void generateToS(Service service) {
         RubyName serviceName = rubyNames.getServiceName(service);
         buffer.addLine("def to_s");
@@ -446,10 +447,57 @@ public class ServicesGenerator implements RubyGenerator {
 
     private void generateLocatorWithoutParameters(Locator locator) {
         String methodName = rubyNames.getMemberStyleName(locator.getName());
-        String urlSegment = locator.getName().words().map(String::toLowerCase).collect(joining());
+        String urlSegment = getPath(locator.getName());
         RubyName serviceName = rubyNames.getServiceName(locator.getService());
         buffer.addLine("def %1$s", methodName);
         buffer.addLine(  "return %1$s.new(@connection, \"#{@path}/%2$s\")", serviceName.getClassName(), urlSegment);
+        buffer.addLine("end");
+        buffer.addLine();
+    }
+
+    private void generatePathLocator(Service service) {
+        // Begin method:
+        buffer.addLine("def service(path)");
+        buffer.addLine(  "if path.nil? || path == ''");
+        buffer.addLine(    "return self");
+        buffer.addLine(  "end");
+
+        // Generate the code that checks if the path corresponds to any of the locators without parameters:
+        service.locators().filter(x -> x.getParameters().isEmpty()).sorted().forEach(locator -> {
+            Name name = locator.getName();
+            String segment = getPath(name);
+            buffer.addLine("if path == '%1$s'", segment);
+            buffer.addLine(  "return %1$s", rubyNames.getMemberStyleName(name));
+            buffer.addLine("end");
+            buffer.addLine("if path.start_with?('%1$s/')", segment);
+            buffer.addLine(
+                "return %1$s.service(path[%2$d..-1])",
+                rubyNames.getMemberStyleName(name),
+                segment.length() + 1
+            );
+            buffer.addLine("end");
+        });
+
+        // If the path doesn't correspond to a locator without parameters, then it will correspond to the locator
+        // without parameters, otherwise it is an error:
+        Optional<Locator> optional = service.locators().filter(x -> !x.getParameters().isEmpty()).findAny();
+        if (optional.isPresent()) {
+            Locator locator = optional.get();
+            Name name = locator.getName();
+            buffer.addLine("index = path.index('/')");
+            buffer.addLine("if index.nil?");
+            buffer.addLine(  "return %1$s(path)", rubyNames.getMemberStyleName(name));
+            buffer.addLine("end");
+            buffer.addLine(
+                "return %1$s(path[0..(index - 1)]).service(path[(index +1)..-1])",
+                rubyNames.getMemberStyleName(name)
+            );
+        }
+        else {
+            buffer.addLine("raise Error.new(\"The path \\\"#{path}\\\" doesn't correspond to any service\")");
+        }
+
+        // End method:
         buffer.addLine("end");
         buffer.addLine();
     }
