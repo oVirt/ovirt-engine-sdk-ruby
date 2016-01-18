@@ -105,6 +105,54 @@ describe SDK::VmReader do
 
     end
 
+    context "when the a nested CPU is passed" do
+
+      it "it isn't marked as a link" do
+        reader = SDK::XmlReader.new({
+          :io => StringIO.new('<vm><cpu/></vm>')
+        })
+        result = SDK::VmReader.read_one(reader)
+        expect(result.cpu.is_link?).to be(false)
+      end
+
+    end
+
+    context "when the a nested cluster is passed" do
+
+      it "it is marked as a link" do
+        reader = SDK::XmlReader.new({
+          :io => StringIO.new('<vm><cluster/></vm>')
+        })
+        result = SDK::VmReader.read_one(reader)
+        expect(result.cluster.is_link?).to be(true)
+      end
+
+    end
+
+    context "when the a nested list of payloads is passed" do
+
+      it "it isn't marked as a link" do
+        reader = SDK::XmlReader.new({
+          :io => StringIO.new('<vm><payloads><payload/></payloads></vm>')
+        })
+        result = SDK::VmReader.read_one(reader)
+        expect(result.payloads.is_link?).to be(false)
+      end
+
+    end
+
+    context "when the a nested list of disks is passed" do
+
+      it "it is marked as a link" do
+        reader = SDK::XmlReader.new({
+          :io => StringIO.new('<vm><disks><disk/></disks></vm>')
+        })
+        result = SDK::VmReader.read_one(reader)
+        expect(result.disks.is_link?).to be(true)
+      end
+
+    end
+
     context "when a connection is passed" do
 
       it "it is copied to the created object" do

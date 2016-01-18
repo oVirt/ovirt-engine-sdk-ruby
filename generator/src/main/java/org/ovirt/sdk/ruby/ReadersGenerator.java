@@ -21,6 +21,7 @@ import java.io.IOException;
 import javax.inject.Inject;
 
 import org.ovirt.api.metamodel.concepts.EnumType;
+import org.ovirt.api.metamodel.concepts.Link;
 import org.ovirt.api.metamodel.concepts.ListType;
 import org.ovirt.api.metamodel.concepts.Model;
 import org.ovirt.api.metamodel.concepts.Name;
@@ -206,23 +207,24 @@ public class ReadersGenerator implements RubyGenerator {
         String variable = String.format("object.%1$s", property);
         buffer.addLine("when '%1$s'", tag);
         if (type instanceof PrimitiveType) {
-            generateReadPrimitive((PrimitiveType) type, variable);
+            generateReadPrimitive(member, variable);
         }
         else if (type instanceof EnumType) {
-            generateReadEnum((EnumType) type, variable);
+            generateReadEnum(member, variable);
         }
         else if (type instanceof StructType) {
-            generateReadStruct((StructType) type, variable);
+            generateReadStruct(member, variable);
         }
         else if (type instanceof ListType) {
-            generateReadList((ListType) type, variable);
+            generateReadList(member, variable);
         }
         else {
             buffer.addLine("reader.next_element");
         }
     }
 
-    private void generateReadPrimitive(PrimitiveType type, String variable) {
+    private void generateReadPrimitive(StructMember member, String variable) {
+        Type type = member.getType();
         Model model = type.getModel();
         if (type == model.getStringType()) {
             buffer.addLine("%1$s = reader.read_string", variable);
@@ -245,17 +247,19 @@ public class ReadersGenerator implements RubyGenerator {
         }
     }
 
-    private void generateReadEnum(EnumType type, String variable) {
+    private void generateReadEnum(StructMember member, String variable) {
         buffer.addLine("%1$s = reader.read_string", variable);
         buffer.addLine("reader.next_element");
     }
 
-    private void generateReadStruct(StructType type, String variable) {
-        RubyName readerName = rubyNames.getReaderName(type);
+    private void generateReadStruct(StructMember member, String variable) {
+        RubyName readerName = rubyNames.getReaderName(member.getType());
         buffer.addLine("%1$s = %2$s.read_one(reader, connection)", variable, readerName.getClassName());
+        buffer.addLine("%1$s.is_link = %2$s", variable, member instanceof Link);
     }
 
-    private void generateReadList(ListType type, String variable) {
+    private void generateReadList(StructMember member, String variable) {
+        ListType type = (ListType) member.getType();
         Type elementType = type.getElementType();
         if (elementType instanceof PrimitiveType) {
             buffer.addLine("reader.next_element");
@@ -263,6 +267,7 @@ public class ReadersGenerator implements RubyGenerator {
         else if (elementType instanceof StructType) {
             RubyName readerName = rubyNames.getReaderName(elementType);
             buffer.addLine("%1$s = %2$s.read_many(reader, connection)", variable, readerName.getClassName());
+            buffer.addLine("%1$s.is_link = %2$s", variable, member instanceof Link);
         }
         else {
             buffer.addLine("reader.next_element");

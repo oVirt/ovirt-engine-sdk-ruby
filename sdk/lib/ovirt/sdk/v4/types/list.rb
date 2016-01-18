@@ -51,6 +51,21 @@ module Ovirt
           @connection = value
         end
 
+        ##
+        # Indicates if this list is used as a link. When a list is used as a link only the `href` attribute will be
+        # returned by the server.
+        #
+        def is_link?
+          return @is_link
+        end
+
+        ##
+        # Sets the value of the flag that indicates if this list is used as a link.
+        #
+        def is_link=(value)
+          @is_link = value
+        end
+
       end
 
     end

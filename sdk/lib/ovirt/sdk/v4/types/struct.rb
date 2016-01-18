@@ -52,11 +52,27 @@ module Ovirt
         end
 
         ##
+        # Indicates if this structure is used as a link. When a structure is used as a link only the identifier and the
+        # `href` attributes will be returned by the server.
+        #
+        def is_link?
+          return @is_link
+        end
+
+        ##
+        # Sets the value of the flag that indicates if this structure is used as a link.
+        #
+        def is_link=(value)
+          @is_link = value
+        end
+
+        ##
         # Empty constructor.
         #
         def initialize(opts = {})
           self.href = opts[:href]
           self.connection = opts[:connection]
+          self.is_link = opts[:is_link]
         end
 
       end
