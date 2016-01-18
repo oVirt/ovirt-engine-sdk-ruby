@@ -183,6 +183,26 @@ describe SDK::Connection do
 
   end
 
+  describe ".url" do
+
+    context "when the connection is created", :integration => true do
+
+      it "the URL can be obtained" do
+        connection = SDK::Connection.new({
+          :url => default_url,
+          :username => default_user,
+          :password => default_password,
+          :ca_file => default_ca_file,
+        })
+        expect(connection.url).to be_a(String)
+        expect(connection.url).to eql(default_url.to_s)
+        connection.close
+      end
+
+    end
+
+  end
+
   describe ".new" do
 
     context "in secure mode", :integration => true do

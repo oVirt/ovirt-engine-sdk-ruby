@@ -32,7 +32,8 @@ module Ovirt
         #
         # This method supports the following parameters, provided as an optional hash:
         #
-        # `:url` - The URL of the server, usually something like `https://server.example.com/ovirt-engine/api`.
+        # `:url` - A string containing the base URL of the server, usually something like
+        # `https://server.example.com/ovirt-engine/api`.
         #
         # `:username` - The name of the user, something like `admin@internal`.
         #
@@ -115,6 +116,13 @@ module Ovirt
             end
           end
 
+        end
+
+        ##
+        # Returns a string containing the base URL used by this connection.
+        #
+        def url
+          return @url.to_s
         end
 
         ##
