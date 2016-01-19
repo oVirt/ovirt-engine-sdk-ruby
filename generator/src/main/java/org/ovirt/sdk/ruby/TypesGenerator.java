@@ -375,6 +375,7 @@ public class TypesGenerator implements RubyGenerator {
         buffer.addLine("#");
         buffer.addLine("load '%1$s.rb'", rubyNames.getBaseStructName().getFileName());
         buffer.addLine("load '%1$s.rb'", rubyNames.getBaseListName().getFileName());
+        buffer.addLine("load '%1$s.rb'", rubyNames.getFaultName().getFileName());
         model.types()
             .filter(x -> x instanceof StructType || x instanceof EnumType)
             .sorted()

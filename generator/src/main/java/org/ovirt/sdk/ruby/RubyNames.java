@@ -38,6 +38,7 @@ import org.ovirt.api.metamodel.tool.Words;
 @ApplicationScoped
 public class RubyNames {
     // The names of the base classes:
+    public static final Name FAULT_NAME = NameParser.parseUsingCase("Fault");
     public static final Name LIST_NAME = NameParser.parseUsingCase("List");
     public static final Name READER_NAME = NameParser.parseUsingCase("Reader");
     public static final Name SERVICE_NAME = NameParser.parseUsingCase("Service");
@@ -167,6 +168,20 @@ public class RubyNames {
      */
     public RubyName getWriterName(Type type) {
         return buildName(type.getName(), WRITER_NAME, WRITERS_DIR);
+    }
+
+    /**
+     * Calculates the Ruby name of the fault class.
+     */
+    public RubyName getFaultName() {
+        return buildName(FAULT_NAME, null, TYPES_DIR);
+    }
+
+    /**
+     * Calculates the Ruby name of the fault reader.
+     */
+    public RubyName getFaultReaderName() {
+        return buildName(FAULT_NAME, READER_NAME, READERS_DIR);
     }
 
     /**
