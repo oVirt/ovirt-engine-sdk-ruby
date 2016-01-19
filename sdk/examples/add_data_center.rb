@@ -32,7 +32,7 @@ connection = Ovirt::SDK::V4::Connection.new({
 dcs_service = connection.system.data_centers
 
 # Use the "add" method to create a new data center:
-dcs_service.add(
+dc = dcs_service.add(
   Ovirt::SDK::V4::DataCenter.new({
     :name => 'mydc',
     :description => 'My data center',

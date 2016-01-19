@@ -310,6 +310,7 @@ public class ReadersGenerator implements RubyGenerator {
         buffer.addLine("# Load all the readers.");
         buffer.addLine("#");
         buffer.addLine("load '%1$s.rb'", rubyNames.getBaseReaderName().getFileName());
+        buffer.addLine("load '%1$s.rb'", rubyNames.getActionReaderName().getFileName());
         buffer.addLine("load '%1$s.rb'", rubyNames.getFaultReaderName().getFileName());
         model.types()
             .filter(x -> x instanceof StructType)

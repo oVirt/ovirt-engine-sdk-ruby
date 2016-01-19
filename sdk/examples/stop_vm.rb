@@ -1,6 +1,6 @@
 #!/usr/bin/ruby
 
-#--
+#
 # Copyright (c) 2016 Red Hat, Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#++
+#
 
 require 'ovirt/sdk/v4'
 
@@ -40,6 +40,13 @@ vm_service = vms_service.vm(vm.id)
 
 # Call the "stop" method of the service to stop it:
 vm_service.stop
+
+# Wait till the virtual machine is down:
+begin
+  sleep(5)
+  vm = vm_service.get
+  state = vm.status.state
+end while state != Ovirt::SDK::V4::VmStatus::DOWN
 
 # Close the connection to the server:
 connection.close

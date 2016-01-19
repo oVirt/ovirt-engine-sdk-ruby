@@ -40,6 +40,9 @@ clusters_service.add(
       :architecture => Ovirt::SDK::V4::Architecture::X86_64,
       :type => 'Intel Conroe Family',
     },
+    :data_center => {
+      :name => 'mydc',
+    },
   })
 )
 

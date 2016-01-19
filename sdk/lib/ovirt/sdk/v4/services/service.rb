@@ -21,6 +21,77 @@ module Ovirt
       # This is the base class for all the services of the SDK. It contains the utility methods used by all of them.
       #
       class Service
+
+        ##
+        # Creates and raises an error containing the details of the given HTTP response and fault.
+        #
+        # This method is intended for internal use by other components of the SDK. Refrain from using it directly, as
+        # backwards compatibility isn't guaranteed.
+        #
+        def raise_error(response, fault)
+          message = ''
+          unless fault.nil?
+            unless fault.reason.nil?
+              message << ' ' unless message.empty?
+              message << "Fault reason is \"#{fault.reason}\"."
+            end
+            unless fault.detail.nil?
+              message << ' ' unless message.empty?
+              message << "Fault detail is \"#{fault.detail}\"."
+            end
+          end
+          unless response.nil?
+            unless response.code.nil?
+              message << ' ' unless message.empty?
+              message << "HTTP response code is #{response.code}."
+            end
+            unless response.message.nil?
+              message << ' ' unless message.empty?
+              message << "HTTP response message is \"#{response.message}\"."
+            end
+          end
+          raise Error.new(message)
+        end
+
+        ##
+        # Reads the response body assuming that it contains a fault message, converts it to an Error and raises it.
+        #
+        # This method is intended for internal use by other components of the SDK. Refrain from using it directly, as
+        # backwards compatibility isn't guaranteed.
+        #
+        def check_fault(response)
+          begin
+            io = StringIO.new(response.body)
+            reader = XmlReader.new(:io => io)
+            fault = FaultReader.read_one(reader)
+          ensure
+            reader.close
+            io.close
+          end
+          raise_error(response, fault)
+        end
+
+        ##
+        # Reads the response body assuming that it contains an action, checks if it contains an exception, and if it
+        # does converts it to an Error and raises it.
+        #
+        # This method is intended for internal use by other components of the SDK. Refrain from using it directly, as
+        # backwards compatibility isn't guaranteed.
+        #
+        def check_action(response)
+          begin
+            io = StringIO.new(response.body)
+            reader = XmlReader.new(:io => io)
+            action = ActionReader.read_one(reader)
+          ensure
+            reader.close
+            io.close
+          end
+          unless action.fault.nil?
+            raise_error(response, action.fault)
+          end
+        end
+
       end
 
     end

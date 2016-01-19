@@ -1,6 +1,6 @@
 #!/usr/bin/ruby
 
-#--
+#
 # Copyright (c) 2016 Red Hat, Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#++
+#
 
 require 'ovirt/sdk/v4'
 
@@ -34,32 +34,30 @@ connection = Ovirt::SDK::V4::Connection.new({
 vms_service = connection.system.vms
 vm = vms_service.list({:search => 'name=myvm'})[0]
 
-# In order to specify the storage domain where we want the disk we need
-# to specify the identifier of the disk profile, so we need to find it:
-profiles_service = connection.system.disk_profiles
-profile_id = nil
-profiles_service.list.each do |profile|
-  if profile.name == 'mydata'
-    profile_id = profile.id
-  end
-end
-
 # Locate the service that manages the disks of the virtual machine:
 disks_service = vms_service.vm(vm.id).disks
 
 # Use the "add" method of the disks service to add the disk:
-disks_service.add(
+disk = disks_service.add(
   Ovirt::SDK::V4::Disk.new({
     :name => 'mydisk',
     :description => 'My disk',
     :interface => Ovirt::SDK::V4::DiskInterface::VIRTIO,
     :format => Ovirt::SDK::V4::DiskFormat::COW,
     :provisioned_size => 1 * 2**20,
-    :disk_profile => {
-      :id => profile_id,
-    },
+    :storage_domains => [{
+        :name => 'mydata',
+    }],
   })
 )
+
+# Wait till the disk is OK:
+disk_service = disks_service.disk(disk.id)
+begin
+  sleep(5)
+  disk = disk_service.get
+  state = disk.status.state
+end while state != Ovirt::SDK::V4::DiskStatus::OK
 
 # Close the connection to the server:
 connection.close

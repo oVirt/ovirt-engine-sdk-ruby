@@ -17,8 +17,8 @@
 
 require 'ovirt/sdk/v4'
 
-# This example will connect to the server and attach an existing NFS
-# data storage domain to a data center.
+# This example will connect to the server and update the description of
+# a data center:
 
 # Create the connection to the server:
 connection = Ovirt::SDK::V4::Connection.new({
@@ -29,39 +29,32 @@ connection = Ovirt::SDK::V4::Connection.new({
   :debug => true,
 })
 
-# Locate the service that manages the storage domains and use it to
-# search for the storage domain:
-sds_service = connection.system.storage_domains
-sd = sds_service.list({:search => 'name=mydata'})[0]
-
-# Locate the service that manages the data centers and use it to
-# search for the data center:
+# Get the reference to the data centers service:
 dcs_service = connection.system.data_centers
+
+# Retrieve the description of the data center:
 dc = dcs_service.list({:search => 'name=mydc'})[0]
 
-# Locate the service that manages the data center where we want to
-# attach the storage domain:
+# In order to update the data center we need a reference to the service
+# tht manages it, then we can call the "update" method passing the
+# update:
 dc_service = dcs_service.data_center(dc.id)
+dc = dc_service.update({
+  :description => 'Updated description',
+})
 
-# Locate the service that manages the storage domains that are attached
-# to the data centers:
-attached_sds_service = dc_service.storage_domains
+# Print the description of the result of the update:
+puts "#{dc.name}: #{dc.description}"
 
-# Use the "add" method of service that manages the attached storage
-# domains to attach it:
-attached_sds_service.add(
-  Ovirt::SDK::V4::StorageDomain.new({
-    :id => sd.id
-  })
-)
-
-# Wait till the storage domain is active:
-attached_sd_service = attached_sds_service.storage_domain(sd.id)
-begin
-  sleep(5)
-  sd = attached_sd_service.get
-  state = sd.status.state
-end while state != Ovirt::SDK::V4::StorageDomainStatus::ACTIVE
+# Note that an alternative way to do this is to update the
+# representation of the data center, and then send it:
+#
+# dc.description = 'Updated description'
+# dc_service.update(dc)
+#
+# But this isn't good practice, because it will send to the server all
+# the attributes of the data center, not just those that we want to
+# update.
 
 # Close the connection to the server:
 connection.close

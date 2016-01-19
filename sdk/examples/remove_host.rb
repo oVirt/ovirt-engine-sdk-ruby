@@ -17,8 +17,8 @@
 
 require 'ovirt/sdk/v4'
 
-# This example will connect to the server and create a new NFS ISO
-# storage domain, that won't be initially attached to any data center.
+# This example will connect to the server, search for a host by name and
+# remove it:
 
 # Create the connection to the server:
 connection = Ovirt::SDK::V4::Connection.new({
@@ -29,33 +29,22 @@ connection = Ovirt::SDK::V4::Connection.new({
   :debug => true,
 })
 
-# Get the reference to the storage domains service:
-sds_service = connection.system.storage_domains
+# Find the service that manages hosts:
+hosts_service = connection.system.hosts
 
-# Use the "add" method to create a new NFS storage domain:
-sd = sds_service.add(
-  Ovirt::SDK::V4::StorageDomain.new({
-    :name => 'myiso',
-    :description => 'My ISO',
-    :type => Ovirt::SDK::V4::StorageDomainType::ISO,
-    :host => {
-      :name => 'myhost',
-    },
-    :storage => {
-      :type => Ovirt::SDK::V4::StorageType::NFS,
-      :address => 'server0.example.com',
-      :path => '/nfs/ovirt/40/myiso',
-    },
-  })
-)
+# Find the host:
+host = hosts_service.list({:search => 'name=myhost'})[0]
 
-# Wait till the storage domain is unattached:
-sd_service = sds_service.storage_domain(sd.id)
-begin
-  sleep(5)
-  sd = sd_service.get
-  state = sd.status.state
-end while state != Ovirt::SDK::V4::StorageDomainStatus::UNATTACHED
+# Find the service that manages the host:
+host_service = hosts_service.host(host.id)
+
+# If the host isn't down or in maintenance then move it to maintenance:
+unless host.status.state == Ovirt::SDK::V4::HostStatus::MAINTENANCE
+  host_service.deactivate
+end
+
+# Remove the host:
+host_service.remove
 
 # Close the connection to the server:
 connection.close

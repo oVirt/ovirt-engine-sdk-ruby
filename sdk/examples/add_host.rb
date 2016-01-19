@@ -31,18 +31,26 @@ connection = Ovirt::SDK::V4::Connection.new({
 # Get the reference to the hosts service:
 hosts_service = connection.system.hosts
 
-# Use the "add" method add a new host:
-hosts_service.add(
+# Add the host:
+host = hosts_service.add(
   Ovirt::SDK::V4::Host.new({
     :name => 'myhost',
     :description => 'My host',
     :address => 'node40.example.com',
-    :root_password => '...',
+    :root_password => 'redhat123',
     :cluster => {
       :name => 'mycluster',
     },
   })
 )
+
+# Wait till the host is up:
+host_service = hosts_service.host(host.id)
+begin
+  sleep(5)
+  host = host_service.get
+  state = host.status.state
+end while state != Ovirt::SDK::V4::HostStatus::UP
 
 # Close the connection to the server:
 connection.close

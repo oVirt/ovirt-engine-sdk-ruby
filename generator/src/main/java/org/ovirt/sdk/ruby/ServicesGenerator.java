@@ -23,7 +23,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
 
@@ -157,47 +156,23 @@ public class ServicesGenerator implements RubyGenerator {
 
         // Begin method:
         Name methodName = method.getName();
+        Type parameterType = parameter.getType();
         Name parameterName = parameter.getName();
-        buffer.addLine(
-            "def %1$s(%2$s, opts = {})",
-            rubyNames.getMemberStyleName(methodName),
-            rubyNames.getMemberStyleName(parameterName)
-        );
+        String arg = rubyNames.getMemberStyleName(parameterName);
+        buffer.addLine("def %1$s(%2$s, opts = {})", rubyNames.getMemberStyleName(methodName), arg);
 
         // Body:
-        Type type = parameter.getType();
         String tag = schemaNames.getSchemaTagName(parameterName);
-        buffer.addLine("io = StringIO.new");
-        buffer.addLine("writer = XmlWriter.new({:io => io, :indent => true})");
-        if (type instanceof StructType) {
-            RubyName writer = rubyNames.getWriterName(type);
-            buffer.addLine(
-                "%1$s.write_one(%2$s, writer, '%3$s')",
-                writer.getClassName(),
-                rubyNames.getMemberStyleName(parameterName),
-                tag
-            );
-        }
-        else if (type instanceof ListType) {
-            ListType listType = (ListType) type;
-            Type elementType = listType.getElementType();
-            RubyName writer = rubyNames.getWriterName(elementType);
-            buffer.addLine(
-                "%1$s.write_many(%2$s, writer, '%3$s')",
-                writer.getClassName(),
-                rubyNames.getMemberStyleName(parameterName),
-                tag
-            );
-        }
-        buffer.addLine("writer.close");
-        buffer.addLine("io.close");
-        buffer.addLine("body = io.string");
-        buffer.addLine("request = Request.new({");
-        buffer.addLine(  ":method => :POST,");
-        buffer.addLine(  ":path => @path,");
-        buffer.addLine(  ":body => body,");
-        buffer.addLine("})");
-        buffer.addLine("@connection.send(request)");
+        generateConvertLiteral(parameterType, arg);
+        buffer.addLine("request = Request.new(:method => :POST, :path => @path)");
+        generateWriteRequestBody(parameter, arg);
+        buffer.addLine("response = @connection.send(request)");
+        buffer.addLine("case response.code");
+        buffer.addLine("when 201, 202");
+        generateReturnResponseBody(parameter);
+        buffer.addLine("else");
+        buffer.addLine(  "check_fault(response)");
+        buffer.addLine("end");
 
         // End method:
         buffer.addLine("end");
@@ -207,11 +182,11 @@ public class ServicesGenerator implements RubyGenerator {
     private void generateActionHttpPost(Method method) {
         // Begin method:
         Name name = method.getName();
-        buffer.addLine("def %s(opts = {})", rubyNames.getMemberStyleName(name));
+        buffer.addLine("def %1$s(opts = {})", rubyNames.getMemberStyleName(name));
 
         // Generate the method:
         buffer.addLine("io = StringIO.new");
-        buffer.addLine("writer = XmlWriter.new({:io => io, :indent => true})");
+        buffer.addLine("writer = XmlWriter.new(:io => io, :indent => true)");
         buffer.addLine("writer.write_start('action')");
         method.parameters()
             .filter(Parameter::isIn)
@@ -226,7 +201,13 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addLine(  ":path => \"#{@path}/%1$s\",", getPath(name));
         buffer.addLine(  ":body => body,");
         buffer.addLine("})");
-        buffer.addLine("@connection.send(request)");
+        buffer.addLine("response = @connection.send(request)");
+        buffer.addLine("case response.code");
+        buffer.addLine("when 200");
+        buffer.addLine(  "check_action(response)");
+        buffer.addLine("else");
+        buffer.addLine(  "check_fault(response)");
+        buffer.addLine("end");
 
         // End method:
         buffer.addLine("end");
@@ -274,11 +255,14 @@ public class ServicesGenerator implements RubyGenerator {
 
     private void generateHttpGet(Method method) {
         // Get the output parameter:
-        Parameter outParameter = method.parameters().filter(Parameter::isOut).findFirst().orElse(null);
+        Parameter parameter = method.parameters()
+            .filter(Parameter::isOut)
+            .findFirst()
+            .orElse(null);
 
         // Begin method:
         Name methodName = method.getName();
-        buffer.addLine("def %s(opts = {})", rubyNames.getMemberStyleName(methodName));
+        buffer.addLine("def %1$s(opts = {})", rubyNames.getMemberStyleName(methodName));
 
         // Generate the input parameters, both as matrix and query parameters, as some versions of the server use
         // matrix parameters and some other use query parameters:
@@ -290,38 +274,14 @@ public class ServicesGenerator implements RubyGenerator {
             .forEach(this::generateUrlParameter);
 
         // Body:
-        buffer.addLine("request = Request.new({");
-        buffer.addLine(  ":method => :GET,");
-        buffer.addLine(  ":path => @path,");
-        buffer.addLine(  ":query => query,");
-        buffer.addLine(  ":matrix => matrix,");
-        buffer.addLine("})");
-        if (outParameter != null) {
-            Type outType = outParameter.getType();
-            buffer.addLine("response = @connection.send(request)");
-            buffer.addLine("if response.body then");
-            buffer.addLine(  "begin");
-            buffer.addLine(    "io = StringIO.new(response.body)");
-            buffer.addLine(    "reader = XmlReader.new({:io => io})");
-            if (outType instanceof StructType) {
-                RubyName outReader = rubyNames.getReaderName(outType);
-                buffer.addLine("return %s.read_one(reader, @connection)", outReader.getClassName());
-            }
-            else if (outType instanceof ListType) {
-                ListType outListType = (ListType) outType;
-                Type outElementType = outListType.getElementType();
-                RubyName outReader = rubyNames.getReaderName(outElementType);
-                buffer.addLine("return %s.read_many(reader, @connection)", outReader.getClassName());
-            }
-            buffer.addLine(  "ensure");
-            buffer.addLine(    "reader.close");
-            buffer.addLine(    "io.close");
-            buffer.addLine(  "end");
-            buffer.addLine("end");
-        }
-        else {
-            buffer.addLine("@connection.send(request)");
-        }
+        buffer.addLine("request = Request.new(:method => :GET, :path => @path, :query => query, :matrix => matrix)");
+        buffer.addLine("response = @connection.send(request)");
+        buffer.addLine("case response.code");
+        buffer.addLine("when 200");
+        generateReturnResponseBody(parameter);
+        buffer.addLine("else");
+        buffer.addLine(  "check_fault(response)");
+        buffer.addLine("end");
 
         // End method:
         buffer.addLine("end");
@@ -329,69 +289,106 @@ public class ServicesGenerator implements RubyGenerator {
     }
 
     private void generateHttpPut(Method method) {
-        // Get the output parameter:
-        Parameter inParameter = method.parameters().filter(Parameter::isIn).findFirst().orElse(null);
-        Parameter outParameter = method.parameters().filter(Parameter::isOut).findFirst().orElse(null);
+        // Get the main parameter:
+        Parameter parameter = method.parameters()
+            .filter(x -> x.isIn() && x.isOut())
+            .findFirst()
+            .orElse(null);
 
-        // Generate the method:
+        // Begin method:
         Name methodName = method.getName();
-        if (inParameter != null) {
-            Name inName = inParameter.getName();
-            Type inType = inParameter.getType();
-            String inArg = rubyNames.getMemberStyleName(inName);
-            buffer.addLine("def %s(%s)", rubyNames.getMemberStyleName(methodName), inArg);
-            buffer.addLine(  "io = StringIO.new");
-            buffer.addLine(  "writer = XmlWriter.new({:io => io, :indent => true})");
-            if (inType instanceof StructType) {
-                RubyName inWriter = rubyNames.getWriterName(inType);
-                buffer.addLine("%s.write_one(%s, writer)", inWriter.getClassName(), inArg);
-            }
-            else if (inType instanceof ListType) {
-                ListType inListType = (ListType) inType;
-                Type inElementType = inListType.getElementType();
-                RubyName inWriter = rubyNames.getWriterName(inType);
-                buffer.addLine("%s.write_many(%s, writer)", inWriter.getClassName(), inArg);
-            }
-            buffer.addLine("writer.close");
-            buffer.addLine("body = io.string");
+        Name parameterName = parameter.getName();
+        Type parameterType = parameter.getType();
+        String arg = rubyNames.getMemberStyleName(parameterName);
+        buffer.addLine("def %1$s(%2$s)", rubyNames.getMemberStyleName(methodName), arg);
+
+        // Body:
+        generateConvertLiteral(parameterType, arg);
+        buffer.addLine("request = Request.new(:method => :PUT, :path => @path)");
+        generateWriteRequestBody(parameter, arg);
+        buffer.addLine("response = @connection.send(request)");
+        buffer.addLine("case response.code");
+        buffer.addLine("when 200");
+        generateReturnResponseBody(parameter);
+        buffer.addLine(  "return result");
+        buffer.addLine("else");
+        buffer.addLine(  "check_fault(response)");
+        buffer.addLine("end");
+
+        // End method:
+        buffer.addLine("end");
+        buffer.addLine();
+    }
+
+    private void generateConvertLiteral(Type type, String variable) {
+        if (type instanceof StructType) {
+            buffer.addLine("if %1$s.is_a?(Hash)", variable);
+            buffer.addLine(  "%1$s = %2$s.new(%1$s)", variable, rubyNames.getTypeName(type));
+            buffer.addLine("end");
         }
-        else {
-            buffer.addLine("body = nil");
-        }
-        if (outParameter != null) {
-            Type outType = outParameter.getType();
-            buffer.addLine("body = @connection.send({:method => :PUT, :path => @path, :body => body})");
-            buffer.addLine("if body then");
-            buffer.addLine(  "begin");
-            buffer.addLine(    "io = StringIO.new(body)");
-            buffer.addLine(    "reader = XmlReader.new({:io => io})");
-            if (outType instanceof StructType) {
-                RubyName outReader = rubyNames.getReaderName(outType);
-                buffer.addLine("return %s.read_one(reader, @connection)", outReader.getClassName());
-            }
-            else if (outType instanceof ListType) {
-                ListType outListType = (ListType) outType;
-                Type outElementType = outListType.getElementType();
-                RubyName outReader = rubyNames.getReaderName(outElementType);
-                buffer.addLine("return %s.read_many(reader, @connection)", outReader.getClassName());
-            }
-            buffer.addLine(  "ensure");
-            buffer.addLine(    "reader.close");
-            buffer.addLine(    "io.close");
+        else if (type instanceof ListType) {
+            ListType listType = (ListType) type;
+            Type elementType = listType.getElementType();
+            buffer.addLine("if %1$s.is_a?(Array)", variable);
+            buffer.addLine(  "%1$s = List.new(%1$s)", variable);
+            buffer.addLine(  "%1$s.each_with_index do |value, index|", variable);
+            buffer.addLine(    "if value.is_a?(Hash)");
+            buffer.addLine(      "%1$s[index] = %2$s.new(value)", variable, rubyNames.getTypeName(elementType));
+            buffer.addLine(    "end");
             buffer.addLine(  "end");
             buffer.addLine("end");
         }
-        else {
-            buffer.addLine("@connection.send({:method => :PUT, :path => @path, :body => body})");
+    }
+
+    private void generateWriteRequestBody(Parameter parameter, String variable) {
+        Name name = parameter.getName();
+        Type type = parameter.getType();
+        String tag = schemaNames.getSchemaTagName(name);
+        buffer.addLine("begin");
+        buffer.addLine(  "io = StringIO.new");
+        buffer.addLine(  "writer = XmlWriter.new(:io => io, :indent => true)");
+        if (type instanceof StructType) {
+            RubyName writer = rubyNames.getWriterName(type);
+            buffer.addLine("%1$s.write_one(%2$s, writer, '%3$s')", writer.getClassName(), variable, tag);
         }
+        else if (type instanceof ListType) {
+            ListType listType = (ListType) type;
+            Type elementType = listType.getElementType();
+            RubyName writer = rubyNames.getWriterName(elementType);
+            buffer.addLine("%1$s.write_many(%2$s, writer, '%3$s')", writer.getClassName(), variable, tag);
+        }
+        buffer.addLine("ensure");
+        buffer.addLine(  "writer.close");
+        buffer.addLine(  "io.close");
         buffer.addLine("end");
-        buffer.addLine();
+        buffer.addLine("request.body = io.string");
+    }
+
+    private void generateReturnResponseBody(Parameter parameter) {
+        Type type = parameter.getType();
+        buffer.addLine("begin");
+        buffer.addLine(  "io = StringIO.new(response.body)");
+        buffer.addLine(  "reader = XmlReader.new(:io => io)");
+        if (type instanceof StructType) {
+            RubyName reader = rubyNames.getReaderName(type);
+            buffer.addLine("return %1$s.read_one(reader, @connection)", reader.getClassName());
+        }
+        else if (type instanceof ListType) {
+            ListType listType = (ListType) type;
+            Type elementType = listType.getElementType();
+            RubyName reader = rubyNames.getReaderName(elementType);
+            buffer.addLine("return %1$s.read_many(reader, @connection)", reader.getClassName());
+        }
+        buffer.addLine("ensure");
+        buffer.addLine(  "reader.close");
+        buffer.addLine(  "io.close");
+        buffer.addLine("end");
     }
 
     private void generateHttpDelete(Method method) {
         // Begin method:
         Name name = method.getName();
-        buffer.addLine("def %s()", rubyNames.getMemberStyleName(name));
+        buffer.addLine("def %1$s(opts = {})", rubyNames.getMemberStyleName(name));
 
         // Generate the input parameters:
         buffer.addLine("query = {}");
@@ -402,13 +399,11 @@ public class ServicesGenerator implements RubyGenerator {
             .forEach(this::generateUrlParameter);
 
         // Generate the method:
-        buffer.addLine(  "request = Request.new({");
-        buffer.addLine(    ":method => :DELETE,");
-        buffer.addLine(    ":path => @path,");
-        buffer.addLine(    ":query => query,");
-        buffer.addLine(    ":matrix => matrix,");
-        buffer.addLine(  "})");
-        buffer.addLine(  "@connection.send(request)");
+        buffer.addLine(  "request = Request.new(:method => :DELETE, :path => @path, :query => query, :matrix => matrix)");
+        buffer.addLine(  "response = @connection.send(request)");
+        buffer.addLine(  "unless response.code == 200");
+        buffer.addLine(    "check_fault(response)");
+        buffer.addLine(  "end");
         buffer.addLine("end");
         buffer.addLine();
     }
@@ -423,7 +418,7 @@ public class ServicesGenerator implements RubyGenerator {
         String symbol = rubyNames.getMemberStyleName(name);
         String tag = schemaNames.getSchemaTagName(name);
         buffer.addLine("value = opts[:%1$s]", symbol);
-        buffer.addLine("if !value.nil?");
+        buffer.addLine("unless value.nil?");
         if (type instanceof PrimitiveType) {
             Model model = type.getModel();
             if (type == model.getBooleanType()) {

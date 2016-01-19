@@ -32,8 +32,8 @@ connection = Ovirt::SDK::V4::Connection.new({
 # Get the reference to the storage domains service:
 sds_service = connection.system.storage_domains
 
-# Use the "add" method to create a new NFS storage domain:
-sds_service.add(
+# Create a new NFS storage domain:
+sd = sds_service.add(
   Ovirt::SDK::V4::StorageDomain.new({
     :name => 'mydata',
     :description => 'My data',
@@ -48,6 +48,14 @@ sds_service.add(
     },
   })
 )
+
+# Wait till the storage domain is unattached:
+sd_service = sds_service.storage_domain(sd.id)
+begin
+  sleep(5)
+  sd = sd_service.get
+  state = sd.status.state
+end while state != Ovirt::SDK::V4::StorageDomainStatus::UNATTACHED
 
 # Close the connection to the server:
 connection.close

@@ -55,5 +55,13 @@ attached_sds_service.add(
   })
 )
 
+# Wait till the storage domain is active:
+attached_sd_service = attached_sds_service.storage_domain(sd.id)
+begin
+  sleep(5)
+  sd = attached_sd_service.get
+  state = sd.status.state
+end while state != Ovirt::SDK::V4::StorageDomainStatus::ACTIVE
+
 # Close the connection to the server:
 connection.close
