@@ -223,6 +223,7 @@ module Ovirt
           # Add headers, avoiding those that have no value:
           @curl.headers.clear
           @curl.headers.merge!(request.headers)
+          @curl.headers['User-Agent'] = "RubySDK/#{VERSION}"
           @curl.headers['Content-Type'] = 'application/xml'
           @curl.headers['Accept'] = 'application/xml'
 
