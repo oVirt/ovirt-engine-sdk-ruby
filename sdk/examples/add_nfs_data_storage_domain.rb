@@ -30,7 +30,7 @@ connection = Ovirt::SDK::V4::Connection.new({
 })
 
 # Get the reference to the storage domains service:
-sds_service = connection.system.storage_domains
+sds_service = connection.system_service.storage_domains_service
 
 # Create a new NFS storage domain:
 sd = sds_service.add(
@@ -50,7 +50,7 @@ sd = sds_service.add(
 )
 
 # Wait till the storage domain is unattached:
-sd_service = sds_service.storage_domain(sd.id)
+sd_service = sds_service.storage_domain_service(sd.id)
 begin
   sleep(5)
   sd = sd_service.get

@@ -31,7 +31,7 @@ connection = Ovirt::SDK::V4::Connection.new({
 })
 
 # Get the reference to the service that manages virtual machines:
-vms_service = connection.system.vms
+vms_service = connection.system_service.vms_service
 
 # Find the virtual machine:
 vm = vms_service.list({:search => 'name=myvm'})[0]

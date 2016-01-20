@@ -31,11 +31,11 @@ connection = Ovirt::SDK::V4::Connection.new({
 
 # Locate the virtual machines service and use it to find the virtual
 # machine:
-vms_service = connection.system.vms
+vms_service = connection.system_service.vms_service
 vm = vms_service.list({:search => 'name=myvm'})[0]
 
 # Locate the service that manages the disks of the virtual machine:
-disks_service = vms_service.vm(vm.id).disks
+disks_service = vms_service.vm_service(vm.id).disks_service
 
 # Use the "add" method of the disks service to add the disk:
 disk = disks_service.add(
@@ -52,7 +52,7 @@ disk = disks_service.add(
 )
 
 # Wait till the disk is OK:
-disk_service = disks_service.disk(disk.id)
+disk_service = disks_service.disk_service(disk.id)
 begin
   sleep(5)
   disk = disk_service.get

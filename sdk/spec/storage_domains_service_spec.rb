@@ -19,7 +19,7 @@ describe SDK::StorageDomainsService do
 
   before(:each) do
     @connection = default_connection
-    @sds = @connection.system.storage_domains
+    @sds_service = @connection.system_service.storage_domains_service
   end
 
   after(:each) do
@@ -31,7 +31,7 @@ describe SDK::StorageDomainsService do
     context "getting the reference to the service" do
 
       it "doesn't return nil" do
-        expect(@sds).not_to be_nil
+        expect(@sds_service).not_to be_nil
       end
 
     end
@@ -43,7 +43,7 @@ describe SDK::StorageDomainsService do
     context "without parameters" do
 
       it "returns a list, maybe empty" do
-        sds = @sds.list
+        sds = @sds_service.list
         expect(sds).not_to be_nil
         expect(sds).to be_an(Array)
       end
@@ -53,7 +53,7 @@ describe SDK::StorageDomainsService do
     context "with an unfeasible query" do
 
       it "returns an empty array" do
-        sds = @sds.list({:search => 'name=ugly'})
+        sds = @sds_service.list({:search => 'name=ugly'})
         expect(sds).to eql([])
       end
 

@@ -181,9 +181,9 @@ module Ovirt
         #
         # The returned value is an instance of the Ovirt::SDK::V4::SystemService class.
         #
-        def system
-          @system ||= SystemService.new(self, "")
-          return @system
+        def system_service
+          @system_service ||= SystemService.new(self, "")
+          return @system_service
         end
 
         ##
@@ -195,7 +195,7 @@ module Ovirt
         # raised.
         #
         def service(path)
-          return system.service(path)
+          return system_service.service(path)
         end
 
         ##

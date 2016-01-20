@@ -453,7 +453,7 @@ public class ServicesGenerator implements RubyGenerator {
         String methodName = rubyNames.getMemberStyleName(locator.getName());
         String argName = rubyNames.getMemberStyleName(parameter.getName());
         RubyName serviceName = rubyNames.getServiceName(locator.getService());
-        buffer.addLine("def %s(%s)", methodName, argName);
+        buffer.addLine("def %1$s_service(%2$s)", methodName, argName);
         buffer.addLine(  "return %1$s.new(@connection, \"#{@path}/#{%2$s}\")", serviceName.getClassName(), argName);
         buffer.addLine("end");
         buffer.addLine();
@@ -463,7 +463,7 @@ public class ServicesGenerator implements RubyGenerator {
         String methodName = rubyNames.getMemberStyleName(locator.getName());
         String urlSegment = getPath(locator.getName());
         RubyName serviceName = rubyNames.getServiceName(locator.getService());
-        buffer.addLine("def %1$s", methodName);
+        buffer.addLine("def %1$s_service", methodName);
         buffer.addLine(  "return %1$s.new(@connection, \"#{@path}/%2$s\")", serviceName.getClassName(), urlSegment);
         buffer.addLine("end");
         buffer.addLine();
@@ -481,11 +481,11 @@ public class ServicesGenerator implements RubyGenerator {
             Name name = locator.getName();
             String segment = getPath(name);
             buffer.addLine("if path == '%1$s'", segment);
-            buffer.addLine(  "return %1$s", rubyNames.getMemberStyleName(name));
+            buffer.addLine(  "return %1$s_service", rubyNames.getMemberStyleName(name));
             buffer.addLine("end");
             buffer.addLine("if path.start_with?('%1$s/')", segment);
             buffer.addLine(
-                "return %1$s.service(path[%2$d..-1])",
+                "return %1$s_service.service(path[%2$d..-1])",
                 rubyNames.getMemberStyleName(name),
                 segment.length() + 1
             );
@@ -493,17 +493,17 @@ public class ServicesGenerator implements RubyGenerator {
         });
 
         // If the path doesn't correspond to a locator without parameters, then it will correspond to the locator
-        // without parameters, otherwise it is an error:
+        // with parameters, otherwise it is an error:
         Optional<Locator> optional = service.locators().filter(x -> !x.getParameters().isEmpty()).findAny();
         if (optional.isPresent()) {
             Locator locator = optional.get();
             Name name = locator.getName();
             buffer.addLine("index = path.index('/')");
             buffer.addLine("if index.nil?");
-            buffer.addLine(  "return %1$s(path)", rubyNames.getMemberStyleName(name));
+            buffer.addLine(  "return %1$s_service(path)", rubyNames.getMemberStyleName(name));
             buffer.addLine("end");
             buffer.addLine(
-                "return %1$s(path[0..(index - 1)]).service(path[(index +1)..-1])",
+                "return %1$s_service(path[0..(index - 1)]).service(path[(index +1)..-1])",
                 rubyNames.getMemberStyleName(name)
             );
         }

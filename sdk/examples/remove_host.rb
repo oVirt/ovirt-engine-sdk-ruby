@@ -30,13 +30,13 @@ connection = Ovirt::SDK::V4::Connection.new({
 })
 
 # Find the service that manages hosts:
-hosts_service = connection.system.hosts
+hosts_service = connection.system_service.hosts_service
 
 # Find the host:
 host = hosts_service.list({:search => 'name=myhost'})[0]
 
 # Find the service that manages the host:
-host_service = hosts_service.host(host.id)
+host_service = hosts_service.host_service(host.id)
 
 # If the host isn't down or in maintenance then move it to maintenance:
 unless host.status.state == Ovirt::SDK::V4::HostStatus::MAINTENANCE

@@ -19,7 +19,7 @@ describe SDK::VmsService do
 
   before(:each) do
     @connection = default_connection
-    @vms = @connection.system.vms
+    @vms_service = @connection.system_service.vms_service
   end
 
   after(:each) do
@@ -31,7 +31,7 @@ describe SDK::VmsService do
     context "getting the reference to the service" do
 
       it "doesn't return nil" do
-        expect(@vms).not_to be_nil
+        expect(@vms_service).not_to be_nil
       end
 
     end
@@ -43,7 +43,7 @@ describe SDK::VmsService do
     context "without parameters" do
 
       it "returns a list, maybe empty" do
-        vms = @vms.list
+        vms = @vms_service.list
         expect(vms).not_to be_nil
         expect(vms).to be_an(Array)
       end
@@ -53,7 +53,7 @@ describe SDK::VmsService do
     context "with an unfeasible query" do
 
       it "returns an empty array" do
-        vms = @vms.list({:search => 'name=ugly'})
+        vms = @vms_service.list({:search => 'name=ugly'})
         expect(vms).to eql([])
       end
 

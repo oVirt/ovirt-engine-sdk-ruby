@@ -19,7 +19,7 @@ describe SDK::DataCentersService do
 
   before(:each) do
     @connection = default_connection
-    @dcs = @connection.system.data_centers
+    @dcs_service = @connection.system_service.data_centers_service
   end
 
   after(:each) do
@@ -31,7 +31,7 @@ describe SDK::DataCentersService do
     context "getting the reference to the service" do
 
       it "doesn't return nil" do
-        expect(@dcs).not_to be_nil
+        expect(@dcs_service).not_to be_nil
       end
 
     end
@@ -43,7 +43,7 @@ describe SDK::DataCentersService do
     context "without parameters" do
 
       it "returns a list, maybe empty" do
-        dcs = @dcs.list
+        dcs = @dcs_service.list
         expect(dcs).not_to be_nil
         expect(dcs).to be_an(Array)
       end
@@ -53,7 +53,7 @@ describe SDK::DataCentersService do
     context "with an unfeasible query" do
 
       it "returns an empty array" do
-        dcs = @dcs.list({:search => 'name=ugly'})
+        dcs = @dcs_service.list({:search => 'name=ugly'})
         expect(dcs).to eql([])
       end
 

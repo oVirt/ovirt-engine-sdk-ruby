@@ -29,7 +29,7 @@ connection = Ovirt::SDK::V4::Connection.new({
 })
 
 # Get the reference to the data centers service:
-dcs_service = connection.system.data_centers
+dcs_service = connection.system_service.data_centers_service
 
 # Use the "add" method to create a new data center:
 dc = dcs_service.add(

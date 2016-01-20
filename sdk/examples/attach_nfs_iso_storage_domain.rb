@@ -31,21 +31,21 @@ connection = Ovirt::SDK::V4::Connection.new({
 
 # Locate the service that manages the storage domains and use it to
 # search for the storage domain:
-sds_service = connection.system.storage_domains
+sds_service = connection.system_service.storage_domains_service
 sd = sds_service.list({:search => 'name=myiso'})[0]
 
 # Locate the service that manages the data centers and use it to
 # search for the data center:
-dcs_service = connection.system.data_centers
+dcs_service = connection.system_service.data_centers_service
 dc = dcs_service.list({:search => 'name=mydc'})[0]
 
 # Locate the service that manages the data center where we want to
 # attach the storage domain:
-dc_service = dcs_service.data_center(dc.id)
+dc_service = dcs_service.data_center_service(dc.id)
 
 # Locate the service that manages the storage domains that are attached
 # to the data centers:
-attached_sds_service = dc_service.storage_domains
+attached_sds_service = dc_service.storage_domains_service
 
 # Use the "add" method of service that manages the attached storage
 # domains to attach it:
@@ -56,7 +56,7 @@ attached_sds_service.add(
 )
 
 # Wait till the storage domain is active:
-attached_sd_service = attached_sds_service.storage_domain(sd.id)
+attached_sd_service = attached_sds_service.storage_domain_service(sd.id)
 begin
   sleep(5)
   sd = attached_sd_service.get

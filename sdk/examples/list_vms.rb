@@ -29,7 +29,7 @@ connection = Ovirt::SDK::V4::Connection.new({
 })
 
 # Get the reference to the "vms" service:
-vms_service = connection.system.vms
+vms_service = connection.system_service.vms_service
 
 # Use the "list" method of the "vms" service to list all the virtual machines of the system:
 vms = vms_service.list

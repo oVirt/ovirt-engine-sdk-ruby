@@ -29,7 +29,7 @@ connection = Ovirt::SDK::V4::Connection.new({
 })
 
 # Get the reference to the hosts service:
-hosts_service = connection.system.hosts
+hosts_service = connection.system_service.hosts_service
 
 # Add the host:
 host = hosts_service.add(
@@ -45,7 +45,7 @@ host = hosts_service.add(
 )
 
 # Wait till the host is up:
-host_service = hosts_service.host(host.id)
+host_service = hosts_service.host_service(host.id)
 begin
   sleep(5)
   host = host_service.get

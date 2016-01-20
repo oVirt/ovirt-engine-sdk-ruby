@@ -31,13 +31,13 @@ connection = Ovirt::SDK::V4::Connection.new({
 
 # Locate the virtual machines service and use it to find the virtual
 # machine:
-vms_service = connection.system.vms
+vms_service = connection.system_service.vms_service
 vm = vms_service.list({:search => 'name=myvm'})[0]
 
 # In order to specify the network that the new interface will be
 # connected to we need to specify the identifier of the virtual network
 # interface profile, so we need to find it:
-profiles_service = connection.system.vnic_profiles
+profiles_service = connection.system_service.vnic_profiles_service
 profile_id = nil
 profiles_service.list.each do |profile|
   if profile.name == 'mynetwork'
@@ -48,7 +48,7 @@ end
 
 # Locate the service that manages the network interface cards of the
 # virtual machine:
-nics_service = vms_service.vm(vm.id).nics
+nics_service = vms_service.vm_service(vm.id).nics_service
 
 # Use the "add" method of the network interface cards service to add the
 # new network interface card:

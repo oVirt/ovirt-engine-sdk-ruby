@@ -31,7 +31,7 @@ connection = Ovirt::SDK::V4::Connection.new({
 })
 
 # Get the reference to the "vms" service:
-vms_service = connection.system.vms
+vms_service = connection.system_service.vms_service
 
 # Use the "list" method of the "vms" service to search the virtual
 # machines that match a search query:

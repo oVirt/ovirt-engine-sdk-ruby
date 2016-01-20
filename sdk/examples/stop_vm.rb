@@ -29,14 +29,14 @@ connection = Ovirt::SDK::V4::Connection.new({
 })
 
 # Get the reference to the "vms" service:
-vms_service = connection.system.vms
+vms_service = connection.system_service.vms_service
 
 # Find the virtual machine:
 vm = vms_service.list({:search => 'name=myvm'})[0]
 
 # Locate the service that manages the virtual machine, as that is where
 # the action methods are defined:
-vm_service = vms_service.vm(vm.id)
+vm_service = vms_service.vm_service(vm.id)
 
 # Call the "stop" method of the service to stop it:
 vm_service.stop

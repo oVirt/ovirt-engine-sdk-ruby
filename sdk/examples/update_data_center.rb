@@ -30,7 +30,7 @@ connection = Ovirt::SDK::V4::Connection.new({
 })
 
 # Get the reference to the data centers service:
-dcs_service = connection.system.data_centers
+dcs_service = connection.system_service.data_centers_service
 
 # Retrieve the description of the data center:
 dc = dcs_service.list({:search => 'name=mydc'})[0]
@@ -38,7 +38,7 @@ dc = dcs_service.list({:search => 'name=mydc'})[0]
 # In order to update the data center we need a reference to the service
 # tht manages it, then we can call the "update" method passing the
 # update:
-dc_service = dcs_service.data_center(dc.id)
+dc_service = dcs_service.data_center_service(dc.id)
 dc = dc_service.update({
   :description => 'Updated description',
 })

@@ -29,7 +29,7 @@ connection = Ovirt::SDK::V4::Connection.new({
 })
 
 # Get the reference to the clusters service:
-clusters_service = connection.system.clusters
+clusters_service = connection.system_service.clusters_service
 
 # Use the "add" method to create a cluster:
 clusters_service.add(

@@ -30,7 +30,7 @@ connection = Ovirt::SDK::V4::Connection.new({
 })
 
 # Find the service that manages VMs:
-vms_service = connection.system.vms
+vms_service = connection.system_service.vms_service
 
 # Find the VM:
 vm = vms_service.list({:search => 'name=myvm'})[0]
@@ -39,10 +39,10 @@ vm = vms_service.list({:search => 'name=myvm'})[0]
 # data of the VM, it doesn't have any method like "remove". Methods are
 # defined in the services. So now that we have the description of the VM
 # we can find the service that manages it, calling the locator method
-# "vm" defined in the "vms" service. This locator method receives as
-# parameter the identifier of the VM and retursn a reference to the
-# service that manages that VM.
-vm_service = vms_service.vm(vm.id)
+# "vm_service" defined in the "vms" service. This locator method
+# receives as parameter the identifier of the VM and retursn a reference
+# to the service that manages that VM.
+vm_service = vms_service.vm_service(vm.id)
 
 # Now that we have the reference to the service that manages the VM we
 # can use it to remove the VM. Note that this method doesn't need any

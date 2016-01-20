@@ -19,7 +19,7 @@ describe SDK::ClustersService do
 
   before(:each) do
     @connection = default_connection
-    @clusters = @connection.system.clusters
+    @clusters_service = @connection.system_service.clusters_service
   end
 
   after(:each) do
@@ -31,7 +31,7 @@ describe SDK::ClustersService do
     context "getting the reference to the service" do
 
       it "doesn't return nil" do
-        expect(@clusters).not_to be_nil
+        expect(@clusters_service).not_to be_nil
       end
 
     end
@@ -43,7 +43,7 @@ describe SDK::ClustersService do
     context "without parameters" do
 
       it "returns a list, maybe empty" do
-        clusters = @clusters.list
+        clusters = @clusters_service.list
         expect(clusters).not_to be_nil
         expect(clusters).to be_an(Array)
       end
@@ -53,7 +53,7 @@ describe SDK::ClustersService do
     context "with an unfeasible query" do
 
       it "returns an empty array" do
-        clusters = @clusters.list({:search => 'name=ugly'})
+        clusters = @clusters_service.list({:search => 'name=ugly'})
         expect(clusters).to eql([])
       end
 
