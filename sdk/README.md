@@ -30,7 +30,7 @@ connection = Ovirt::SDK::V4::Connection({
 })
 
 # Get the reference to the system service:
-system_service = connection.system
+system_service = connection.system_service
 
 # Always remember to close the connection when finished:
 connection.close
@@ -40,15 +40,15 @@ The `ca.pem` file is required when connecting to a server protected
 with TLS. In an usual oVirt installation it will be in
 `/etc/pki/ovirt-engine/ca.pem`.
 
-Once you have the reference to the system service you can use it to
-get references to other services, and call their methods. For example,
-to retrieve the list of virtual machines of the system you can use the
-`vms` method, which returns a reference to the service that manages
-the virtual machines:
+Once you have the reference to the system service you can use it to get
+references to other services, and call their methods. For example, to
+retrieve the list of virtual machines of the system you can use the
+`vms_service` method, which returns a reference to the service that
+manages the virtual machines:
 
 ```ruby
 # Get the reference to the "vms" service:
-vms_service = system_service.vms
+vms_service = system_service.vms_service
 ```
 
 This service is an instance of Ovirt::SDK::V4::VmsService, and it has
@@ -65,4 +65,4 @@ vms.each do |vm|
 end
 ```
 
-In the future you will find more usuage examples in the `examples` directory.
+You will find more usuage examples in the `examples` directory.
