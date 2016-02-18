@@ -100,7 +100,7 @@ static VALUE ov_xml_writer_initialize(VALUE self, VALUE options) {
 
     // Create the libxml buffer that writes to the IO object:
     xmlOutputBufferPtr buffer = xmlOutputBufferCreateIO(ov_xml_writer_callback, NULL, object, NULL);
-    if (object == NULL) {
+    if (buffer == NULL) {
         rb_raise(ov_error_class, "Can't create XML buffer");
     }
 
