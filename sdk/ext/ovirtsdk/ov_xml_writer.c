@@ -134,7 +134,7 @@ static VALUE ov_xml_writer_write_start(VALUE self, VALUE name) {
     char *c_name = StringValueCStr(name);
     int rc = xmlTextWriterStartElement(object->writer, BAD_CAST c_name);
     if (rc < 0) {
-        rb_raise(ov_error_class, "Can't end XML element");
+        rb_raise(ov_error_class, "Can't start XML element");
     }
     return Qnil;
 }
