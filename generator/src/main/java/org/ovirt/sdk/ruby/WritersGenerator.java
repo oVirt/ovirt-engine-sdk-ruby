@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Red Hat, Inc.
+Copyright (c) 2015-2016 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -52,66 +52,47 @@ public class WritersGenerator implements RubyGenerator {
     }
 
     public void generate(Model model) {
-        // Generate a file for each writer, and then one large file containing forward declarations of all the writers
-        // and "load" statements to load them:
-        generateWriterFiles(model);
-        generateWritersFile(model);
-    }
-
-    private void generateWriterFiles(Model model) {
-        model.types()
-            .filter(x -> x instanceof StructType)
-            .forEach(this::generateWriterFile);
-    }
-
-    private void generateWriterFile(Type type) {
-        // Get the name of the class:
-        RubyName writerName = rubyNames.getWriterName(type);
+        // Calculate the file name:
+        String fileName = rubyNames.getModulePath() + "/writers";
+        buffer = new RubyBuffer();
+        buffer.setFileName(fileName);
 
         // Generate the source:
-        buffer = new RubyBuffer();
-        buffer.setFileName(writerName.getFileName());
-        generateWriter(type);
+        generateSource(model);
+
+        // Write the file:
         try {
             buffer.write(out);
         }
         catch (IOException exception) {
-            throw new IllegalStateException("Error writing class \"" + writerName + "\"", exception);
+            throw new IllegalStateException("Error writing writers file \"" + fileName + "\"", exception);
         }
     }
 
-    private void generateWriter(Type type) {
-        // Require the base writer:
-        RubyName baseName = rubyNames.getBaseWriterName();
-
+    private void generateSource(Model model) {
         // Begin module:
-        RubyName writerName = rubyNames.getWriterName(type);
-        buffer.beginModule(writerName.getModuleName());
+        String moduleName = rubyNames.getModuleName();
+        buffer.beginModule(moduleName);
         buffer.addLine();
 
-        // Check the kind of type:
-        if (type instanceof StructType) {
-            generateStruct((StructType) type);
-        }
+        // Generate a writer for each struct type:
+        model.types()
+            .filter(StructType.class::isInstance)
+            .map(StructType.class::cast)
+            .sorted()
+            .forEach(this::generateWriter);
 
         // End module:
-        buffer.endModule(writerName.getModuleName());
+        buffer.endModule(moduleName);
     }
 
-    private void generateStruct(StructType type) {
+    private void generateWriter(StructType type) {
         // Begin class:
-        generateClassDeclaration(type);
+        RubyName writerName = rubyNames.getWriterName(type);
+        RubyName baseName = rubyNames.getBaseWriterName();
+        buffer.addLine("class %1$s < %2$s # :nodoc:", writerName.getClassName(), baseName.getClassName());
         buffer.addLine();
 
-        // Generate the methods:
-        generateMethods(type);
-
-        // End class:
-        buffer.addLine("end");
-        buffer.addLine();
-    }
-
-    private void generateMethods(StructType type) {
         // Get the tags:
         Name singularName = type.getName();
         Name pluralName = names.getPlural(singularName);
@@ -140,6 +121,10 @@ public class WritersGenerator implements RubyGenerator {
         buffer.addLine(    "write_one(item, writer, singular)");
         buffer.addLine(  "end");
         buffer.addLine(  "writer.write_end");
+        buffer.addLine("end");
+        buffer.addLine();
+
+        // End class:
         buffer.addLine("end");
         buffer.addLine();
     }
@@ -284,67 +269,6 @@ public class WritersGenerator implements RubyGenerator {
                 pluralTag
             );
         }
-    }
-
-    private void generateWritersFile(Model model) {
-        // Calculate the file name:
-        String fileName = rubyNames.getModulePath() + "/writers";
-        buffer = new RubyBuffer();
-        buffer.setFileName(fileName);
-
-        // Begin module:
-        buffer.addLine("##");
-        buffer.addLine("# These forward declarations are required in order to avoid circular dependencies.");
-        buffer.addLine("#");
-        buffer.beginModule(rubyNames.getModuleName());
-        buffer.addLine();
-
-        // Generate the forward declarations using the order calculated in the previous step:
-        buffer.addLine("class %1$s # :nodoc:", rubyNames.getBaseWriterName().getClassName());
-        buffer.addLine("end");
-        buffer.addLine();
-        model.types()
-            .filter(StructType.class::isInstance)
-            .map(StructType.class::cast)
-            .sorted()
-            .forEach(x -> {
-                generateClassDeclaration(x);
-                buffer.addLine("end");
-                buffer.addLine();
-            });
-
-        // End module:
-        buffer.endModule(rubyNames.getModuleName());
-        buffer.addLine();
-
-        // Generate the load statements:
-        buffer.addLine("##");
-        buffer.addLine("# Load all the writers.");
-        buffer.addLine("#");
-        buffer.addLine("load '%1$s.rb'", rubyNames.getBaseWriterName().getFileName());
-        model.types()
-            .filter(x -> x instanceof StructType)
-            .sorted()
-            .map(rubyNames::getWriterName)
-            .forEach(this::generateLoadStatement);
-
-        // Write the file:
-        try {
-            buffer.write(out);
-        }
-        catch (IOException exception) {
-            throw new IllegalStateException("Error writing types file \"" + fileName + "\"", exception);
-        }
-    }
-
-    private void generateClassDeclaration(StructType type) {
-        RubyName writerName = rubyNames.getWriterName(type);
-        RubyName baseName = rubyNames.getBaseWriterName();
-        buffer.addLine("class %1$s < %2$s # :nodoc:", writerName.getClassName(), baseName.getClassName());
-    }
-
-    private void generateLoadStatement(RubyName name) {
-        buffer.addLine("load '%1$s.rb'", name.getFileName());
     }
 }
 

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Red Hat, Inc.
+Copyright (c) 2015-2016 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,64 +50,48 @@ public class ReadersGenerator implements RubyGenerator {
     }
 
     public void generate(Model model) {
-        // Generate a file for each reader, and then one large file containing forward declarations of all the readers
-        // and "load" statements to load them:
-        generateReaderFiles(model);
-        generateReadersFile(model);
-    }
-
-    private void generateReaderFiles(Model model) {
-        model.types()
-            .filter(x -> x instanceof StructType)
-            .forEach(this::generateReaderFile);
-    }
-
-    private void generateReaderFile(Type type) {
-        // Get the name of the class:
-        RubyName readerName = rubyNames.getReaderName(type);
+        // Calculate the file name:
+        String fileName = rubyNames.getModulePath() + "/readers";
+        buffer = new RubyBuffer();
+        buffer.setFileName(fileName);
 
         // Generate the source:
-        buffer = new RubyBuffer();
-        buffer.setFileName(readerName.getFileName());
-        generateReader(type);
+        generateSource(model);
+
+        // Write the file:
         try {
             buffer.write(out);
         }
         catch (IOException exception) {
-            throw new IllegalStateException("Error writing reader \"" + readerName + "\"", exception);
+            throw new IllegalStateException("Error writing readers file \"" + fileName + "\"", exception);
         }
     }
 
-    private void generateReader(Type type) {
+    private void generateSource(Model model) {
         // Begin module:
-        RubyName readerName = rubyNames.getReaderName(type);
-        buffer.beginModule(readerName.getModuleName());
+        String moduleName = rubyNames.getModuleName();
+        buffer.beginModule(moduleName);
         buffer.addLine();
 
-        // Check the kind of type:
-        if (type instanceof StructType) {
-            generateStruct((StructType) type);
-        }
+        // Generate a reader for each struct type:
+        model.types()
+            .filter(StructType.class::isInstance)
+            .map(StructType.class::cast)
+            .sorted()
+            .forEach(this::generateReader);
 
         // End module:
-        buffer.endModule(readerName.getModuleName());
+        buffer.endModule(moduleName);
+        buffer.addLine();
     }
 
-    private void generateStruct(StructType type) {
+    private void generateReader(StructType type) {
         // Begin class:
-        generateClassDeclaration(type);
-        buffer.addLine();
-
-        // Generate the methods:
-        generateMethods(type);
-
-        // End class:
-        buffer.addLine("end");
-        buffer.addLine();
-    }
-
-    private void generateMethods(StructType type) {
         RubyName typeName = rubyNames.getTypeName(type);
+        RubyName readerName = rubyNames.getReaderName(type);
+        RubyName baseName = rubyNames.getBaseReaderName();
+        buffer.addLine("class %1$s < %2$s # :nodoc:", readerName.getClassName(), baseName.getClassName());
+        buffer.addLine();
 
         // Generate the method that reads one instance:
         buffer.addLine("def self.read_one(reader, connection = nil)");
@@ -162,6 +146,10 @@ public class ReadersGenerator implements RubyGenerator {
         buffer.addLine(  "reader.read");
         buffer.addLine();
         buffer.addLine(  "return list");
+        buffer.addLine("end");
+        buffer.addLine();
+
+        // End class:
         buffer.addLine("end");
         buffer.addLine();
     }
@@ -272,69 +260,6 @@ public class ReadersGenerator implements RubyGenerator {
         else {
             buffer.addLine("reader.next_element");
         }
-    }
-
-    private void generateReadersFile(Model model) {
-        // Calculate the file name:
-        String fileName = rubyNames.getModulePath() + "/readers";
-        buffer = new RubyBuffer();
-        buffer.setFileName(fileName);
-
-        // Begin module:
-        buffer.addLine("##");
-        buffer.addLine("# These forward declarations are required in order to avoid circular dependencies.");
-        buffer.addLine("#");
-        buffer.beginModule(rubyNames.getModuleName());
-        buffer.addLine();
-
-        // Generate the forward declarations using the order calculated in the previous step:
-        buffer.addLine("class %1$s # :nodoc:", rubyNames.getBaseReaderName().getClassName());
-        buffer.addLine("end");
-        buffer.addLine();
-        model.types()
-            .filter(StructType.class::isInstance)
-            .map(StructType.class::cast)
-            .sorted()
-            .forEach(x -> {
-                generateClassDeclaration(x);
-                buffer.addLine("end");
-                buffer.addLine();
-            });
-
-        // End module:
-        buffer.endModule(rubyNames.getModuleName());
-        buffer.addLine();
-
-        // Generate the load statements:
-        buffer.addLine("##");
-        buffer.addLine("# Load all the readers.");
-        buffer.addLine("#");
-        buffer.addLine("load '%1$s.rb'", rubyNames.getBaseReaderName().getFileName());
-        buffer.addLine("load '%1$s.rb'", rubyNames.getActionReaderName().getFileName());
-        buffer.addLine("load '%1$s.rb'", rubyNames.getFaultReaderName().getFileName());
-        model.types()
-            .filter(x -> x instanceof StructType)
-            .sorted()
-            .map(rubyNames::getReaderName)
-            .forEach(this::generateLoadStatement);
-
-        // Write the file:
-        try {
-            buffer.write(out);
-        }
-        catch (IOException exception) {
-            throw new IllegalStateException("Error writing types file \"" + fileName + "\"", exception);
-        }
-    }
-
-    private void generateClassDeclaration(StructType type) {
-        RubyName readerName = rubyNames.getReaderName(type);
-        RubyName baseName = rubyNames.getBaseReaderName();
-        buffer.addLine("class %1$s < %2$s # :nodoc:", readerName.getClassName(), baseName.getClassName());
-    }
-
-    private void generateLoadStatement(RubyName name) {
-        buffer.addLine("load '%1$s.rb'", name.getFileName());
     }
 }
 

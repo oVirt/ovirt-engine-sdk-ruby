@@ -7,7 +7,11 @@
 .bash_history
 .idea/
 sdk/doc/
-sdk/lib/ovirt/
+sdk/lib/ovirt/sdk/v4/readers.rb
+sdk/lib/ovirt/sdk/v4/services.rb
+sdk/lib/ovirt/sdk/v4/types.rb
+sdk/lib/ovirt/sdk/v4/version.rb
+sdk/lib/ovirt/sdk/v4/writers.rb
 sdk/pkg/
 sdk/tmp/
 target/

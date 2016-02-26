@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Red Hat, Inc.
+Copyright (c) 2015-2016 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -69,30 +69,64 @@ public class ServicesGenerator implements RubyGenerator {
     }
 
     public void generate(Model model) {
-        // Generate a file for each service, and then one large file containing forward declarations of all the services
-        // and "load" statements to load them:
-        generateServiceFiles(model);
-        generateServicesFile(model);
-    }
-
-    private void generateServiceFiles(Model model) {
-        model.services().forEach(this::generateServiceFile);
-    }
-
-    private void generateServiceFile(Service service) {
-        // Get the name of the class:
-        RubyName serviceName = rubyNames.getServiceName(service);
+        // Calculate the file name:
+        String fileName = rubyNames.getModulePath() + "/services";
+        buffer = new RubyBuffer();
+        buffer.setFileName(fileName);
 
         // Generate the source:
-        buffer = new RubyBuffer();
-        buffer.setFileName(serviceName.getFileName());
-        generateService(service);
+        generateSource(model);
+
+        // Write the file:
         try {
             buffer.write(out);
         }
         catch (IOException exception) {
-            throw new IllegalStateException("Error writing class \"" + serviceName + "\"", exception);
+            throw new IllegalStateException("Error writing services file \"" + fileName + "\"", exception);
         }
+    }
+
+    private void generateSource(Model model) {
+        // Begin module:
+        buffer.addLine("##");
+        buffer.addLine("# These forward declarations are required in order to avoid circular dependencies.");
+        buffer.addLine("#");
+        String moduleName = rubyNames.getModuleName();
+        buffer.beginModule(moduleName);
+        buffer.addLine();
+
+        // The declarations of the services need to appear in inheritance order, otherwise some symbols won't be
+        // defined and that will produce errors. To order them correctly we need first to sort them by name, and
+        // then sort again so that bases are before extensions.
+        Deque<Service> pending = model.services()
+            .sorted()
+            .collect(toCollection(ArrayDeque::new));
+        Deque<Service> sorted = new ArrayDeque<>(pending.size());
+        while (!pending.isEmpty()) {
+            Service current = pending.removeFirst();
+            Service base = current.getBase();
+            if (base == null || sorted.contains(base)) {
+                sorted.addLast(current);
+            }
+            else {
+                pending.addLast(current);
+            }
+        }
+
+        // Generate the forward declarations using the order calculated in the previous step:
+        sorted.forEach(x -> {
+            generateClassDeclaration(x);
+            buffer.addLine("end");
+            buffer.addLine();
+        });
+
+        // Generate the complete declarations, using the same order:
+        sorted.forEach(this::generateService);
+
+        // End module:
+        buffer.endModule(moduleName);
+        buffer.addLine();
+
     }
 
     private void generateService(Service service) {
@@ -516,79 +550,11 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addLine();
     }
 
-    private void generateServicesFile(Model model) {
-        // Calculate the file name:
-        String fileName = rubyNames.getModulePath() + "/services";
-        buffer = new RubyBuffer();
-        buffer.setFileName(fileName);
-
-        // Begin module:
-        buffer.addLine("##");
-        buffer.addLine("# These forward declarations are required in order to avoid circular dependencies.");
-        buffer.addLine("#");
-        buffer.beginModule(rubyNames.getModuleName());
-        buffer.addLine();
-
-        // The declarations of the services need to appear in inheritance order, otherwise some symbols won't be
-        // defined and that will produce errors. To order them correctly we need first to sort them by name, and
-        // then sort again so that bases are before extensions.
-        Deque<Service> pending = model.services()
-            .sorted()
-            .collect(toCollection(ArrayDeque::new));
-        Deque<Service> sorted = new ArrayDeque<>(pending.size());
-        while (!pending.isEmpty()) {
-            Service current = pending.removeFirst();
-            Service base = current.getBase();
-            if (base == null || sorted.contains(base)) {
-                sorted.addLast(current);
-            }
-            else {
-                pending.addLast(current);
-            }
-        }
-
-        // Generate the forward declarations using the order calculated in the previous step:
-        buffer.addLine("class %1$s", rubyNames.getBaseServiceName().getClassName());
-        buffer.addLine("end");
-        buffer.addLine();
-        sorted.forEach(x -> {
-            generateClassDeclaration(x);
-            buffer.addLine("end");
-            buffer.addLine();
-        });
-
-        // End module:
-        buffer.endModule(rubyNames.getModuleName());
-        buffer.addLine();
-
-        // Generate the load statements:
-        buffer.addLine("##");
-        buffer.addLine("# Load all the services.");
-        buffer.addLine("#");
-        buffer.addLine("load '%1$s.rb'", rubyNames.getBaseServiceName().getFileName());
-        model.services()
-            .sorted()
-            .map(rubyNames::getServiceName)
-            .forEach(this::generateLoadStatement);
-
-        // Write the file:
-        try {
-            buffer.write(out);
-        }
-        catch (IOException exception) {
-            throw new IllegalStateException("Error writing services file \"" + fileName + "\"", exception);
-        }
-    }
-
     private void generateClassDeclaration(Service service) {
         RubyName serviceName = rubyNames.getServiceName(service);
         Service base = service.getBase();
         RubyName baseName = base != null? rubyNames.getServiceName(base): rubyNames.getBaseServiceName();
         buffer.addLine("class %1$s < %2$s", serviceName.getClassName(), baseName.getClassName());
-    }
-
-    private void generateLoadStatement(RubyName name) {
-        buffer.addLine("load '%1$s.rb'", name.getFileName());
     }
 
     private String getPath(Name name) {

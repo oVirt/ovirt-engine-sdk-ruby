@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Red Hat, Inc.
+Copyright (c) 2015-2016 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -53,50 +53,74 @@ public class TypesGenerator implements RubyGenerator {
     }
 
     public void generate(Model model) {
-        // Generate a file for each type, and then one large file containing forward declarations of all the types
-        // and "load" statements to load them:
-        generateTypeFiles(model);
-        generateTypesFile(model);
-    }
-
-    private void generateTypeFiles(Model model) {
-        model.types()
-            .filter(x -> x instanceof StructType || x instanceof EnumType)
-            .forEach(this::generateTypeFile);
-    }
-
-    private void generateTypeFile(Type type) {
-        // Get the name of the class:
-        RubyName className = rubyNames.getTypeName(type);
+        // Calculate the file name:
+        String fileName = rubyNames.getModulePath() + "/types";
+        buffer = new RubyBuffer();
+        buffer.setFileName(fileName);
 
         // Generate the source:
-        buffer = new RubyBuffer();
-        buffer.setFileName(className.getFileName());
-        generateType(type);
+        generateSource(model);
+
+        // Write the file:
         try {
             buffer.write(out);
         }
         catch (IOException exception) {
-            throw new IllegalStateException("Error writing class \"" + className + "\"", exception);
+            throw new IllegalStateException("Error writing types file \"" + fileName + "\"", exception);
         }
     }
 
-    private void generateType(Type type) {
+    private void generateSource(Model model) {
         // Begin module:
-        RubyName typeName = rubyNames.getTypeName(type);
-        buffer.beginModule(typeName.getModuleName());
+        buffer.addLine("##");
+        buffer.addLine("# These forward declarations are required in order to avoid circular dependencies.");
+        buffer.addLine("#");
+        buffer.beginModule(rubyNames.getModuleName());
         buffer.addLine();
 
-        // Check the kind of type:
+        // The declarations of the types need to appear in inheritance order, otherwise some symbols won't be
+        // defined and that will produce errors. To order them correctly we need first to sort them by name, and
+        // then sort again so that bases are before extensions.
+        Deque<StructType> pending = model.types()
+            .filter(StructType.class::isInstance)
+            .map(StructType.class::cast)
+            .sorted()
+            .collect(toCollection(ArrayDeque::new));
+        Deque<StructType> sorted = new ArrayDeque<>(pending.size());
+        while (!pending.isEmpty()) {
+            StructType current = pending.removeFirst();
+            StructType base = (StructType) current.getBase();
+            if (base == null || sorted.contains(base)) {
+                sorted.addLast(current);
+            }
+            else {
+                pending.addLast(current);
+            }
+        }
+
+        // Generate the forward declarations using the order calculated in the previous step:
+        sorted.forEach(x -> {
+            generateClassDeclaration(x);
+            buffer.addLine("end");
+            buffer.addLine();
+        });
+
+        // Generate the complete declarations, using the same order:
+        sorted.forEach(this::generateType);
+
+        // End module:
+        buffer.endModule(rubyNames.getModuleName());
+        buffer.addLine();
+
+    }
+
+    private void generateType(Type type) {
         if (type instanceof StructType) {
             generateStruct((StructType) type);
         }
         if (type instanceof EnumType) {
             generateEnum((EnumType) type);
         }
-
-        // End module:
-        buffer.endModule(typeName.getModuleName());
     }
 
     private void generateStruct(StructType type) {
@@ -322,85 +346,11 @@ public class TypesGenerator implements RubyGenerator {
         buffer.addLine("%s = '%s'", constantName, constantValue);
     }
 
-    private void generateTypesFile(Model model) {
-        // Calculate the file name:
-        String fileName = rubyNames.getModulePath() + "/types";
-        buffer = new RubyBuffer();
-        buffer.setFileName(fileName);
-
-        // Begin module:
-        buffer.addLine("##");
-        buffer.addLine("# These forward declarations are required in order to avoid circular dependencies.");
-        buffer.addLine("#");
-        buffer.beginModule(rubyNames.getModuleName());
-        buffer.addLine();
-
-        // The declarations of the types need to appear in inheritance order, otherwise some symbols won't be
-        // defined and that will produce errors. To order them correctly we need first to sort them by name, and
-        // then sort again so that bases are before extensions.
-        Deque<StructType> pending = model.types()
-            .filter(StructType.class::isInstance)
-            .map(StructType.class::cast)
-            .sorted()
-            .collect(toCollection(ArrayDeque::new));
-        Deque<StructType> sorted = new ArrayDeque<>(pending.size());
-        while (!pending.isEmpty()) {
-            StructType current = pending.removeFirst();
-            StructType base = (StructType) current.getBase();
-            if (base == null || sorted.contains(base)) {
-                sorted.addLast(current);
-            }
-            else {
-                pending.addLast(current);
-            }
-        }
-
-        // Generate the forward declarations using the order calculated in the previous step:
-        buffer.addLine("class %1$s", rubyNames.getBaseStructName().getClassName());
-        buffer.addLine("end");
-        buffer.addLine();
-        sorted.forEach(x -> {
-            generateClassDeclaration(x);
-            buffer.addLine("end");
-            buffer.addLine();
-        });
-
-        // End module:
-        buffer.endModule(rubyNames.getModuleName());
-        buffer.addLine();
-
-        // Generate the load statements:
-        buffer.addLine("##");
-        buffer.addLine("# Load all the types.");
-        buffer.addLine("#");
-        buffer.addLine("load '%1$s.rb'", rubyNames.getBaseStructName().getFileName());
-        buffer.addLine("load '%1$s.rb'", rubyNames.getBaseListName().getFileName());
-        buffer.addLine("load '%1$s.rb'", rubyNames.getActionName().getFileName());
-        buffer.addLine("load '%1$s.rb'", rubyNames.getFaultName().getFileName());
-        model.types()
-            .filter(x -> x instanceof StructType || x instanceof EnumType)
-            .sorted()
-            .map(rubyNames::getTypeName)
-            .forEach(this::generateLoadStatement);
-
-        // Write the file:
-        try {
-            buffer.write(out);
-        }
-        catch (IOException exception) {
-            throw new IllegalStateException("Error writing types file \"" + fileName + "\"", exception);
-        }
-    }
-
     private void generateClassDeclaration(StructType type) {
         RubyName typeName = rubyNames.getTypeName(type);
         Type base = type.getBase();
         RubyName baseName = base != null? rubyNames.getTypeName(base): rubyNames.getBaseStructName();
         buffer.addLine("class %1$s < %2$s", typeName.getClassName(), baseName.getClassName());
-    }
-
-    private void generateLoadStatement(RubyName name) {
-        buffer.addLine("load '%1$s.rb'", name.getFileName());
     }
 }
 
