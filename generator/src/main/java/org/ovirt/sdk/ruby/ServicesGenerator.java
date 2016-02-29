@@ -130,11 +130,6 @@ public class ServicesGenerator implements RubyGenerator {
     }
 
     private void generateService(Service service) {
-        // Begin module:
-        RubyName serviceName = rubyNames.getServiceName(service);
-        buffer.beginModule(serviceName.getModuleName());
-        buffer.addLine();
-
         // Begin class:
         generateClassDeclaration(service);
         buffer.addLine();
@@ -157,9 +152,6 @@ public class ServicesGenerator implements RubyGenerator {
         // End class:
         buffer.addLine("end");
         buffer.addLine();
-
-        // End module:
-        buffer.endModule(serviceName.getModuleName());
     }
 
     private void generateMethod(Method method) {
