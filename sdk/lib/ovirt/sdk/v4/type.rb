@@ -1,5 +1,5 @@
 #--
-# Copyright (c) 2015 Red Hat, Inc.
+# Copyright (c) 2016-2016 Red Hat, Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -18,10 +18,9 @@ module Ovirt
     module V4
 
       ##
-      # This is the base class for all the list types of the SDK. It contains the utility methods used by all of
-      # them.
+      # This module is a mixin that contains the methos common to struct and list types.
       #
-      class List < Array
+      module Type
 
         ##
         # Returns the value of the `href` attribute.
@@ -38,36 +37,36 @@ module Ovirt
         end
 
         ##
-        # Returns the reference to the connection that created this list.
+        # Returns the reference to the connection that created this object.
         #
         def connection
           return @connection
         end
 
         ##
-        # Sets reference to the connection that created this list.
+        # Sets reference to the connection that created this object.
         #
         def connection=(value)
           @connection = value
         end
 
         ##
-        # Indicates if this list is used as a link. When a list is used as a link only the `href` attribute will be
-        # returned by the server.
+        # Indicates if this structure is used as a link. When a structure is used as a link only the identifier and the
+        # `href` attributes will be returned by the server.
         #
         def is_link?
           return @is_link
         end
 
         ##
-        # Sets the value of the flag that indicates if this list is used as a link.
+        # Sets the value of the flag that indicates if this structure is used as a link.
         #
         def is_link=(value)
           @is_link = value
         end
 
         ##
-        # Follows the `href` attribute of this structure, retrieves the list and returns it.
+        # Follows the `href` attribute of this structure, retrieves the object and returns it.
         #
         def follow_link
           # Check that the "href" and "connection" attributes have values, as both are needed in order to retrieve
@@ -88,12 +87,37 @@ module Ovirt
             raise Error.new("The URL \"#{href}\" isn't compatible with the base URL of the connection")
           end
 
-          # Remove the prefix from the URL, follow the path to the relevant service and invoke the "list" method to
+          # Remove the prefix from the URL, follow the path to the relevant service and invoke the "get" method to
           # retrieve its representation:
           path = href[prefix.length..-1]
           service = connection.service(path)
-          return service.list
+          return service.get
         end
+
+      end
+
+      ##
+      # This is the base class for all the struct types.
+      #
+      class Struct
+        include Type
+
+        ##
+        # Empty constructor.
+        #
+        def initialize(opts = {})
+          self.href = opts[:href]
+          self.connection = opts[:connection]
+          self.is_link = opts[:is_link]
+        end
+
+      end
+
+      ##
+      # This is the base class for all the list types.
+      #
+      class List < Array
+        include Type
       end
 
     end
