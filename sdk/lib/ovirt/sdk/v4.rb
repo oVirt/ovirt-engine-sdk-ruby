@@ -1,5 +1,5 @@
 #--
-# Copyright (c) 2015 Red Hat, Inc.
+# Copyright (c) 2015-2016 Red Hat, Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -30,7 +30,7 @@ require 'ovirt/sdk/v4/version.rb'
 require 'ovirt/sdk/v4/xml_formatter.rb'
 require 'ovirt/sdk/v4/xml_reader.rb'
 require 'ovirt/sdk/v4/xml_writer.rb'
-require 'ovirt/sdk/v4/connection.rb'
+require 'ovirt/sdk/v4/http.rb'
 require 'ovirt/sdk/v4/struct.rb'
 require 'ovirt/sdk/v4/list.rb'
 require 'ovirt/sdk/v4/types.rb'
