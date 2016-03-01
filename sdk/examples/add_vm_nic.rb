@@ -2,6 +2,7 @@
 
 #
 # Copyright (c) 2016 Red Hat, Inc.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -15,13 +16,13 @@
 # limitations under the License.
 #
 
-require 'ovirt/sdk/v4'
+require 'ovirtsdk4'
 
 # This example will connect to the server and add a network interface
 # card to an existing virtual machine.
 
 # Create the connection to the server:
-connection = Ovirt::SDK::V4::Connection.new({
+connection = OvirtSDK4::Connection.new({
   :url => 'https://engine40.example.com/ovirt-engine/api',
   :username => 'admin@internal',
   :password => 'redhat123',
@@ -53,7 +54,7 @@ nics_service = vms_service.vm_service(vm.id).nics_service
 # Use the "add" method of the network interface cards service to add the
 # new network interface card:
 nics_service.add(
-  Ovirt::SDK::V4::Nic.new({
+  OvirtSDK4::Nic.new({
     :name => 'mynic',
     :description => 'My network interface card',
     :vnic_profile => {

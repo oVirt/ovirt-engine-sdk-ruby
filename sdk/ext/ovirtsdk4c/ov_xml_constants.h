@@ -1,5 +1,6 @@
 /*
-Copyright (c) 2015 Red Hat, Inc.
+Copyright (c) 2015-2016 Red Hat, Inc.
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -13,13 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef __OV_ERROR_H__
-#define __OV_ERROR_H__
+#ifndef __OV_XML_CONSTANTS_H__
+#define __OV_XML_CONSTANTS_H__
 
 // Classes:
-VALUE ov_error_class;
+VALUE ov_xml_constants_module;
 
 // Initialization function:
-extern void ov_error_define(void);
+extern void ov_xml_constants_define(void);
 
 #endif

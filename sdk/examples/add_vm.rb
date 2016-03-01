@@ -2,6 +2,7 @@
 
 #
 # Copyright (c) 2016 Red Hat, Inc.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -15,12 +16,12 @@
 # limitations under the License.
 #
 
-require 'ovirt/sdk/v4'
+require 'ovirtsdk4'
 
 # This example will connect to the server and create a new virtual machine:
 
 # Create the connection to the server:
-connection = Ovirt::SDK::V4::Connection.new({
+connection = OvirtSDK4::Connection.new({
   :url => 'https://engine40.example.com/ovirt-engine/api',
   :username => 'admin@internal',
   :password => 'redhat123',
@@ -33,7 +34,7 @@ vms_service = connection.system_service.vms_service
 
 # Use the "add" method to create a new virtual machine:
 vms_service.add(
-  Ovirt::SDK::V4::Vm.new({
+  OvirtSDK4::Vm.new({
     :name => 'myvm',
     :cluster => {
       :name => 'mycluster'
@@ -50,12 +51,12 @@ vms_service.add(
 # objects, it is equivalent, but more verbose. For example:
 #
 # vms_service.add(
-#   Ovirt::SDK::V4::Vm.new({
+#   OvirtSDK4::Vm.new({
 #     :name => 'myvm',
-#     :cluster => Ovirt::SDK::V4::Cluster.new({
+#     :cluster => OvirtSDK4::Cluster.new({
 #       :name => 'mycluster'
 #     }),
-#     :template => Ovirt::SDK::V4::Template.new({
+#     :template => OvirtSDK4::Template.new({
 #       :name => 'mytemplate'
 #     })
 #   })

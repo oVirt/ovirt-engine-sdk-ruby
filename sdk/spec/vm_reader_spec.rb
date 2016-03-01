@@ -1,5 +1,6 @@
 #
 # Copyright (c) 2015 Red Hat, Inc.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -241,9 +242,9 @@ describe SDK::VmReader do
         expect(result).to be_a(SDK::List)
         expect(result.size).to eql(2)
         expect(result[0]).to_not be_nil
-        expect(result[0]).to be_a(Ovirt::SDK::V4::Vm)
+        expect(result[0]).to be_a(SDK::Vm)
         expect(result[1]).to_not be_nil
-        expect(result[1]).to be_a(Ovirt::SDK::V4::Vm)
+        expect(result[1]).to be_a(SDK::Vm)
       end
 
     end

@@ -1,7 +1,7 @@
 %global gem_name ovirt-engine-sdk
 %global gem_version @GEM_VERSION@
 
-Name: rubygem-ovirt-engine-sdk
+Name: rubygem-ovirt-engine-sdk4
 Summary: oVirt Engine Ruby SDK
 Version: @RPM_VERSION@
 Release: @RPM_RELEASE@

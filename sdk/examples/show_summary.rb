@@ -16,13 +16,13 @@
 # limitations under the License.
 #
 
-require 'ovirt/sdk/v4'
+require 'ovirtsdk4'
 
 # This example will connect to the server and display a summary of the
 # relevant objects in the system, extracted from the root service:
 
 # Create the connection to the server:
-connection = Ovirt::SDK::V4::Connection.new({
+connection = OvirtSDK4::Connection.new({
   :url => 'https://engine40.example.com/ovirt-engine/api',
   :username => 'admin@internal',
   :password => 'redhat123',

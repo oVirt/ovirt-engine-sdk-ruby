@@ -2,6 +2,7 @@
 
 #
 # Copyright (c) 2016 Red Hat, Inc.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -15,13 +16,13 @@
 # limitations under the License.
 #
 
-require 'ovirt/sdk/v4'
+require 'ovirtsdk4'
 
 # This example will connect to the server and attach an existing NFS
 # data storage domain to a data center.
 
 # Create the connection to the server:
-connection = Ovirt::SDK::V4::Connection.new({
+connection = OvirtSDK4::Connection.new({
   :url => 'https://engine40.example.com/ovirt-engine/api',
   :username => 'admin@internal',
   :password => 'redhat123',
@@ -50,7 +51,7 @@ attached_sds_service = dc_service.storage_domains_service
 # Use the "add" method of service that manages the attached storage
 # domains to attach it:
 attached_sds_service.add(
-  Ovirt::SDK::V4::StorageDomain.new({
+  OvirtSDK4::StorageDomain.new({
     :id => sd.id
   })
 )
@@ -61,7 +62,7 @@ begin
   sleep(5)
   sd = attached_sd_service.get
   state = sd.status.state
-end while state != Ovirt::SDK::V4::StorageDomainStatus::ACTIVE
+end while state != OvirtSDK4::StorageDomainStatus::ACTIVE
 
 # Close the connection to the server:
 connection.close

@@ -1,5 +1,6 @@
 /*
-Copyright (c) 2015 Red Hat, Inc.
+Copyright (c) 2015-2016 Red Hat, Inc.
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -16,18 +17,8 @@ limitations under the License.
 #include <ruby.h>
 
 #include "ov_module.h"
-#include "ov_error.h"
-#include "ov_xml_constants.h"
-#include "ov_xml_reader.h"
-#include "ov_xml_writer.h"
 
-void Init_ovirtsdk(void) {
-    // Define the module:
-    ov_module_define();
-
-    // Define the classes:
-    ov_error_define();
-    ov_xml_constants_define();
-    ov_xml_reader_define();
-    ov_xml_writer_define();
+// Initialization function:
+void ov_module_define(void) {
+    ov_module = rb_define_module("OvirtSDK4");
 }

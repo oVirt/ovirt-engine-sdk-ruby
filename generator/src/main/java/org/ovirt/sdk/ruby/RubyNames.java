@@ -61,8 +61,8 @@ public class RubyNames {
     private Set<String> reservedWords;
 
     // The name and path of the module:
-    private String moduleName = "Ovirt::SDK::V4";
-    private String modulePath = "ovirt/sdk/v4";
+    private String moduleName = "OvirtSDK4";
+    private String modulePath = "ovirtsdk4";
 
     // The version of the gem:
     private String version;

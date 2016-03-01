@@ -2,6 +2,7 @@
 
 #
 # Copyright (c) 2016 Red Hat, Inc.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -15,12 +16,12 @@
 # limitations under the License.
 #
 
-require 'ovirt/sdk/v4'
+require 'ovirtsdk4'
 
 # This example will connect to the server and add a new host:
 
 # Create the connection to the server:
-connection = Ovirt::SDK::V4::Connection.new({
+connection = OvirtSDK4::Connection.new({
   :url => 'https://engine40.example.com/ovirt-engine/api',
   :username => 'admin@internal',
   :password => 'redhat123',
@@ -33,7 +34,7 @@ hosts_service = connection.system_service.hosts_service
 
 # Add the host:
 host = hosts_service.add(
-  Ovirt::SDK::V4::Host.new({
+  OvirtSDK4::Host.new({
     :name => 'myhost',
     :description => 'My host',
     :address => 'node40.example.com',
@@ -50,7 +51,7 @@ begin
   sleep(5)
   host = host_service.get
   state = host.status.state
-end while state != Ovirt::SDK::V4::HostStatus::UP
+end while state != OvirtSDK4::HostStatus::UP
 
 # Close the connection to the server:
 connection.close

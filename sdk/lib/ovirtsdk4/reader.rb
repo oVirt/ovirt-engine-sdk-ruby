@@ -1,5 +1,6 @@
 #--
 # Copyright (c) 2015 Red Hat, Inc.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -13,29 +14,13 @@
 # limitations under the License.
 #++
 
-module Ovirt
-  module SDK
-    module V4
+module OvirtSDK4
 
-      ##
-      # This is an utility class used to format objects for use in HTTP requests. It is inteded for use by other
-      # components of the SDK. Refrain from using it directly, as backwards compatibility isn't guaranteed.
-      #
-      class XmlFormatter
-
-        ##
-        # Formats a boolean value.
-        #
-        def self.format_boolean(value)
-          if value
-            return 'true'
-          else
-            return 'false'
-          end
-        end
-
-      end
-
-    end
+  ##
+  # This is the base class for all the XML readers used by the SDK. It contains the utility methods used by all
+  # of them.
+  #
+  class Reader
   end
+
 end

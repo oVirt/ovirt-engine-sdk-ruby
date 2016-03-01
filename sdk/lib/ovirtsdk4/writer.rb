@@ -1,5 +1,6 @@
 #--
-# Copyright (c) 2015 Red Hat, Inc.
+# Copyright (c) 2015-2016 Red Hat, Inc.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -13,17 +14,13 @@
 # limitations under the License.
 #++
 
-module Ovirt
-  module SDK
-    module V4
+module OvirtSDK4
 
-      ##
-      # This is the base class for all the XML readers used by the SDK. It contains the utility methods used by all
-      # of them.
-      #
-      class Reader
-      end
-
-    end
+  ##
+  # This is the base class for all the XML writers used by the SDK. It contains the utility methods used by
+  # all of them.
+  #
+  class Writer
   end
+
 end

@@ -13,16 +13,16 @@ instructions in the `README.md` file of the parent directory.
 
 ## Usage
 
-To use the SDK require the `ovirt/sdk/v4` file. That will give you
+To use the SDK require the `ovirtsdk4` file. That will give you
 access to all the classes of th SDK, and in particular to the
-Ovirt::SDK::V4::Connection class. This is the entry point of the SDK,
+OvirtSDKV4::Connection class. This is the entry point of the SDK,
 and gives you access to the root of the tree of services of the API:
 
 ```ruby
-require 'ovirt/sdk/v4'
+require 'ovirtsdk4'
 
 # Create a connection to the server:
-connection = Ovirt::SDK::V4::Connection({
+connection = OvirtSDK4::Connection({
   :url => 'https://engine.example.com/ovirt-engine/api',
   :username => 'admin@internal',
   :password => '...',
@@ -51,9 +51,9 @@ manages the virtual machines:
 vms_service = system_service.vms_service
 ```
 
-This service is an instance of Ovirt::SDK::V4::VmsService, and it has
+This service is an instance of OvirtSDK4::VmsService, and it has
 a `list` method that returns an array of virtual machines, which are
-instances of the Ovirt::SDK::V4::Vm class:
+instances of the OvirtSDK4::Vm class:
 
 ```ruby
 # Retrieve the virtual machines:

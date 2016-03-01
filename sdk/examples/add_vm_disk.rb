@@ -2,6 +2,7 @@
 
 #
 # Copyright (c) 2016 Red Hat, Inc.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -15,13 +16,13 @@
 # limitations under the License.
 #
 
-require 'ovirt/sdk/v4'
+require 'ovirtsdk4'
 
 # This example will connect to the server and add a disk to an existing
 # virtual machine.
 
 # Create the connection to the server:
-connection = Ovirt::SDK::V4::Connection.new({
+connection = OvirtSDK4::Connection.new({
   :url => 'https://engine40.example.com/ovirt-engine/api',
   :username => 'admin@internal',
   :password => 'redhat123',
@@ -39,11 +40,11 @@ disks_service = vms_service.vm_service(vm.id).disks_service
 
 # Use the "add" method of the disks service to add the disk:
 disk = disks_service.add(
-  Ovirt::SDK::V4::Disk.new({
+  OvirtSDK4::Disk.new({
     :name => 'mydisk',
     :description => 'My disk',
-    :interface => Ovirt::SDK::V4::DiskInterface::VIRTIO,
-    :format => Ovirt::SDK::V4::DiskFormat::COW,
+    :interface => OvirtSDK4::DiskInterface::VIRTIO,
+    :format => OvirtSDK4::DiskFormat::COW,
     :provisioned_size => 1 * 2**20,
     :storage_domains => [{
         :name => 'mydata',
@@ -57,7 +58,7 @@ begin
   sleep(5)
   disk = disk_service.get
   state = disk.status.state
-end while state != Ovirt::SDK::V4::DiskStatus::OK
+end while state != OvirtSDK4::DiskStatus::OK
 
 # Close the connection to the server:
 connection.close

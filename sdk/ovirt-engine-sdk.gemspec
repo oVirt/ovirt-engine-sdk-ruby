@@ -1,5 +1,6 @@
 #--
 # Copyright (c) 2015 Red Hat, Inc.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -15,13 +16,13 @@
 
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib)
-require 'ovirt/sdk/v4/version'
+require 'ovirtsdk4/version'
 
 Gem::Specification.new do |spec|
 
   # Basic information:
   spec.name        = 'ovirt-engine-sdk'
-  spec.version     = Ovirt::SDK::V4::VERSION
+  spec.version     = OvirtSDK4::VERSION
   spec.summary     = 'oVirt SDK'
   spec.description = 'Ruby SDK for the oVirt Engine API.'
   spec.authors     = ['Juan Hernandez']
@@ -40,7 +41,7 @@ Gem::Specification.new do |spec|
 
   # Extensions:
   spec.extensions = [
-    'ext/ovirtsdk/extconf.rb',
+    'ext/ovirtsdk4c/extconf.rb',
   ]
 
   # Files:

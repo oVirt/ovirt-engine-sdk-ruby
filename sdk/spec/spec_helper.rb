@@ -1,5 +1,6 @@
 #
 # Copyright (c) 2015 Red Hat, Inc.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -20,10 +21,10 @@ require 'tempfile'
 require 'uri'
 require 'yaml'
 
-require 'ovirt/sdk/v4'
+require 'ovirtsdk4'
 
 # This is just to shorten the module prefix used in the tests:
-SDK = Ovirt::SDK::V4
+SDK = OvirtSDK4
 
 # This module contains utility functions to be used in all the examples.
 module Helpers # :nodoc:
