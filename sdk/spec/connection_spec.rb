@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015 Red Hat, Inc.
+# Copyright (c) 2015-2016 Red Hat, Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -241,6 +241,51 @@ describe SDK::Connection do
         }
         connection = SDK::Connection.new(options)
         connection.close
+      end
+
+    end
+
+    context "given a log file that doesn't exist", :integration => true do
+
+      it "the file is created" do
+        fd = Tempfile.new('log')
+        log = fd.path
+        fd.close
+        fd.unlink
+        options = {
+          :url => default_url,
+          :username => default_user,
+          :password => default_password,
+          :ca_file => default_ca_file,
+          :debug => true,
+          :log => log,
+        }
+        connection = SDK::Connection.new(options)
+        connection.close
+        expect(File.exists?(log)).to be true
+        expect(File.size(log)).to be > 0
+        File.delete(log)
+      end
+
+    end
+
+    context "given a log IO object", :integration => true do
+
+      it "something is written to it" do
+        log = Tempfile.new('log')
+        options = {
+          :url => default_url,
+          :username => default_user,
+          :password => default_password,
+          :ca_file => default_ca_file,
+          :debug => true,
+          :log => log,
+        }
+        connection = SDK::Connection.new(options)
+        connection.close
+        expect(log.size).to be > 0
+        log.close
+        log.unlink
       end
 
     end

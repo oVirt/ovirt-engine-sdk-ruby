@@ -1,5 +1,5 @@
 #--
-# Copyright (c) 2015 Red Hat, Inc.
+# Copyright (c) 2015-2016 Red Hat, Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -100,6 +100,11 @@ module Ovirt
         # data sent to and received from the server will be written to `$stdout`. Be aware that user names and
         # passwords will also be written, so handle it with care. The default values is `false`.
         #
+        # `:log` - The log file where the debug output will be written. The value can be an string containing a file
+        # name or an IO object. If it is a file name then the file will be created if it doesn't exist, and the debug
+        # output will be added to the end. The file will be closed when the connection is closed. If it is an IO
+        # object then the debug output will be written directly, and it won't be closed.
+        #
         def initialize(opts = {})
           # Get the values of the parameters and assign default values:
           url = opts[:url]
@@ -108,6 +113,7 @@ module Ovirt
           insecure = opts[:insecure] || false
           ca_file = opts[:ca_file]
           debug = opts[:debug] || false
+          log = opts[:log] || STDOUT
 
           # Check mandatory parameters:
           if url.nil?
@@ -146,6 +152,11 @@ module Ovirt
 
           # Configure debug mode:
           if debug
+            if log.is_a?(String)
+              @log = ::File.open(log, 'a')
+            else
+              @log = log
+            end
             @curl.verbose = true
             @curl.on_debug do |type, data|
               case type
@@ -162,8 +173,9 @@ module Ovirt
               end
               lines = data.gsub("\r\n", "\n").strip.split("\n")
               lines.each do |line|
-                puts prefix + line
+                @log.puts(prefix + line)
               end
+              @log.flush
             end
           end
 
@@ -263,6 +275,11 @@ module Ovirt
             :method => :HEAD,
           })
           send(request, true)
+
+          # Close the log file, if we did open it:
+          unless @log.nil? || @log.equal?(STDOUT)
+            @log.close
+          end
 
           # Release resources used by the cURL handle:
           @curl.close
