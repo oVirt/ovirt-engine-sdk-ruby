@@ -22,7 +22,7 @@ and gives you access to the root of the tree of services of the API:
 require 'ovirtsdk4'
 
 # Create a connection to the server:
-connection = OvirtSDK4::Connection({
+connection = OvirtSDK4::Connection.new({
   :url => 'https://engine.example.com/ovirt-engine/api',
   :username => 'admin@internal',
   :password => '...',
