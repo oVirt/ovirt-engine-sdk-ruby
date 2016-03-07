@@ -47,15 +47,15 @@ Gem::Specification.new do |spec|
   # Files:
   spec.files = Dir.glob([
     'LICENSE.txt',
-    'README.md',
+    'README.adoc',
     'ext/**/*.{rb,c,h}',
     'lib/**/*.rb',
   ])
 
   # Use Markdown for the documentation:
   spec.rdoc_options = [
-    '--markup=markdown',
-    '--main=README.md',
+    '--markup=asciidoc',
+    '--main=README.adoc',
     '--exclude=pom.xml',
   ]
 

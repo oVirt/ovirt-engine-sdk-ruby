@@ -1,11 +1,11 @@
-# oVirt Ruby SDK
+= oVirt Ruby SDK
 
-## Introduction
+== Introduction
 
 The oVirt Ruby SDK is a Ruby gem that simplyfies access to the oVirt
 Engine API.
 
-## Building
+== Building
 
 Most of the source code of the Ruby SDK is automatically generated from
 the API model.
@@ -15,11 +15,9 @@ directory.  This Java program will get the API model and the metamodel
 artifacts from the available Maven repositories. To build and run it use
 the following commands:
 
-```
-$ git clone git://gerrit.ovirt.org/ovirt-engine-sdk-ruby
-$ cd ovirt-engine-sdk-ruby
-$ mvn package
-```
+  $ git clone git://gerrit.ovirt.org/ovirt-engine-sdk-ruby
+  $ cd ovirt-engine-sdk-ruby
+  $ mvn package
 
 This will build the code generator, run it to generate the SDK for the
 version of the API that corresponds to the branch of the SDK that you
@@ -30,18 +28,14 @@ can use the `model.version` property. For example, if you need to
 generate the SDK for version `4.1.0` of the SDK you can use this
 command:
 
-```
-$ mvn package -Dmodel.version=4.1.0
-```
+  $ mvn package -Dmodel.version=4.1.0
 
 The generated `.gem` file will be located in the `sdk` directory:
 
-```
-$ ls sdk/*.gem
-sdk/ovirt-engine-sdk-4.0.0.alpha0.gem
-```
+  $ ls sdk/*.gem
+  sdk/ovirt-engine-sdk-4.0.0.alpha0.gem
 
-## Testing
+== Testing
 
 The test suite of the project is inside the `sdk/spec` directory. By
 default, when the project is built, only a subset of the tests is
@@ -53,16 +47,14 @@ oVirt engine up and running, put the connection details into the
 `spec/parameters.yaml` file and run the `rspec` command line tool with
 the the `--tag integration` option:
 
-```
-$ cd sdk
-$ cat > spec/parameters.yaml <<.
-default_url: https://myengine.example.com/ovirt-engine/api
-default_user: admin@internal
-default_password: mypassword
-default_debug: false
-.
-$ rspec --tag integration
-```
+  $ cd sdk
+  $ cat > spec/parameters.yaml <<.
+  default_url: https://myengine.example.com/ovirt-engine/api
+  default_user: admin@internal
+  default_password: mypassword
+  default_debug: false
+  .
+  $ rspec --tag integration
 
 The `default_debug` option is translated into the `:debug` parameter of
 the constructor of the `Connection` class used for the integration tests

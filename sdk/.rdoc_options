@@ -10,8 +10,8 @@ line_numbers: false
 locale:
 locale_dir: locale
 locale_name:
-main_page: README.md
-markup: markdown
+main_page: README.adoc
+markup: asciidoc
 output_decoration: true
 page_dir:
 show_hash: false
