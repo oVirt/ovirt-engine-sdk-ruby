@@ -1,0 +1,7 @@
+--markup asciidoc
+--hide-api private
+--exclude lib/ovirtsdk4/reader.rb
+--exclude lib/ovirtsdk4/readers.rb
+--exclude lib/ovirtsdk4/writer.rb
+--exclude lib/ovirtsdk4/writers.rb
+--exclude lib/ovirtsdk4/xml.rb

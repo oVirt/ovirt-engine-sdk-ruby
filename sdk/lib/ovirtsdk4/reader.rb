@@ -20,6 +20,8 @@ module OvirtSDK4
   # This is the base class for all the XML readers used by the SDK. It contains the utility methods used by all
   # of them.
   #
+  # @api private
+  #
   class Reader
   end
 

@@ -62,7 +62,7 @@ mv .%{gem_extdir_mri}/*.so %{buildroot}%{gem_extdir_mri}
 
 %files
 %dir %{gem_instdir}
-%doc %{gem_instdir}/README.md
+%doc %{gem_instdir}/README.adoc
 %exclude %{gem_cache}
 %exclude %{gem_docdir}
 %exclude %{gem_instdir}/Rakefile
@@ -73,7 +73,7 @@ mv .%{gem_extdir_mri}/*.so %{buildroot}%{gem_extdir_mri}
 %{gem_spec}
 
 %files doc
-%doc %{gem_instdir}/README.md
+%doc %{gem_instdir}/README.adoc
 %license %{gem_instdir}/LICENSE.txt
 %{gem_docdir}
 

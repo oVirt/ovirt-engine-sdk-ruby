@@ -22,6 +22,8 @@ module OvirtSDK4
   # This is an utility class used to format objects for use in HTTP requests. It is inteded for use by other
   # components of the SDK. Refrain from using it directly, as backwards compatibility isn't guaranteed.
   #
+  # @api private
+  #
   class XmlFormatter
 
     ##
@@ -42,6 +44,8 @@ module OvirtSDK4
   # other components of the SDK. Refrain from using it directly, as backwards compatibility isn't guaranteed.
   #
   # The part of the code that requires calls to _libxml_ is written in C, as an extension.
+  #
+  # @api private
   #
   class XmlReader
 
@@ -205,6 +209,8 @@ module OvirtSDK4
   # other components of the SDK. Refrain from using it directly, as backwards compatibility isn't guaranteed.
   #
   # The part of the code that requires calls to _libxml_ is written in C, as an extension.
+  #
+  # @api private
   #
   class XmlWriter
 

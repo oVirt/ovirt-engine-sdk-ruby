@@ -24,12 +24,16 @@ module OvirtSDK4
     ##
     # Returns the value of the `href` attribute.
     #
+    # @return [String]
+    #
     def href
       return @href
     end
 
     ##
     # Sets the value of the `href` attribute.
+    #
+    # @param value [String]
     #
     def href=(value)
       @href = value
@@ -38,12 +42,16 @@ module OvirtSDK4
     ##
     # Returns the reference to the connection that created this object.
     #
+    # @return [Connection]
+    #
     def connection
       return @connection
     end
 
     ##
     # Sets reference to the connection that created this object.
+    #
+    # @param value [Connection]
     #
     def connection=(value)
       @connection = value
@@ -53,12 +61,16 @@ module OvirtSDK4
     # Indicates if this structure is used as a link. When a structure is used as a link only the identifier and the
     # `href` attributes will be returned by the server.
     #
+    # @return [Boolean]
+    #
     def is_link?
       return @is_link
     end
 
     ##
     # Sets the value of the flag that indicates if this structure is used as a link.
+    #
+    # @param value [Boolean]
     #
     def is_link=(value)
       @is_link = value

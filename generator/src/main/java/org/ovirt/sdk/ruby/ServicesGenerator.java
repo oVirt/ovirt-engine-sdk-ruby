@@ -57,6 +57,7 @@ public class ServicesGenerator implements RubyGenerator {
     // Reference to the objects used to generate the code:
     @Inject private RubyNames rubyNames;
     @Inject private SchemaNames schemaNames;
+    @Inject private YardDoc yardDoc;
 
     // The buffer used to generate the Ruby code:
     private RubyBuffer buffer;
@@ -135,9 +136,17 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addLine();
 
         // Generate the constructor:
+        buffer.addLine("##");
+        buffer.addLine("# Creates a new implementation of the service.");
+        buffer.addLine("#");
+        buffer.addLine("# @param connection [Connection] The connection to be used by this service.");
+        buffer.addLine("# @param path [String] The relative path of this service, for example `vms/123/disks`.");
+        buffer.addLine("#");
+        buffer.addLine("# @api private");
+        buffer.addLine("#");
         buffer.addLine("def initialize(connection, path)");
-        buffer.addLine("  @connection = connection");
-        buffer.addLine("  @path = path");
+        buffer.addLine(  "@connection = connection");
+        buffer.addLine(  "@path = path");
         buffer.addLine("end");
         buffer.addLine();
 
@@ -185,6 +194,12 @@ public class ServicesGenerator implements RubyGenerator {
         Type parameterType = parameter.getType();
         Name parameterName = parameter.getName();
         String arg = rubyNames.getMemberStyleName(parameterName);
+        buffer.addLine("##");
+        buffer.addLine("# Adds a new `%1$s`.", arg);
+        buffer.addLine("#");
+        buffer.addLine("# @param %1$s [%2$s]", arg, yardDoc.getType(parameterType));
+        buffer.addLine("# @return [%1$s]", yardDoc.getType(parameterType));
+        buffer.addLine("#");
         buffer.addLine("def %1$s(%2$s, opts = {})", rubyNames.getMemberStyleName(methodName), arg);
 
         // Body:
@@ -207,8 +222,12 @@ public class ServicesGenerator implements RubyGenerator {
 
     private void generateActionHttpPost(Method method) {
         // Begin method:
-        Name name = method.getName();
-        buffer.addLine("def %1$s(opts = {})", rubyNames.getMemberStyleName(name));
+        Name methodName = method.getName();
+        String actionName = rubyNames.getMemberStyleName(methodName);
+        buffer.addLine("##");
+        buffer.addLine("# Executes the `%1$s` method.", actionName);
+        buffer.addLine("#");
+        buffer.addLine("def %1$s(opts = {})", actionName);
 
         // Generate the method:
         buffer.addLine("io = StringIO.new");
@@ -224,7 +243,7 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addLine("body = io.string");
         buffer.addLine("request = Request.new({");
         buffer.addLine(  ":method => :POST,");
-        buffer.addLine(  ":path => \"#{@path}/%1$s\",", getPath(name));
+        buffer.addLine(  ":path => \"#{@path}/%1$s\",", getPath(methodName));
         buffer.addLine(  ":body => body,");
         buffer.addLine("})");
         buffer.addLine("response = @connection.send(request)");
@@ -458,6 +477,11 @@ public class ServicesGenerator implements RubyGenerator {
 
     private void generateToS(Service service) {
         RubyName serviceName = rubyNames.getServiceName(service);
+        buffer.addLine("##");
+        buffer.addLine("# Returns an string representation of this service.");
+        buffer.addLine("#");
+        buffer.addLine("# @return [String]");
+        buffer.addLine("#");
         buffer.addLine("def to_s");
         buffer.addLine(  "return \"#<#{%1$s}:#{@path}>\"", serviceName.getClassName());
         buffer.addLine("end");
@@ -479,6 +503,12 @@ public class ServicesGenerator implements RubyGenerator {
         String methodName = rubyNames.getMemberStyleName(locator.getName());
         String argName = rubyNames.getMemberStyleName(parameter.getName());
         RubyName serviceName = rubyNames.getServiceName(locator.getService());
+        buffer.addLine("##");
+        buffer.addLine("# Locates the `%1$s` service.", methodName);
+        buffer.addLine("#");
+        buffer.addLine("# @param %1$s [String] The identifier of the `%2$s`.", argName, methodName);
+        buffer.addLine("# @return [%1$s] A reference to the `%2$s` service.", serviceName.getClassName(), methodName);
+        buffer.addLine("#");
         buffer.addLine("def %1$s_service(%2$s)", methodName, argName);
         buffer.addLine(  "return %1$s.new(@connection, \"#{@path}/#{%2$s}\")", serviceName.getClassName(), argName);
         buffer.addLine("end");
@@ -489,6 +519,10 @@ public class ServicesGenerator implements RubyGenerator {
         String methodName = rubyNames.getMemberStyleName(locator.getName());
         String urlSegment = getPath(locator.getName());
         RubyName serviceName = rubyNames.getServiceName(locator.getService());
+        buffer.addLine("##");
+        buffer.addLine("# Locates the `%1$s` service.", methodName);
+        buffer.addLine("#");
+        buffer.addLine("# @return [%1$s] A reference to `%2$s` service.", serviceName.getClassName(), methodName);
         buffer.addLine("def %1$s_service", methodName);
         buffer.addLine(  "return %1$s.new(@connection, \"#{@path}/%2$s\")", serviceName.getClassName(), urlSegment);
         buffer.addLine("end");
@@ -497,6 +531,12 @@ public class ServicesGenerator implements RubyGenerator {
 
     private void generatePathLocator(Service service) {
         // Begin method:
+        buffer.addLine("##");
+        buffer.addLine("# Locates the service corresponding to the given path.");
+        buffer.addLine("#");
+        buffer.addLine("# @param path [String] The path of the service.");
+        buffer.addLine("# @return [Service] A reference to the service.");
+        buffer.addLine("#");
         buffer.addLine("def service(path)");
         buffer.addLine(  "if path.nil? || path == ''");
         buffer.addLine(    "return self");

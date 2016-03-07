@@ -38,6 +38,7 @@ Gem::Specification.new do |spec|
 
   # Build time dependencies:
   spec.add_development_dependency('rspec', '~> 3.3')
+  spec.add_development_dependency('yard', '~> 0.8')
 
   # Extensions:
   spec.extensions = [
@@ -51,12 +52,5 @@ Gem::Specification.new do |spec|
     'ext/**/*.{rb,c,h}',
     'lib/**/*.rb',
   ])
-
-  # Use Markdown for the documentation:
-  spec.rdoc_options = [
-    '--markup=asciidoc',
-    '--main=README.adoc',
-    '--exclude=pom.xml',
-  ]
 
 end

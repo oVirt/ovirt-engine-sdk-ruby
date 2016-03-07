@@ -22,8 +22,7 @@ module OvirtSDK4
   ##
   # This class represents an HTTP request.
   #
-  # This class is intended for internal use by other components of the SDK. Refrain from using it directly as there
-  # is no backwards compatibility guarantee.
+  # @api private
   #
   class Request
     attr_accessor :method
@@ -50,8 +49,7 @@ module OvirtSDK4
   ##
   # This class represents an HTTP response.
   #
-  # This class is intended for internal use by other components of the SDK. Refrain from using it directly as there
-  # is no backwards compatibility guarantee.
+  # @api private
   #
   class Response
     attr_accessor :body
@@ -80,29 +78,29 @@ module OvirtSDK4
     ##
     # Creates a new connection to the API server.
     #
-    # This method supports the following parameters, provided as an optional hash:
+    # @param opts [Hash] The options used to create the connection.
     #
-    # `:url` - A string containing the base URL of the server, usually something like
-    # `https://server.example.com/ovirt-engine/api`.
+    # @option opts [String] :url A string containing the base URL of the server, usually something like
+    #   `\https://server.example.com/ovirt-engine/api`.
     #
-    # `:username` - The name of the user, something like `admin@internal`.
+    # @option opts [String] :user The name of the user, something like `admin@internal`.
     #
-    # `:password` - The name password of the user.
+    # @option opts [String] :password The password of the user.
     #
-    # `:insecure` - A boolean flag that indicates if the server TLS certificate and host name should be
-    # checked. The default is `true`.
+    # @option opts [Boolean] :insecure (true) A boolean flag that indicates if the server TLS certificate and host
+    #   name should be checked.
     #
-    # `:ca_file` - A PEM file containing the trusted CA certificates. The certificate presented by the server
-    # will be verified using these CA certificates.
+    # @option opts [String] :ca_file The name of a a PEM file containing the trusted CA certificates. The certificate
+    #   presented by the server will be verified using these CA certificates.
     #
-    # `:debug` - A boolean flag indicating if debug output should be generated. If the values is `true` all the
-    # data sent to and received from the server will be written to `$stdout`. Be aware that user names and
-    # passwords will also be written, so handle it with care. The default values is `false`.
+    # @option opts [Boolean] :debug (false) A boolean flag indicating if debug output should be generated. If the
+    #   values is `true` all the data sent to and received from the server will be written to `$stdout`. Be aware that
+    #   user names and passwords will also be written, so handle it with care.
     #
-    # `:log` - The log file where the debug output will be written. The value can be an string containing a file
-    # name or an IO object. If it is a file name then the file will be created if it doesn't exist, and the debug
-    # output will be added to the end. The file will be closed when the connection is closed. If it is an IO
-    # object then the debug output will be written directly, and it won't be closed.
+    # @option opts [String, IO] :log The log file where the debug output will be written. The value can be an string
+    #   containing a file name or an IO object. If it is a file name then the file will be created if it doesn't
+    #   exist, and the debug output will be added to the end. The file will be closed when the connection is closed.
+    #   If it is an IO object then the debug output will be written directly, and it won't be closed.
     #
     def initialize(opts = {})
       # Get the values of the parameters and assign default values:
@@ -181,16 +179,18 @@ module OvirtSDK4
     end
 
     ##
-    # Returns a string containing the base URL used by this connection.
+    # Returns the base URL of this connection.
+    #
+    # @return [String]
     #
     def url
       return @url
     end
 
     ##
-    # Returns the reference to the root of the services tree.
+    # Returns a reference to the root of the services tree.
     #
-    # The returned value is an instance of the OvirtSDK4::SystemService class.
+    # @return [SystemService]
     #
     def system_service
       @system_service ||= SystemService.new(self, "")
@@ -202,8 +202,9 @@ module OvirtSDK4
     # is `vms/123/disks` then it will return a reference to the service that manages the disks for the virtual
     # machine with identifier `123`.
     #
-    # If there is no service corresponding to the given path an exception of type OvirtSDK4::Error will be
-    # raised.
+    # @param path [String] The path of the service, for example `vms/123/disks`.
+    # @return [Service]
+    # @raise [Error] If there is no service corresponding to the given path.
     #
     def service(path)
       return system_service.service(path)
@@ -212,16 +213,11 @@ module OvirtSDK4
     ##
     # Sends an HTTP request and waits for the response.
     #
-    # This method is intended for internal use by other components of the SDK. Refrain from using it directly, as
-    # backwards compatibility isn't guaranteed.
+    # @param request [Request] The Request object containing the details of the HTTP request to send.
+    # @param last [Boolean] A boolean flag indicating if this is the last request.
+    # @return [Response] A request object containing the details of the HTTP response received.
     #
-    # This method supports the following parameters.
-    #
-    # `request` - The Request object containing the details of the HTTP request to send.
-    #
-    # `last` - A boolean flag indicating if this is the last request.
-    #
-    # The returned value is a Request object containing the details of the HTTP response received.
+    # @api private
     #
     def send(request, last = false)
       # Build the URL:
@@ -287,22 +283,21 @@ module OvirtSDK4
     ##
     # Builds a request URL from a path, and the sets of matrix and query parameters.
     #
-    # This method is intended for internal use by other components of the SDK. Refrain from using it directly, as
-    # backwards compatibility isn't guaranteed.
+    # @params opts [Hash] The options used to build the URL.
     #
-    # This method supports the following parameters, provided as an optional hash:
+    # @option opts [String] :path The path that will be added to the base URL. The default is an empty string.
     #
-    # `:path` - The path that will be added to the base URL. The default is an empty string.
+    # @option opts [Hash<String, String>] :query ({}) A hash containing the query parameters to add to the URL. The
+    #   keys of the hash should be strings containing the names of the parameters, and the values should be strings
+    #   containing the values.
     #
-    # `:query` - A hash containing the query parameters to add to the URL. The keys of the hash should be strings
-    # containing the names of the parameters, and the values should be strings containing the values. The default
-    # is an empty hash.
+    # @option opts [Hash<String, String>] :matrix ({}) A hash containing the matrix parameters to add to the URL. The
+    #   keys of the hash should be strings containing the names of the parameters, and the values should be strings
+    #   containing the values.
     #
-    # `:matrix` - A hash containing the matrix parameters to add to the URL. The keys of the hash should be strings
-    # containing the names of the parameters, and the values should be strings containing the values. The default
-    # is an empty hash.
+    # @return [String] The URL.
     #
-    # The returned value is an string containing the URL.
+    # @api private
     #
     def build_url(opts = {})
       # Get the values of the parameters and assign default values:

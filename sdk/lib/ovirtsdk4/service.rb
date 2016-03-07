@@ -27,6 +27,8 @@ module OvirtSDK4
     # This method is intended for internal use by other components of the SDK. Refrain from using it directly, as
     # backwards compatibility isn't guaranteed.
     #
+    # @api private
+    #
     def raise_error(response, fault)
       message = ''
       unless fault.nil?
@@ -58,6 +60,8 @@ module OvirtSDK4
     # This method is intended for internal use by other components of the SDK. Refrain from using it directly, as
     # backwards compatibility isn't guaranteed.
     #
+    # @api private
+    #
     def check_fault(response)
       begin
         io = StringIO.new(response.body)
@@ -76,6 +80,8 @@ module OvirtSDK4
     #
     # This method is intended for internal use by other components of the SDK. Refrain from using it directly, as
     # backwards compatibility isn't guaranteed.
+    #
+    # @api private
     #
     def check_action(response)
       begin

@@ -15,7 +15,7 @@ instructions in the `README.adoc` file of the parent directory.
 
 To use the SDK require the `ovirtsdk4` file. That will give you
 access to all the classes of th SDK, and in particular to the
-OvirtSDKV4::Connection class. This is the entry point of the SDK,
+{OvirtSDK4::Connection} class. This is the entry point of the SDK,
 and gives you access to the root of the tree of services of the API:
 
 [source,ruby]
@@ -53,9 +53,9 @@ manages the virtual machines:
 vms_service = system_service.vms_service
 ----
 
-This service is an instance of OvirtSDK4::VmsService, and it has
+This service is an instance of {OvirtSDK4::VmsService}, and it has
 a `list` method that returns an array of virtual machines, which are
-instances of the OvirtSDK4::Vm class:
+instances of the {OvirtSDK4::Vm} class:
 
 [source,ruby]
 ----

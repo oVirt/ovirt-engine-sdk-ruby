@@ -21,7 +21,9 @@ import static java.util.stream.Collectors.toCollection;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.List;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 
@@ -44,6 +46,7 @@ public class TypesGenerator implements RubyGenerator {
 
     // Reference to the objects used to generate the code:
     @Inject private RubyNames rubyNames;
+    @Inject private YardDoc yardDoc;
 
     // The buffer used to generate the Ruby code:
     private RubyBuffer buffer;
@@ -129,18 +132,42 @@ public class TypesGenerator implements RubyGenerator {
         buffer.addLine();
 
         // Attributes and links:
-        type.declaredAttributes().sorted().forEach(this::generateMember);
-        type.declaredLinks().sorted().forEach(this::generateMember);
+        List<StructMember> members = new ArrayList<>();
+        members.addAll(type.getAttributes());
+        members.addAll(type.getLinks());
+        members.stream().sorted().forEach(this::generateMember);
 
         // Constructor with a named parameter for each attribute:
+        RubyName typeName = rubyNames.getTypeName(type);
+        buffer.addLine("##");
+        buffer.addLine("# Creates a new instance of the {%1$s} class.", typeName.getClassName());
+        buffer.addLine("#");
+        buffer.addLine("# @param opts [Hash] A hash containing the attributes of the object. The keys of the hash ");
+        buffer.addLine("#   should be symbols corresponding to the names of the attributes. The values of the hash ");
+        buffer.addLine("#   should be the values of the attributes.");
+        buffer.addLine("#");
+        members.stream().sorted().forEach(member -> {
+            Type memberType = member.getType();
+            Name memberName = member.getName();
+            String docType = yardDoc.getType(memberType);
+            String docName = rubyNames.getMemberStyleName(memberName);
+            if (memberType instanceof PrimitiveType || memberType instanceof EnumType) {
+                buffer.addLine("# @option opts [%1$s] :%2$s The value of attribute `%2$s`.", docType, docName);
+            }
+            else if (memberType instanceof StructType) {
+                buffer.addLine("# @option opts [%1$s, Hash] :%2$s The value of attribute `%2$s`.", docType, docName);
+            }
+            else if (memberType instanceof ListType) {
+                buffer.addLine("# @option opts [%1$s, Array<Hash>] :%2$s The values of attribute `%2$s`.", docType, docName);
+            }
+        });
+        buffer.addLine("#");
         buffer.addLine("def initialize(opts = {})");
         buffer.addLine(  "super(opts)");
-        Stream.concat(type.declaredAttributes(), type.declaredLinks())
-             .map(StructMember::getName)
-             .map(rubyNames::getMemberStyleName)
-             .sorted()
-             .map(x -> String.format("self.%1$s = opts[:%1$s]", x))
-             .forEach(buffer::addLine);
+        members.stream().sorted().forEach(member -> {
+            String memberName = rubyNames.getMemberStyleName(member.getName());
+            buffer.addLine("self.%1$s = opts[:%1$s]", memberName);
+        });
         buffer.addLine("end");
         buffer.addLine();
 
@@ -158,48 +185,11 @@ public class TypesGenerator implements RubyGenerator {
         Name name = member.getName();
         Type type = member.getType();
         String property = rubyNames.getMemberStyleName(name);
-        if (type instanceof PrimitiveType) {
-            Model model = type.getModel();
-            if (type == model.getBooleanType()) {
-                buffer.addLine("##");
-                buffer.addLine("# Returns the boolean value.");
-                buffer.addLine("#");
-            }
-            else if (type == model.getStringType()) {
-                buffer.addLine("##");
-                buffer.addLine("# Returns the string value.");
-                buffer.addLine("#");
-            }
-            else if (type == model.getIntegerType()) {
-                buffer.addLine("##");
-                buffer.addLine("# Returns the Integer value.");
-                buffer.addLine("#");
-            }
-            else if (type == model.getDecimalType()) {
-                buffer.addLine("##");
-                buffer.addLine("# Returns the float value.");
-                buffer.addLine("#");
-            }
-            else if (type == model.getDateType()) {
-                buffer.addLine("##");
-                buffer.addLine("# Returns the DateTime value.");
-                buffer.addLine("#");
-            }
-        }
-        else if (type instanceof ListType) {
-            ListType listType = (ListType) type;
-            Type elementType = listType.getElementType();
-            RubyName elementTypeName = rubyNames.getTypeName(elementType);
-            buffer.addLine("##");
-            buffer.addLine("# Returns an array of objects of type %1$s.", elementTypeName);
-            buffer.addLine("#");
-        }
-        else if (type instanceof EnumType || type instanceof StructType) {
-            RubyName typeName = rubyNames.getTypeName(type);
-            buffer.addLine("##");
-            buffer.addLine("# Returns the %1$s value.", typeName);
-            buffer.addLine("#");
-        }
+        buffer.addLine("##");
+        buffer.addLine("# Returns the value of the `%1$s` attribute.", property);
+        buffer.addLine("#");
+        buffer.addLine("# @return [%1$s]", yardDoc.getType(type));
+        buffer.addLine("#");
         buffer.addLine("def %1$s", property);
         buffer.addLine(  "return @%1$s", property);
         buffer.addLine("end");
@@ -210,108 +200,42 @@ public class TypesGenerator implements RubyGenerator {
         Name name = member.getName();
         Type type = member.getType();
         String property = rubyNames.getMemberStyleName(name);
-        if (type instanceof PrimitiveType) {
-            Model model = type.getModel();
-            if (type == model.getBooleanType()) {
-                buffer.addLine("##");
-                buffer.addLine("# Sets the boolean value.");
-                buffer.addLine("#");
-            }
-            else if (type == model.getStringType()) {
-                buffer.addLine("##");
-                buffer.addLine("# Sets the string value.");
-                buffer.addLine("#");
-            }
-            else if (type == model.getIntegerType()) {
-                buffer.addLine("##");
-                buffer.addLine("# Sets the Integer value.");
-                buffer.addLine("#");
-            }
-            else if (type == model.getDecimalType()) {
-                buffer.addLine("##");
-                buffer.addLine("# Sets the float value.");
-                buffer.addLine("#");
-            }
-            else if (type == model.getDateType()) {
-                buffer.addLine("##");
-                buffer.addLine("# Sets the DateTime value.");
-                buffer.addLine("#");
-            }
+        buffer.addLine("##");
+        buffer.addLine("# Sets the value of the `%1$s` attribute.", property);
+        buffer.addLine("#");
+        if (type instanceof PrimitiveType || type instanceof EnumType) {
+            buffer.addLine("# @param value [%1$s]", yardDoc.getType(type));
+            buffer.addLine("#");
             buffer.addLine("def %1$s=(value)", property);
             buffer.addLine(  "@%1$s = value", property);
             buffer.addLine("end");
         }
-        else if (type instanceof EnumType) {
-            RubyName typeName = rubyNames.getTypeName(type);
-            buffer.addLine("##");
-            buffer.addLine("# Sets the %1$s value.", typeName);
-            buffer.addLine("#");
-            buffer.addLine("attr_writer :%1$s", property);
-        }
         else if (type instanceof StructType) {
             RubyName typeName = rubyNames.getTypeName(type);
-            buffer.addLine("##");
-            buffer.addLine("# Sets the %1$s value.", typeName);
+            buffer.addLine("# @param value [%1$s, Hash]", yardDoc.getType(type));
             buffer.addLine("#");
-            buffer.addLine("# The `object` can be an instance of %1$s or a hash.", typeName);
+            buffer.addLine("# The `value` parameter can be an instance of {%1$s} or a hash.", typeName);
             buffer.addLine("# If it is a hash then a new instance will be created passing the hash as the ");
             buffer.addLine("# `opts` parameter to the constructor.");
             buffer.addLine("#");
-            buffer.addLine("def %1$s=(object)", property);
-            buffer.addLine(  "if object.is_a?(Hash)");
-            buffer.addLine(    "object = %1$s.new(object)", typeName.getClassName());
+            buffer.addLine("def %1$s=(value)", property);
+            buffer.addLine(  "if value.is_a?(Hash)");
+            buffer.addLine(    "value = %1$s.new(value)", typeName.getClassName());
             buffer.addLine(  "end");
-            buffer.addLine(  "@%1$s = object", property);
+            buffer.addLine(  "@%1$s = value", property);
             buffer.addLine("end");
         }
         else if (type instanceof ListType) {
+            buffer.addLine("# @param list [%1$s]", yardDoc.getType(type));
             ListType listType = (ListType) type;
             Type elementType = listType.getElementType();
-            if (elementType instanceof PrimitiveType) {
-                Model model = elementType.getModel();
-                if (elementType == model.getBooleanType()) {
-                    buffer.addLine("##");
-                    buffer.addLine("# Sets the boolean values.");
-                    buffer.addLine("#");
-                }
-                else if (elementType == model.getStringType()) {
-                    buffer.addLine("##");
-                    buffer.addLine("# Sets the string values.");
-                    buffer.addLine("#");
-                }
-                else if (elementType == model.getIntegerType()) {
-                    buffer.addLine("##");
-                    buffer.addLine("# Sets the Integer values.");
-                    buffer.addLine("#");
-                }
-                else if (elementType == model.getDecimalType()) {
-                    buffer.addLine("##");
-                    buffer.addLine("# Sets the float values.");
-                    buffer.addLine("#");
-                }
-                else if (elementType == model.getDateType()) {
-                    buffer.addLine("##");
-                    buffer.addLine("# Sets the DateTime values.");
-                    buffer.addLine("#");
-                }
-                buffer.addLine("def %1$s=(list)", property);
-                buffer.addLine(  "@%1$s = list", property);
-                buffer.addLine("end");
-            }
-            else if (elementType instanceof EnumType) {
-                RubyName elementTypeName = rubyNames.getTypeName(elementType);
-                buffer.addLine("##");
-                buffer.addLine("# Sets the %1$s values.", elementTypeName);
-                buffer.addLine("#");
+            if (elementType instanceof PrimitiveType || elementType instanceof EnumType) {
                 buffer.addLine("def %1$s=(list)", property);
                 buffer.addLine(  "@%1$s = list", property);
                 buffer.addLine("end");
             }
             else if (elementType instanceof StructType) {
                 RubyName elementTypeName = rubyNames.getTypeName(elementType);
-                buffer.addLine("##");
-                buffer.addLine("# Sets the values from a list or array of objects of type %1$s.", elementTypeName);
-                buffer.addLine("#");
                 buffer.addLine("def %1$s=(list)", property);
                 buffer.addLine(  "if list.class == Array");
                 buffer.addLine(    "list = List.new(list)");
