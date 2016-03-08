@@ -33,8 +33,6 @@ connection = OvirtSDK4::Connection.new({
 # Get the reference to the "vms" service:
 vms_service = connection.system_service.vms_service
 
-# Use the "list" method of the "vms" service to list all the virtual machines of the system:
-
 # List the virtual machines, page by page:
 size = 1
 index = 1
