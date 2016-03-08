@@ -32,6 +32,7 @@ connection = OvirtSDK4::Connection.new({
 
 # Get API information from the root service:
 api = connection.system_service.get
+puts("version: #{api.product_info.version.full_version}")
 puts("hosts: #{api.summary.hosts.total}")
 puts("sds: #{api.summary.storage_domains.total}")
 puts("users: #{api.summary.users.total}")
