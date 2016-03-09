@@ -262,6 +262,24 @@ module OvirtSDK4
     end
 
     ##
+    # Tests the connectivity with the server. If connectivity works correctly it returns `true`. If there is any
+    # connectivity problem it will either return `false` or raise an exception if the `raise_exception` parameter is
+    # `true`.
+    #
+    # @param raise_exception [Boolean]
+    # @return [Boolean]
+    #
+    def test(raise_exception = false)
+      begin
+        system_service.get
+        return true
+      rescue Exception
+        raise if raise_exception
+        return false
+      end
+    end
+
+    ##
     # Releases the resources used by this connection.
     #
     def close
