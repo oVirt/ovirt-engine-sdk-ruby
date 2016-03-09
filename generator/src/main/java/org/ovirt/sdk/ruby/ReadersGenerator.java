@@ -215,20 +215,19 @@ public class ReadersGenerator implements RubyGenerator {
         Type type = member.getType();
         Model model = type.getModel();
         if (type == model.getStringType()) {
-            buffer.addLine("%1$s = reader.read_string", variable);
-            buffer.addLine("reader.next_element");
+            buffer.addLine("%1$s = Reader.read_string(reader)", variable);
         }
         else if (type == model.getBooleanType()) {
-            buffer.addLine("%1$s = reader.read_boolean", variable);
+            buffer.addLine("%1$s = Reader.read_boolean(reader)", variable);
         }
         else if (type == model.getIntegerType()) {
-            buffer.addLine("%1$s = reader.read_integer", variable);
+            buffer.addLine("%1$s = Reader.read_integer(reader)", variable);
         }
         else if (type == model.getDecimalType()) {
-            buffer.addLine("%1$s = reader.read_decimal", variable);
+            buffer.addLine("%1$s = Reader.read_decimal(reader)", variable);
         }
         else if (type == model.getDateType()) {
-            buffer.addLine("%1$s = reader.read_date", variable);
+            buffer.addLine("%1$s = Reader.read_date(reader)", variable);
         }
         else {
             buffer.addLine("reader.next_element");
@@ -236,8 +235,7 @@ public class ReadersGenerator implements RubyGenerator {
     }
 
     private void generateReadEnum(StructMember member, String variable) {
-        buffer.addLine("%1$s = reader.read_string", variable);
-        buffer.addLine("reader.next_element");
+        buffer.addLine("%1$s = Reader.read_string(reader)", variable);
     }
 
     private void generateReadStruct(StructMember member, String variable) {

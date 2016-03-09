@@ -467,7 +467,16 @@ public class ServicesGenerator implements RubyGenerator {
         if (type instanceof PrimitiveType) {
             Model model = type.getModel();
             if (type == model.getBooleanType()) {
-                buffer.addLine("value = XmlFormatter.format_boolean(value)", tag);
+                buffer.addLine("value = Writer.render_boolean(value)", tag);
+            }
+            else if (type == model.getIntegerType()) {
+                buffer.addLine("value = Writer.render_integer(value)", tag);
+            }
+            else if (type == model.getDecimalType()) {
+                buffer.addLine("value = Writer.render_decimal(value)", tag);
+            }
+            else if (type == model.getDateType()) {
+                buffer.addLine("value = Writer.render_date(value)", tag);
             }
         }
         buffer.addLine(  "query['%1$s'] = value", tag);

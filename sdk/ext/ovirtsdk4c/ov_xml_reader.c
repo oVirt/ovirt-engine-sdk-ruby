@@ -142,17 +142,32 @@ static VALUE ov_xml_reader_read(VALUE self) {
     return Qnil;
 }
 
-static VALUE ov_xml_reader_node_type(VALUE self) {
-    ov_xml_reader_object *object;
+static VALUE ov_xml_reader_forward(VALUE self) {
+    int c_type = 0;
+    int rc = 0;
+    ov_xml_reader_object *object = NULL;
+
     Data_Get_Struct(self, ov_xml_reader_object, object);
     ov_xml_reader_check_closed(object);
-    int c_type = xmlTextReaderNodeType(object->reader);
-    if (c_type == -1) {
-        rb_raise(ov_error_class, "Can't get currrent node type");
-        return Qnil;
+
+    for (;;) {
+        c_type = xmlTextReaderNodeType(object->reader);
+        if (c_type == -1) {
+            rb_raise(ov_error_class, "Can't get current node type");
+        }
+        else if (c_type == XML_READER_TYPE_ELEMENT) {
+            return Qtrue;
+        }
+        else if (c_type == XML_READER_TYPE_END_ELEMENT || c_type == XML_READER_TYPE_NONE) {
+            return Qfalse;
+        }
+        else {
+            rc = xmlTextReaderRead(object->reader);
+            if (rc == -1) {
+                rb_raise(ov_error_class, "Can't move to next node");
+            }
+        }
     }
-    VALUE type = INT2NUM(c_type);
-    return type;
 }
 
 static VALUE ov_xml_reader_node_name(VALUE self) {
@@ -189,16 +204,94 @@ static VALUE ov_xml_reader_get_attribute(VALUE self, VALUE name) {
 }
 
 static VALUE ov_xml_reader_read_element(VALUE self) {
-    ov_xml_reader_object *object;
+    VALUE value;
+    int c_empty = 0;
+    int c_type = 0;
+    int rc = 0;
+    ov_xml_reader_object *object = NULL;
+    xmlChar *c_value = NULL;
+
     Data_Get_Struct(self, ov_xml_reader_object, object);
     ov_xml_reader_check_closed(object);
-    xmlChar *c_value = xmlTextReaderReadString(object->reader);
-    if (c_value == NULL) {
-        return Qnil;
+
+    /* Check the type of the current node: */
+    c_type = xmlTextReaderNodeType(object->reader);
+    if (c_type == -1) {
+        rb_raise(ov_error_class, "Can't get current node type");
     }
-    VALUE value = rb_str_new_cstr((char*) c_value);
+    if (c_type != XML_READER_TYPE_ELEMENT) {
+        rb_raise(ov_error_class, "Current node isn't the start of an element");
+    }
+
+    /* Check if the current node is empty: */
+    c_empty = xmlTextReaderIsEmptyElement(object->reader);
+    if (c_empty == -1) {
+        rb_raise(ov_error_class, "Can't check if current element is empty");
+    }
+
+    /* For empty values elements there is no need to read the value. For non empty values we need to read the value, and
+       check if it is NULL, as that means that the value is an empty string. */
+    if (c_empty) {
+        c_value = NULL;
+    }
+    else {
+        c_value = xmlTextReaderReadString(object->reader);
+        if (c_value == NULL) {
+            c_value = xmlCharStrdup("");
+            if (c_value == NULL) {
+                rb_raise(ov_error_class, "Can't allocate XML string");
+            }
+        }
+    }
+
+    /* Move to the next element: */
+    rc = xmlTextReaderNext(object->reader);
+    if (rc == -1) {
+        if (c_value != NULL) {
+            xmlFree(c_value);
+        }
+        rb_raise(ov_error_class, "Can't move to the next element");
+    }
+
+    /* Return the result: */
+    if (c_value == NULL) {
+       return Qnil;
+    }
+    value = rb_str_new_cstr((char*) c_value);
     xmlFree(c_value);
     return value;
+}
+
+static VALUE ov_xml_reader_read_elements(VALUE self) {
+    VALUE element;
+    VALUE list;
+    int c_type = 0;
+    int rc = 0;
+    ov_xml_reader_object* object = NULL;
+
+    Data_Get_Struct(self, ov_xml_reader_object, object);
+    ov_xml_reader_check_closed(object);
+    list = rb_ary_new();
+    for (;;) {
+        c_type = xmlTextReaderNodeType(object->reader);
+        if (c_type == -1) {
+            rb_raise(ov_error_class, "Can't get current node type");
+        }
+        else if (c_type == XML_READER_TYPE_ELEMENT) {
+            element = ov_xml_reader_read_element(self);
+            rb_ary_push(list, element);
+        }
+        else if (c_type == XML_READER_TYPE_END_ELEMENT || c_type == XML_READER_TYPE_NONE) {
+            break;
+        }
+        else {
+            rc = xmlTextReaderNext(object->reader);
+            if (rc == -1) {
+                rb_raise(ov_error_class, "Can't move to the next element");
+            }
+        }
+    }
+    return list;
 }
 
 static VALUE ov_xml_reader_next_element(VALUE self) {
@@ -213,7 +306,6 @@ static VALUE ov_xml_reader_next_element(VALUE self) {
         return Qtrue;
     }
     rb_raise(ov_error_class, "Can't move to next element");
-    return Qnil;
 }
 
 static VALUE ov_xml_reader_close(VALUE self) {
@@ -235,13 +327,14 @@ void ov_xml_reader_define(void) {
     rb_define_method(ov_xml_reader_class, "initialize", ov_xml_reader_initialize, 1);
 
     // Define the methods:
+    rb_define_method(ov_xml_reader_class, "forward", ov_xml_reader_forward, 0);
     rb_define_method(ov_xml_reader_class, "io", ov_xml_reader_io, 0);
     rb_define_method(ov_xml_reader_class, "read", ov_xml_reader_read, 0);
-    rb_define_method(ov_xml_reader_class, "node_type", ov_xml_reader_node_type, 0);
     rb_define_method(ov_xml_reader_class, "node_name", ov_xml_reader_node_name, 0);
     rb_define_method(ov_xml_reader_class, "empty_element?", ov_xml_reader_empty_element, 0);
     rb_define_method(ov_xml_reader_class, "get_attribute", ov_xml_reader_get_attribute, 1);
     rb_define_method(ov_xml_reader_class, "read_element", ov_xml_reader_read_element, 0);
+    rb_define_method(ov_xml_reader_class, "read_elements", ov_xml_reader_read_elements, 0);
     rb_define_method(ov_xml_reader_class, "next_element", ov_xml_reader_next_element, 0);
     rb_define_method(ov_xml_reader_class, "close", ov_xml_reader_close, 0);
 

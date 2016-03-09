@@ -26,103 +26,23 @@ describe SDK::XmlWriter do
           io = StringIO.new
           writer = SDK::XmlWriter.new({:io => io})
           expect(writer.io).to equal(io)
-          
+
       end
-      
+
     end
 
   end
 
-  describe ".write_string" do
+  describe ".write_element" do
 
     context "given name and value" do
 
       it "writes the expected XML" do
         writer = SDK::XmlWriter.new({:io => StringIO.new})
-        writer.write_string('value', 'myvalue')
+        writer.write_element('value', 'myvalue')
         writer.flush
         result = writer.io.string
         expect(result).to eql('<value>myvalue</value>')
-      end
-
-    end
-
-  end
-
-  describe ".write_boolean" do
-
-    context "given name and true" do
-
-      it "writes the expected XML" do
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
-        writer.write_boolean('value', true)
-        writer.flush
-        result = writer.io.string
-        expect(result).to eql('<value>true</value>')
-      end
-
-    end
-
-    context "given name and false" do
-
-      it "writes the expected XML" do
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
-        writer.write_boolean('value', false)
-        writer.flush
-        result = writer.io.string
-        expect(result).to eql('<value>false</value>')
-      end
-
-    end
-
-    context "given name and truthy" do
-
-      it "writes 'true'" do
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
-        writer.write_boolean('value', 'myvalue')
-        writer.flush
-        result = writer.io.string
-        expect(result).to eql('<value>true</value>')
-      end
-
-    end
-
-    context "given name and falsy" do
-
-      it "writes 'false'" do
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
-        writer.write_boolean('value', nil)
-        writer.flush
-        result = writer.io.string
-        expect(result).to eql('<value>false</value>')
-      end
-
-    end
-
-  end
-
-  describe ".write_integer" do
-
-    context "given zero" do
-
-      it "writes the expected XML" do
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
-        writer.write_integer('value', 0)
-        writer.flush
-        result = writer.io.string
-        expect(result).to eql('<value>0</value>')
-      end
-
-    end
-
-    context "given one" do
-
-      it "writes the expected XML" do
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
-        writer.write_integer('value', 1)
-        writer.flush
-        result = writer.io.string
-        expect(result).to eql('<value>1</value>')
       end
 
     end

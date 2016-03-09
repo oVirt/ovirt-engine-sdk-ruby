@@ -28,7 +28,6 @@ require 'ovirtsdk4c'
 # Own requirements.
 #
 require 'ovirtsdk4/version.rb'
-require 'ovirtsdk4/xml.rb'
 require 'ovirtsdk4/http.rb'
 require 'ovirtsdk4/type.rb'
 require 'ovirtsdk4/types.rb'

@@ -18,7 +18,6 @@ limitations under the License.
 
 #include "ov_module.h"
 #include "ov_error.h"
-#include "ov_xml_constants.h"
 #include "ov_xml_reader.h"
 #include "ov_xml_writer.h"
 
@@ -28,7 +27,6 @@ void Init_ovirtsdk4c(void) {
 
     // Define the classes:
     ov_error_define();
-    ov_xml_constants_define();
     ov_xml_reader_define();
     ov_xml_writer_define();
 }

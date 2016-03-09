@@ -178,7 +178,7 @@ public class WritersGenerator implements RubyGenerator {
     }
 
     private void generateWriteEnumPropertyAsAttribute(EnumType type, String attribute, String value) {
-        buffer.addLine("writer.write_element('%1$s', %2$s) unless %2$s.nil?", attribute, value);
+        buffer.addLine("Writer.write_string(writer, '%1$s', %2$s) unless %2$s.nil?", attribute, value);
     }
 
     private void generateMemberWriteAsElement(StructMember member) {
@@ -203,24 +203,24 @@ public class WritersGenerator implements RubyGenerator {
     private void generateWritePrimitivePropertyAsElement(PrimitiveType type, String tag, String value) {
         Model model = type.getModel();
         if (type == model.getStringType()) {
-            buffer.addLine("writer.write_string('%1$s', %2$s) unless %2$s.nil?", tag, value);
+            buffer.addLine("Writer.write_string(writer, '%1$s', %2$s) unless %2$s.nil?", tag, value);
         }
         else if (type == model.getBooleanType()) {
-            buffer.addLine("writer.write_boolean('%1$s', %2$s) unless %2$s.nil?", tag, value);
+            buffer.addLine("Writer.write_boolean(writer, '%1$s', %2$s) unless %2$s.nil?", tag, value);
         }
         else if (type == model.getIntegerType()) {
-            buffer.addLine("writer.write_integer('%1$s', %2$s) unless %2$s.nil?", tag, value);
+            buffer.addLine("Writer.write_integer(writer, '%1$s', %2$s) unless %2$s.nil?", tag, value);
         }
         else if (type == model.getDecimalType()) {
-            buffer.addLine("writer.write_decimal('%1$s', %2$s) unless %2$s.nil?", tag, value);
+            buffer.addLine("Writer.write_decimal(writer, '%1$s', %2$s) unless %2$s.nil?", tag, value);
         }
         else if (type == model.getDateType()) {
-            buffer.addLine("writer.write_date('%1$s', %2$s) unless %2$s.nil?", tag, value);
+            buffer.addLine("Writer.write_date(writer, '%1$s', %2$s) unless %2$s.nil?", tag, value);
         }
     }
 
     private void generateWriteEnumPropertyAsElement(EnumType type, String tag, String value) {
-        buffer.addLine("writer.write_string('%1$s', %2$s) unless %2$s.nil?", tag, value);
+        buffer.addLine("Writer.write_string(writer, '%1$s', %2$s) unless %2$s.nil?", tag, value);
     }
 
     private void generateWriteStructPropertyAsElement(StructMember member) {
