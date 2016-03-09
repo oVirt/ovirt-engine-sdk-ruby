@@ -61,8 +61,17 @@ public class TypesGenerator implements RubyGenerator {
         buffer = new RubyBuffer();
         buffer.setFileName(fileName);
 
+        // Begin module:
+        buffer.beginModule(rubyNames.getModuleName());
+        buffer.addLine();
+
         // Generate the source:
-        generateSource(model);
+        generateStructs(model);
+        generateEnums(model);
+
+        // End module:
+        buffer.endModule(rubyNames.getModuleName());
+        buffer.addLine();
 
         // Write the file:
         try {
@@ -73,13 +82,11 @@ public class TypesGenerator implements RubyGenerator {
         }
     }
 
-    private void generateSource(Model model) {
+    private void generateStructs(Model model) {
         // Begin module:
         buffer.addLine("##");
         buffer.addLine("# These forward declarations are required in order to avoid circular dependencies.");
         buffer.addLine("#");
-        buffer.beginModule(rubyNames.getModuleName());
-        buffer.addLine();
 
         // The declarations of the types need to appear in inheritance order, otherwise some symbols won't be
         // defined and that will produce errors. To order them correctly we need first to sort them by name, and
@@ -109,21 +116,7 @@ public class TypesGenerator implements RubyGenerator {
         });
 
         // Generate the complete declarations, using the same order:
-        sorted.forEach(this::generateType);
-
-        // End module:
-        buffer.endModule(rubyNames.getModuleName());
-        buffer.addLine();
-
-    }
-
-    private void generateType(Type type) {
-        if (type instanceof StructType) {
-            generateStruct((StructType) type);
-        }
-        if (type instanceof EnumType) {
-            generateEnum((EnumType) type);
-        }
+        sorted.forEach(this::generateStruct);
     }
 
     private void generateStruct(StructType type) {
@@ -252,6 +245,14 @@ public class TypesGenerator implements RubyGenerator {
         buffer.addLine();
     }
 
+    private void generateEnums(Model model) {
+        model.types()
+            .filter(EnumType.class::isInstance)
+            .map(EnumType.class::cast)
+            .sorted()
+            .forEach(this::generateEnum);
+    }
+
     private void generateEnum(EnumType type) {
         // Begin module:
         RubyName typeName = rubyNames.getTypeName(type);
@@ -262,6 +263,7 @@ public class TypesGenerator implements RubyGenerator {
 
         // End module:
         buffer.endModule(typeName.getClassName());
+        buffer.addLine();
     }
 
     private void generateEnumValue(EnumValue value) {
