@@ -110,7 +110,7 @@ module OvirtSDK4
       insecure = opts[:insecure] || false
       ca_file = opts[:ca_file]
       debug = opts[:debug] || false
-      log = opts[:log] || STDOUT
+      log = opts[:log]
 
       # Check mandatory parameters:
       if url.nil?
@@ -148,9 +148,13 @@ module OvirtSDK4
       end
 
       # Configure debug mode:
+      @close_log = false
       if debug
-        if log.is_a?(String)
+        if log.nil?
+          @log = STDOUT
+        elsif log.is_a?(String)
           @log = ::File.open(log, 'a')
+          @close_log = true
         else
           @log = log
         end
@@ -290,7 +294,7 @@ module OvirtSDK4
       send(request, true)
 
       # Close the log file, if we did open it:
-      unless @log.nil? || @log.equal?(STDOUT)
+      if @close_log
         @log.close
       end
 
