@@ -294,6 +294,44 @@ module OvirtSDK4
     end
 
     ##
+    # Indicates if the given object is a link. An object is a link if it has an `href` attribute.
+    #
+    # @return [Boolean]
+    #
+    def is_link?(object)
+      return !object.href.nil?
+    end
+
+    ##
+    # Follows the `href` attribute of the given object, retrieves the target object and returns it.
+    #
+    # @param object [Type] The object containing the `href` attribute.
+    # @raise [Error] If the `href` attribute has no value, or the link can't be followed.
+    #
+    def follow_link(object)
+      # Check that the "href" has a value, as it is needed in order to retrieve the representation of the object:
+      href = object.href
+      if href.nil?
+        raise Error.new("Can't follow link because the 'href' attribute does't have a value")
+      end
+
+      # Check that the value of the "href" attribute is compatible with the base URL of the connection:
+      prefix = @url.path
+      if !prefix.end_with?('/')
+        prefix += '/'
+      end
+      if !href.start_with?(prefix)
+        raise Error.new("The URL '#{href}' isn't compatible with the base URL of the connection")
+      end
+
+      # Remove the prefix from the URL, follow the path to the relevant service and invoke the "get" method to
+      # retrieve its representation:
+      path = href[prefix.length..-1]
+      service = service(path)
+      return service.get
+    end
+
+    ##
     # Releases the resources used by this connection.
     #
     def close

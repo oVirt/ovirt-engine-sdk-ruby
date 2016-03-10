@@ -416,13 +416,13 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addLine(  "reader = XmlReader.new(:io => io)");
         if (type instanceof StructType) {
             RubyName reader = rubyNames.getReaderName(type);
-            buffer.addLine("return %1$s.read_one(reader, @connection)", reader.getClassName());
+            buffer.addLine("return %1$s.read_one(reader)", reader.getClassName());
         }
         else if (type instanceof ListType) {
             ListType listType = (ListType) type;
             Type elementType = listType.getElementType();
             RubyName reader = rubyNames.getReaderName(elementType);
-            buffer.addLine("return %1$s.read_many(reader, @connection)", reader.getClassName());
+            buffer.addLine("return %1$s.read_many(reader)", reader.getClassName());
         }
         buffer.addLine("ensure");
         buffer.addLine(  "reader.close");

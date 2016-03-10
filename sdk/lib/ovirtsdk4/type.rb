@@ -17,7 +17,7 @@
 module OvirtSDK4
 
   ##
-  # This module is a mixin that contains the methos common to struct and list types.
+  # This module is a mixin that contains the methods common to struct and list types.
   #
   module Type
 
@@ -39,72 +39,6 @@ module OvirtSDK4
       @href = value
     end
 
-    ##
-    # Returns the reference to the connection that created this object.
-    #
-    # @return [Connection]
-    #
-    def connection
-      return @connection
-    end
-
-    ##
-    # Sets reference to the connection that created this object.
-    #
-    # @param value [Connection]
-    #
-    def connection=(value)
-      @connection = value
-    end
-
-    ##
-    # Indicates if this structure is used as a link. When a structure is used as a link only the identifier and the
-    # `href` attributes will be returned by the server.
-    #
-    # @return [Boolean]
-    #
-    def is_link?
-      return @is_link
-    end
-
-    ##
-    # Sets the value of the flag that indicates if this structure is used as a link.
-    #
-    # @param value [Boolean]
-    #
-    def is_link=(value)
-      @is_link = value
-    end
-
-    ##
-    # Follows the `href` attribute of this structure, retrieves the object and returns it.
-    #
-    def follow_link
-      # Check that the "href" and "connection" attributes have values, as both are needed in order to retrieve
-      # the representation of the object:
-      if href.nil?
-        raise Error.new("Can't follow link because the \"href\" attribute does't have a value")
-      end
-      if connection.nil?
-        raise Error.new("Can't follow link because the \"connection\" attribute does't have a value")
-      end
-
-      # Check that the value of the "href" attribute is compatible with the base URL of the connection:
-      prefix = connection.url.path
-      if !prefix.end_with?('/')
-        prefix += '/'
-      end
-      if !href.start_with?(prefix)
-        raise Error.new("The URL \"#{href}\" isn't compatible with the base URL of the connection")
-      end
-
-      # Remove the prefix from the URL, follow the path to the relevant service and invoke the "get" method to
-      # retrieve its representation:
-      path = href[prefix.length..-1]
-      service = connection.service(path)
-      return service.get
-    end
-
   end
 
   ##
@@ -118,8 +52,6 @@ module OvirtSDK4
     #
     def initialize(opts = {})
       self.href = opts[:href]
-      self.connection = opts[:connection]
-      self.is_link = opts[:is_link]
     end
 
   end
