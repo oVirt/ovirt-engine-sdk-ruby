@@ -102,6 +102,9 @@ module OvirtSDK4
     #   exist, and the debug output will be added to the end. The file will be closed when the connection is closed.
     #   If it is an IO object then the debug output will be written directly, and it won't be closed.
     #
+    # @option opts [Boolean] :kerberos (false) A boolean flag indicating if Kerberos uthentication should be used
+    #   instead of the default basic authentication.
+    #
     def initialize(opts = {})
       # Get the values of the parameters and assign default values:
       url = opts[:url]
@@ -111,6 +114,7 @@ module OvirtSDK4
       ca_file = opts[:ca_file]
       debug = opts[:debug] || false
       log = opts[:log]
+      kerberos = opts[:kerberos] || false
 
       # Check mandatory parameters:
       if url.nil?
@@ -129,9 +133,15 @@ module OvirtSDK4
       @curl.cookiejar = '/dev/null'
 
       # Configure authentication:
-      @curl.http_auth_types = :basic
-      @curl.username = username
-      @curl.password = password
+      if kerberos
+        @curl.http_auth_types = :gssnegotiate
+        @curl.username = ''
+        @curl.password = ''
+      else
+        @curl.http_auth_types = :basic
+        @curl.username = username
+        @curl.password = password
+      end
 
       # Configure TLS parameters:
       if @url.scheme == 'https'
