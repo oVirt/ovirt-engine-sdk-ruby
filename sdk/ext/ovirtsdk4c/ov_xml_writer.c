@@ -23,11 +23,9 @@ limitations under the License.
 #include "ov_error.h"
 #include "ov_xml_writer.h"
 
-// Symbols:
-static VALUE IO_SYMBOL;
-static VALUE INDENT_SYMBOL;
-
-// Method identifiers:
+/* Identifiers: */
+static ID STRING_ID;
+static ID STRING_IO_ID;
 static ID WRITE_ID;
 
 typedef struct {
@@ -61,7 +59,10 @@ static void ov_xml_writer_free(ov_xml_writer_object *object) {
 }
 
 static VALUE ov_xml_writer_alloc(VALUE klass) {
-    ov_xml_writer_object *object = ALLOC(ov_xml_writer_object);
+    ov_xml_writer_object* object = NULL;
+
+    object = ALLOC(ov_xml_writer_object);
+    memset(object, 0, sizeof(ov_xml_writer_object));
     return Data_Wrap_Struct(klass, ov_xml_writer_mark, ov_xml_writer_free, object);
 }
 
@@ -80,39 +81,65 @@ static int ov_xml_writer_callback(void *context, const char *buffer, int length)
     return NUM2INT(count);
 }
 
-static VALUE ov_xml_writer_initialize(VALUE self, VALUE options) {
-    // Initialize the writer:
-    ov_xml_writer_object *object;
+static VALUE ov_xml_writer_create_string_io() {
+    VALUE sio_class;
+    VALUE sio_obj;
+
+    sio_class = rb_const_get(rb_cObject, STRING_IO_ID);
+    sio_obj = rb_class_new_instance(0, NULL, sio_class);
+    return sio_obj;
+}
+
+static VALUE ov_xml_writer_initialize(int argc, VALUE* argv, VALUE self) {
+    VALUE indent;
+    VALUE io;
+    VALUE io_class;
+    ov_xml_writer_object* object = NULL;
+    xmlOutputBufferPtr buffer = NULL;
+
+    /* Get the pointer to the object: */
     Data_Get_Struct(self, ov_xml_writer_object, object);
 
-    // Get the options, and assign default values:
-    Check_Type(options, T_HASH);
-    VALUE io = rb_hash_aref(options, IO_SYMBOL);
+    /* Get the values of the parameters: */
+    if (argc > 2) {
+      rb_raise(ov_error_class, "Expected at most two arguments, 'io' and 'indent', but received %d", argc);
+    }
+    io = argc > 0? argv[0]: Qnil;
+    indent = argc > 1? argv[1]: Qnil;
+
+    /* The first parameter can be an IO object or nil. If it is nil then we need to create a IO object where we can
+       write the generated XML. */
     if (NIL_P(io)) {
-       rb_raise(ov_error_class, "The \"io\" parameter is mandatory and can't be nil");
+        object->io = ov_xml_writer_create_string_io();
     }
-    VALUE indent = rb_hash_aref(options, INDENT_SYMBOL);
-    if (NIL_P(indent)) {
-        indent = Qfalse;
+    else {
+        io_class = rb_class_of(io);
+        if (io_class == rb_cIO) {
+            object->io = io;
+        }
+        else {
+            rb_raise(
+                ov_error_class,
+                "The type of the 'io' parameter must be 'IO', but it is '%"PRIsVALUE"'",
+                io_class
+            );
+        }
     }
 
-    // Save the IO object:
-    object->io = io;
-
-    // Create the libxml buffer that writes to the IO object:
-    xmlOutputBufferPtr buffer = xmlOutputBufferCreateIO(ov_xml_writer_callback, NULL, object, NULL);
+    /* Create the libxml buffer that writes to the IO object: */
+    buffer = xmlOutputBufferCreateIO(ov_xml_writer_callback, NULL, object, NULL);
     if (buffer == NULL) {
         rb_raise(ov_error_class, "Can't create XML buffer");
     }
 
-    // Create the libxml writer:
+    /* Create the libxml writer: */
     object->writer = xmlNewTextWriter(buffer);
     if (object->writer == NULL) {
         xmlOutputBufferClose(buffer);
         rb_raise(ov_error_class, "Can't create XML writer");
     }
 
-    // Enable indentation:
+    /* Enable indentation: */
     if (RTEST(indent)) {
         xmlTextWriterSetIndent(object->writer, 1);
         xmlTextWriterSetIndentString(object->writer, BAD_CAST "  ");
@@ -121,10 +148,17 @@ static VALUE ov_xml_writer_initialize(VALUE self, VALUE options) {
     return self;
 }
 
-static VALUE ov_xml_writer_io(VALUE self) {
-    ov_xml_writer_object *object;
+static VALUE ov_xml_writer_string(VALUE self) {
+    int rc = 0;
+    ov_xml_writer_object* object = NULL;
+
     Data_Get_Struct(self, ov_xml_writer_object, object);
-    return object->io;
+    ov_xml_writer_check_closed(object);
+    rc = xmlTextWriterFlush(object->writer);
+    if (rc < 0) {
+        rb_raise(ov_error_class, "Can't flush XML writer");
+    }
+    return rb_funcall(object->io, STRING_ID, 0, NULL);
 }
 
 static VALUE ov_xml_writer_write_start(VALUE self, VALUE name) {
@@ -182,10 +216,12 @@ static VALUE ov_xml_writer_write_element(VALUE self, VALUE name, VALUE value) {
 }
 
 static VALUE ov_xml_writer_flush(VALUE self) {
-    ov_xml_writer_object *object;
+    ov_xml_writer_object* object = NULL;
+    int rc = 0;
+
     Data_Get_Struct(self, ov_xml_writer_object, object);
     ov_xml_writer_check_closed(object);
-    int rc = xmlTextWriterFlush(object->writer);
+    rc = xmlTextWriterFlush(object->writer);
     if (rc < 0) {
         rb_raise(ov_error_class, "Can't flush XML writer");
     }
@@ -202,26 +238,27 @@ static VALUE ov_xml_writer_close(VALUE self) {
 }
 
 void ov_xml_writer_define(void) {
-    // Define the class:
+    /* Load required modules: */
+    rb_require("stringio");
+
+    /* Define the class: */
     ov_xml_writer_class = rb_define_class_under(ov_module, "XmlWriter", rb_cObject);
 
-    // Define the constructor:
+    /* Define the constructor: */
     rb_define_alloc_func(ov_xml_writer_class, ov_xml_writer_alloc);
-    rb_define_method(ov_xml_writer_class, "initialize", ov_xml_writer_initialize, 1);
+    rb_define_method(ov_xml_writer_class, "initialize", ov_xml_writer_initialize, -1);
 
-    // Define the methods:
-    rb_define_method(ov_xml_writer_class, "io", ov_xml_writer_io, 0);
-    rb_define_method(ov_xml_writer_class, "write_start", ov_xml_writer_write_start, 1);
-    rb_define_method(ov_xml_writer_class, "write_end", ov_xml_writer_write_end, 0);
+    /* Define the methods: */
+    rb_define_method(ov_xml_writer_class, "close", ov_xml_writer_close, 0);
+    rb_define_method(ov_xml_writer_class, "flush", ov_xml_writer_flush, 0);
+    rb_define_method(ov_xml_writer_class, "string", ov_xml_writer_string, 0);
     rb_define_method(ov_xml_writer_class, "write_attribute", ov_xml_writer_write_attribute, 2);
     rb_define_method(ov_xml_writer_class, "write_element", ov_xml_writer_write_element, 2);
-    rb_define_method(ov_xml_writer_class, "flush", ov_xml_writer_flush, 0);
-    rb_define_method(ov_xml_writer_class, "close", ov_xml_writer_close, 0);
+    rb_define_method(ov_xml_writer_class, "write_end", ov_xml_writer_write_end, 0);
+    rb_define_method(ov_xml_writer_class, "write_start", ov_xml_writer_write_start, 1);
 
-    // Create symbols:
-    IO_SYMBOL = ID2SYM(rb_intern("io"));
-    INDENT_SYMBOL  = ID2SYM(rb_intern("indent"));
-
-    // Create method identifiers:
+    /* Create method identifiers: */
+    STRING_ID = rb_intern("string");
+    STRING_IO_ID = rb_intern("StringIO");
     WRITE_ID = rb_intern("write");
 }

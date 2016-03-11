@@ -18,31 +18,15 @@ require 'spec_helper'
 
 describe SDK::XmlWriter do
 
-  describe ".io" do
-
-    context "created with an IO object" do
-
-      it "returns the original IO object" do
-          io = StringIO.new
-          writer = SDK::XmlWriter.new({:io => io})
-          expect(writer.io).to equal(io)
-
-      end
-
-    end
-
-  end
-
   describe ".write_element" do
 
     context "given name and value" do
 
       it "writes the expected XML" do
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         writer.write_element('value', 'myvalue')
-        writer.flush
-        result = writer.io.string
-        expect(result).to eql('<value>myvalue</value>')
+        expect(writer.string).to eql('<value>myvalue</value>')
+        writer.close
       end
 
     end

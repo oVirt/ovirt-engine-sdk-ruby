@@ -16,7 +16,6 @@
 
 require 'openssl'
 require 'socket'
-require 'stringio'
 require 'tempfile'
 require 'uri'
 require 'yaml'

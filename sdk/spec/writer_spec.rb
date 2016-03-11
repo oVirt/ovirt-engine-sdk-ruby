@@ -52,10 +52,9 @@ describe SDK::Writer do
     context "given name and value" do
 
       it "writes the expected XML" do
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::Writer.write_string(writer, 'value', 'myvalue')
-        writer.flush
-        result = writer.io.string
+        result = writer.string
         expect(result).to eql('<value>myvalue</value>')
       end
 
@@ -68,10 +67,9 @@ describe SDK::Writer do
     context "given name and true" do
 
       it "writes the expected XML" do
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::Writer.write_boolean(writer, 'value', true)
-        writer.flush
-        result = writer.io.string
+        result = writer.string
         expect(result).to eql('<value>true</value>')
       end
 
@@ -80,11 +78,10 @@ describe SDK::Writer do
     context "given name and false" do
 
       it "writes the expected XML" do
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::Writer.write_boolean(writer, 'value', false)
-        writer.flush
-        result = writer.io.string
-        expect(result).to eql('<value>false</value>')
+        expect(writer.string).to eql('<value>false</value>')
+        writer.close
       end
 
     end
@@ -92,11 +89,10 @@ describe SDK::Writer do
     context "given name and truthy" do
 
       it "writes 'true'" do
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::Writer.write_boolean(writer, 'value', 'myvalue')
-        writer.flush
-        result = writer.io.string
-        expect(result).to eql('<value>true</value>')
+        expect(writer.string).to eql('<value>true</value>')
+        writer.close
       end
 
     end
@@ -104,11 +100,10 @@ describe SDK::Writer do
     context "given name and falsy" do
 
       it "writes 'false'" do
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::Writer.write_boolean(writer, 'value', nil)
-        writer.flush
-        result = writer.io.string
-        expect(result).to eql('<value>false</value>')
+        expect(writer.string).to eql('<value>false</value>')
+        writer.close
       end
 
     end
@@ -148,11 +143,10 @@ describe SDK::Writer do
     context "given zero" do
 
       it "writes the expected XML" do
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::Writer.write_integer(writer, 'value', 0)
-        writer.flush
-        result = writer.io.string
-        expect(result).to eql('<value>0</value>')
+        expect(writer.string).to eql('<value>0</value>')
+        writer.close
       end
 
     end
@@ -160,11 +154,10 @@ describe SDK::Writer do
     context "given one" do
 
       it "writes the expected XML" do
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::Writer.write_integer(writer, 'value', 1)
-        writer.flush
-        result = writer.io.string
-        expect(result).to eql('<value>1</value>')
+        expect(writer.string).to eql('<value>1</value>')
+        writer.close
       end
 
     end
@@ -172,11 +165,10 @@ describe SDK::Writer do
     context "given minus one" do
 
       it "writes the expected XML" do
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::Writer.write_integer(writer, 'value', -1)
-        writer.flush
-        result = writer.io.string
-        expect(result).to eql('<value>-1</value>')
+        expect(writer.string).to eql('<value>-1</value>')
+        writer.close
       end
 
     end
@@ -224,11 +216,10 @@ describe SDK::Writer do
     context "given zero" do
 
       it "writes the expected XML" do
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::Writer.write_integer(writer, 'value', 0.0)
-        writer.flush
-        result = writer.io.string
-        expect(result).to eql('<value>0.0</value>')
+        expect(writer.string).to eql('<value>0.0</value>')
+        writer.close
       end
 
     end
@@ -236,11 +227,10 @@ describe SDK::Writer do
     context "given one" do
 
       it "writes the expected XML" do
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::Writer.write_integer(writer, 'value', 1.0)
-        writer.flush
-        result = writer.io.string
-        expect(result).to eql('<value>1.0</value>')
+        expect(writer.string).to eql('<value>1.0</value>')
+        writer.close
       end
 
     end
@@ -248,11 +238,10 @@ describe SDK::Writer do
     context "given minus one" do
 
       it "writes the expected XML" do
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::Writer.write_integer(writer, 'value', -1.0)
-        writer.flush
-        result = writer.io.string
-        expect(result).to eql('<value>-1.0</value>')
+        expect(writer.string).to eql('<value>-1.0</value>')
+        writer.close
       end
 
     end
@@ -260,11 +249,10 @@ describe SDK::Writer do
     context "given pi" do
 
       it "writes the expected XML" do
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::Writer.write_integer(writer, 'value', 3.1415)
-        writer.flush
-        result = writer.io.string
-        expect(result).to eql('<value>3.1415</value>')
+        expect(writer.string).to eql('<value>3.1415</value>')
+        writer.close
       end
 
     end
@@ -289,12 +277,11 @@ describe SDK::Writer do
     context "given a date" do
 
       it "writes the expected XML" do
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         date = DateTime.new(2015, 12, 10, 22, 00, 30, '+1')
         SDK::Writer.write_date(writer, 'value', date)
-        writer.flush
-        result = writer.io.string
-        expect(result).to eql('<value>2015-12-10T22:00:30+01:00</value>')
+        expect(writer.string).to eql('<value>2015-12-10T22:00:30+01:00</value>')
+        writer.close
       end
 
     end

@@ -27,11 +27,9 @@ limitations under the License.
 #include "ov_error.h"
 #include "ov_xml_reader.h"
 
-// Symbols:
-static VALUE IO_SYMBOL;
-
 // Method identifiers:
 static ID READ_ID;
+static ID STRING_IO_ID;
 
 typedef struct {
     VALUE io;
@@ -55,7 +53,9 @@ static void ov_xml_reader_mark(ov_xml_reader_object *object) {
 static void ov_xml_reader_free(ov_xml_reader_object *object) {
     // Free the libxml reader:
     if (!object->closed) {
-       xmlFreeTextReader(object->reader);
+       if (object->reader != NULL) {
+           xmlFreeTextReader(object->reader);
+       }
        object->reader = NULL;
        object->closed = true;
     }
@@ -65,7 +65,10 @@ static void ov_xml_reader_free(ov_xml_reader_object *object) {
 }
 
 static VALUE ov_xml_reader_alloc(VALUE klass) {
-    ov_xml_reader_object *object = ALLOC(ov_xml_reader_object);
+    ov_xml_reader_object* object = NULL;
+
+    object = ALLOC(ov_xml_reader_object);
+    memset(object, 0, sizeof(ov_xml_reader_object));
     return Data_Wrap_Struct(klass, ov_xml_reader_mark, ov_xml_reader_free, object);
 }
 
@@ -88,43 +91,56 @@ static int ov_xml_reader_callback(void *context, char *buffer, int length) {
     return length;
 }
 
-static VALUE ov_xml_reader_initialize(VALUE self, VALUE options) {
-    // Initialize the reader:
-    ov_xml_reader_object *object;
+static VALUE ov_xml_reader_create_string_io(VALUE text) {
+    VALUE sio_class;
+    VALUE sio_obj;
+
+    sio_class = rb_const_get(rb_cObject, STRING_IO_ID);
+    sio_obj = rb_class_new_instance(1, &text, sio_class);
+    return sio_obj;
+}
+
+static VALUE ov_xml_reader_initialize(VALUE self, VALUE io) {
+    VALUE io_class;
+    int rc = 0;
+    ov_xml_reader_object* object = NULL;
+
+    /* Get the pointer to the object: */
     Data_Get_Struct(self, ov_xml_reader_object, object);
 
-    // Get the options, and assign default values:
-    Check_Type(options, T_HASH);
-    VALUE io = rb_hash_aref(options, IO_SYMBOL);
-    if (NIL_P(io)) {
-       rb_raise(ov_error_class, "The \"io\" parameter is mandatory and can't be nil");
+    /* The parameter of the constructor can be a string or an IO object. If it is a string then we need to create aa
+       IO object to read from it. */
+    io_class = rb_class_of(io);
+    if (io_class == rb_cString) {
+        object->io = ov_xml_reader_create_string_io(io);
+    }
+    else if (io_class == rb_cIO) {
+        object->io = io;
+    }
+    else {
+        rb_raise(
+            ov_error_class,
+            "The type of the 'io' parameter must be 'String' or 'IO', but it is '%"PRIsVALUE"'",
+            io_class
+        );
     }
 
-    // Save the IO object:
-    object->io = io;
-
-    // Clear the closed flag:
+    /* Clear the closed flag: */
     object->closed = false;
 
-    // Create the libxml reader:
+    /* Create the libxml reader: */
     object->reader = xmlReaderForIO(ov_xml_reader_callback, NULL, object, NULL, NULL, 0);
     if (object->reader == NULL) {
         rb_raise(ov_error_class, "Can't create reader");
     }
 
-    // Move the cursor to the first node:
-    int rc = xmlTextReaderRead(object->reader);
+    /* Move the cursor to the first node: */
+    rc = xmlTextReaderRead(object->reader);
     if (rc == -1) {
         rb_raise(ov_error_class, "Can't read first node");
     }
 
     return self;
-}
-
-static VALUE ov_xml_reader_io(VALUE self) {
-    ov_xml_reader_object *object;
-    Data_Get_Struct(self, ov_xml_reader_object, object);
-    return object->io;
 }
 
 static VALUE ov_xml_reader_read(VALUE self) {
@@ -319,16 +335,18 @@ static VALUE ov_xml_reader_close(VALUE self) {
 }
 
 void ov_xml_reader_define(void) {
-    // Define the class:
+    /* Load required modules: */
+    rb_require("stringio");
+
+    /* Define the class: */
     ov_xml_reader_class = rb_define_class_under(ov_module, "XmlReader", rb_cObject);
 
-    // Define the constructor:
+    /* Define the constructor: */
     rb_define_alloc_func(ov_xml_reader_class, ov_xml_reader_alloc);
     rb_define_method(ov_xml_reader_class, "initialize", ov_xml_reader_initialize, 1);
 
-    // Define the methods:
+    /* Define the methods: */
     rb_define_method(ov_xml_reader_class, "forward", ov_xml_reader_forward, 0);
-    rb_define_method(ov_xml_reader_class, "io", ov_xml_reader_io, 0);
     rb_define_method(ov_xml_reader_class, "read", ov_xml_reader_read, 0);
     rb_define_method(ov_xml_reader_class, "node_name", ov_xml_reader_node_name, 0);
     rb_define_method(ov_xml_reader_class, "empty_element?", ov_xml_reader_empty_element, 0);
@@ -338,9 +356,7 @@ void ov_xml_reader_define(void) {
     rb_define_method(ov_xml_reader_class, "next_element", ov_xml_reader_next_element, 0);
     rb_define_method(ov_xml_reader_class, "close", ov_xml_reader_close, 0);
 
-    // Create symbols:
-    IO_SYMBOL = ID2SYM(rb_intern("io"));
-
-    // Create method identifiers:
+    /* Create method identifiers: */
     READ_ID = rb_intern("read");
+    STRING_IO_ID = rb_intern("StringIO");
 }

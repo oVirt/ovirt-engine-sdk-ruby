@@ -24,10 +24,10 @@ describe SDK::VmWriter do
 
       it "writes the expected XML" do
         vm = SDK::Vm.new
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::VmWriter.write_one(vm, writer)
+        expect(writer.string).to eql('<vm/>')
         writer.close
-        expect(writer.io.string).to eql('<vm/>')
       end
 
     end
@@ -36,10 +36,10 @@ describe SDK::VmWriter do
 
       it "writes the expected XML" do
         vm = SDK::Vm.new({:id => '123'})
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::VmWriter.write_one(vm, writer)
+        expect(writer.string).to eql('<vm id="123"/>')
         writer.close
-        expect(writer.io.string).to eql('<vm id="123"/>')
       end
 
     end
@@ -48,10 +48,10 @@ describe SDK::VmWriter do
 
       it "writes the expected XML" do
         vm = SDK::Vm.new({:name => 'myvm'})
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::VmWriter.write_one(vm, writer)
+        expect(writer.string).to eql('<vm><name>myvm</name></vm>')
         writer.close
-        expect(writer.io.string).to eql('<vm><name>myvm</name></vm>')
       end
 
     end
@@ -60,10 +60,10 @@ describe SDK::VmWriter do
 
       it "writes the expected XML" do
         vm = SDK::Vm.new({:id => '123', :name => 'myvm'})
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::VmWriter.write_one(vm, writer)
+        expect(writer.string).to eql('<vm id="123"><name>myvm</name></vm>')
         writer.close
-        expect(writer.io.string).to eql('<vm id="123"><name>myvm</name></vm>')
       end
 
     end
@@ -72,10 +72,10 @@ describe SDK::VmWriter do
 
       it "writes the expected XML" do
         vm = SDK::Vm.new({:delete_protected => true})
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::VmWriter.write_one(vm, writer)
+        expect(writer.string).to eql('<vm><delete_protected>true</delete_protected></vm>')
         writer.close
-        expect(writer.io.string).to eql('<vm><delete_protected>true</delete_protected></vm>')
       end
 
     end
@@ -84,10 +84,10 @@ describe SDK::VmWriter do
 
       it "writes the expected XML" do
         vm = SDK::Vm.new({:delete_protected => false})
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::VmWriter.write_one(vm, writer)
+        expect(writer.string).to eql('<vm><delete_protected>false</delete_protected></vm>')
         writer.close
-        expect(writer.io.string).to eql('<vm><delete_protected>false</delete_protected></vm>')
       end
 
     end
@@ -96,10 +96,10 @@ describe SDK::VmWriter do
 
       it "writes the expected XML" do
         vm = SDK::Vm.new({:cpu => {}})
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::VmWriter.write_one(vm, writer)
+        expect(writer.string).to eql('<vm><cpu/></vm>')
         writer.close
-        expect(writer.io.string).to eql('<vm><cpu/></vm>')
       end
 
     end
@@ -110,10 +110,10 @@ describe SDK::VmWriter do
         vm = SDK::Vm.new({
           :cpu => {:name => 'mycpu'}
         })
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::VmWriter.write_one(vm, writer)
+        expect(writer.string).to eql('<vm><cpu><name>mycpu</name></cpu></vm>')
         writer.close
-        expect(writer.io.string).to eql('<vm><cpu><name>mycpu</name></cpu></vm>')
       end
 
     end
@@ -122,10 +122,10 @@ describe SDK::VmWriter do
 
       it "writes the expected XML" do
         vm = SDK::Vm.new({:name => 'myvm'})
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::VmWriter.write_one(vm, writer, 'alternative')
+        expect(writer.string).to eql('<alternative><name>myvm</name></alternative>')
         writer.close
-        expect(writer.io.string).to eql('<alternative><name>myvm</name></alternative>')
       end
 
     end
@@ -134,10 +134,10 @@ describe SDK::VmWriter do
 
       it "writes the expected XML" do
         vm = SDK::Vm.new({:href => 'myhref'})
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::VmWriter.write_one(vm, writer)
+        expect(writer.string).to eql('<vm href="myhref"/>')
         writer.close
-        expect(writer.io.string).to eql('<vm href="myhref"/>')
       end
 
     end
@@ -150,10 +150,10 @@ describe SDK::VmWriter do
 
       it "writes the expected XML" do
         vms = []
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::VmWriter.write_many(vms, writer)
+        expect(writer.string).to eql('<vms/>')
         writer.close
-        expect(writer.io.string).to eql('<vms/>')
       end
 
     end
@@ -162,10 +162,10 @@ describe SDK::VmWriter do
 
       it "writes the expected XML" do
         vms = SDK::List[]
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::VmWriter.write_many(vms, writer)
+        expect(writer.string).to eql('<vms/>')
         writer.close
-        expect(writer.io.string).to eql('<vms/>')
       end
 
     end
@@ -176,10 +176,10 @@ describe SDK::VmWriter do
         vms = [
           SDK::Vm.new,
         ]
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::VmWriter.write_many(vms, writer)
+        expect(writer.string).to eql('<vms><vm/></vms>')
         writer.close
-        expect(writer.io.string).to eql('<vms><vm/></vms>')
       end
 
     end
@@ -190,10 +190,10 @@ describe SDK::VmWriter do
         vms = SDK::List[
           SDK::Vm.new,
         ]
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::VmWriter.write_many(vms, writer)
+        expect(writer.string).to eql('<vms><vm/></vms>')
         writer.close
-        expect(writer.io.string).to eql('<vms><vm/></vms>')
       end
 
     end
@@ -205,10 +205,10 @@ describe SDK::VmWriter do
           SDK::Vm.new,
           SDK::Vm.new,
         ]
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::VmWriter.write_many(vms, writer)
+        expect(writer.string).to eql('<vms><vm/><vm/></vms>')
         writer.close
-        expect(writer.io.string).to eql('<vms><vm/><vm/></vms>')
       end
 
     end
@@ -220,10 +220,10 @@ describe SDK::VmWriter do
           SDK::Vm.new,
           SDK::Vm.new,
         ]
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::VmWriter.write_many(vms, writer)
+        expect(writer.string).to eql('<vms><vm/><vm/></vms>')
         writer.close
-        expect(writer.io.string).to eql('<vms><vm/><vm/></vms>')
       end
 
     end
@@ -236,10 +236,10 @@ describe SDK::VmWriter do
           SDK::Vm.new,
         ]
         vms.href = "myhref"
-        writer = SDK::XmlWriter.new({:io => StringIO.new})
+        writer = SDK::XmlWriter.new
         SDK::VmWriter.write_many(vms, writer)
+        expect(writer.string).to eql('<vms href="myhref"><vm/><vm/></vms>')
         writer.close
-        expect(writer.io.string).to eql('<vms href="myhref"><vm/><vm/></vms>')
       end
 
     end

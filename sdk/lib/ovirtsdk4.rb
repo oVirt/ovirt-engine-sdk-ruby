@@ -18,10 +18,10 @@
 # Library requirements.
 #
 require 'date'
-require 'stringio'
 
 ##
 # Load the extension:
+#
 require 'ovirtsdk4c'
 
 ##

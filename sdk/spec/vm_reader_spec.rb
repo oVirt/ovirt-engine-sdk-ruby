@@ -23,9 +23,7 @@ describe SDK::VmReader do
     context "when given an empty XML" do
 
       it "creates an empty VM" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<vm/>')
-        }) 
+        reader = SDK::XmlReader.new('<vm/>')
         result = SDK::VmReader.read_one(reader)
         reader.close
         expect(result).to_not be_nil
@@ -37,9 +35,7 @@ describe SDK::VmReader do
     context "when given a VM with an id" do
 
       it "creates a VM with that id" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<vm id="123"/>')
-        })
+        reader = SDK::XmlReader.new('<vm id="123"/>')
         result = SDK::VmReader.read_one(reader)
         expect(result).to_not be_nil
         expect(result).to be_a(SDK::Vm)
@@ -51,9 +47,7 @@ describe SDK::VmReader do
     context "when given a VM with a name" do
 
       it "creates a VM with that name" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<vm><name>myvm</name></vm>')
-        })
+        reader = SDK::XmlReader.new('<vm><name>myvm</name></vm>')
         result = SDK::VmReader.read_one(reader)
         expect(result).to_not be_nil
         expect(result).to be_a(SDK::Vm)
@@ -65,9 +59,7 @@ describe SDK::VmReader do
     context "when given a VM with id and name" do
 
       it "creates a VM with that id and name" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<vm id="123"><name>myvm</name></vm>')
-        })
+        reader = SDK::XmlReader.new('<vm id="123"><name>myvm</name></vm>')
         result = SDK::VmReader.read_one(reader)
         expect(result).to_not be_nil
         expect(result).to be_a(SDK::Vm)
@@ -80,9 +72,7 @@ describe SDK::VmReader do
     context "when given an alternative tag" do
 
       it "ignores it and reads the attributes correctly" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<alternative id="123"><name>myvm</name></alternative>')
-        })
+        reader = SDK::XmlReader.new('<alternative id="123"><name>myvm</name></alternative>')
         result = SDK::VmReader.read_one(reader)
         expect(result).to_not be_nil
         expect(result).to be_a(SDK::Vm)
@@ -95,9 +85,7 @@ describe SDK::VmReader do
     context "when the href attribute has a value" do
 
       it "the href getter returns its value" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<vm href="myhref"></vm>')
-        })
+        reader = SDK::XmlReader.new('<vm href="myhref"></vm>')
         result = SDK::VmReader.read_one(reader)
         expect(result).to_not be_nil
         expect(result).to be_a(SDK::Vm)
@@ -113,9 +101,7 @@ describe SDK::VmReader do
     context "when given an empty XML" do
 
       it "creates an empty list" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<vms/>')
-        })
+        reader = SDK::XmlReader.new('<vms/>')
         result = SDK::VmReader.read_many(reader)
         expect(result).to_not be_nil
         expect(result).to be_a(SDK::List)
@@ -127,9 +113,7 @@ describe SDK::VmReader do
     context "when given one VM" do
 
       it "creates an a list with one element" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<vms><vm/></vms>')
-        })
+        reader = SDK::XmlReader.new('<vms><vm/></vms>')
         result = SDK::VmReader.read_many(reader)
         expect(result).to_not be_nil
         expect(result).to be_a(SDK::List)
@@ -143,9 +127,7 @@ describe SDK::VmReader do
     context "when given two VMs" do
 
       it "creates an a list with two element" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<vms><vm/><vm/></vms>')
-        })
+        reader = SDK::XmlReader.new('<vms><vm/><vm/></vms>')
         result = SDK::VmReader.read_many(reader)
         expect(result).to_not be_nil
         expect(result).to be_a(SDK::List)
@@ -161,9 +143,7 @@ describe SDK::VmReader do
     context "when given alternative tags" do
 
       it "reads the elements of the list correctly" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<myvms><myvm/><myvm/></myvms>')
-        })
+        reader = SDK::XmlReader.new('<myvms><myvm/><myvm/></myvms>')
         result = SDK::VmReader.read_many(reader)
         expect(result).to_not be_nil
         expect(result).to be_a(SDK::List)
@@ -179,9 +159,7 @@ describe SDK::VmReader do
     context "when the href attribute has a value" do
 
       it "the href getter returns its value" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<vms href="myhref"></vms>')
-        })
+        reader = SDK::XmlReader.new('<vms href="myhref"></vms>')
         result = SDK::VmReader.read_many(reader)
         expect(result).to_not be_nil
         expect(result).to be_a(SDK::List)

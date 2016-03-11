@@ -64,12 +64,10 @@ module OvirtSDK4
     #
     def check_fault(response)
       begin
-        io = StringIO.new(response.body)
-        reader = XmlReader.new(:io => io)
+        reader = XmlReader.new(response.body)
         fault = FaultReader.read_one(reader)
       ensure
         reader.close
-        io.close
       end
       raise_error(response, fault)
     end
@@ -85,12 +83,10 @@ module OvirtSDK4
     #
     def check_action(response)
       begin
-        io = StringIO.new(response.body)
-        reader = XmlReader.new(:io => io)
+        reader = XmlReader.new(response.body)
         action = ActionReader.read_one(reader)
       ensure
         reader.close
-        io.close
       end
       unless action.fault.nil?
         raise_error(response, action.fault)

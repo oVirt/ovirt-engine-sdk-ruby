@@ -23,9 +23,7 @@ describe SDK::ActionReader do
     context "when given an empty XML" do
 
       it "creates the expected action" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<fault/>')
-        })
+        reader = SDK::XmlReader.new('<fault/>')
         result = SDK::ActionReader.read_one(reader)
         reader.close
         expect(result).to be_a(SDK::Action)
@@ -38,9 +36,9 @@ describe SDK::ActionReader do
     context "when given status" do
 
       it "creates the expected action" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<action><status><state>mystate</state></status></action>')
-        })
+        reader = SDK::XmlReader.new(
+          '<action><status><state>mystate</state></status></action>'
+        )
         result = SDK::ActionReader.read_one(reader)
         expect(result).to_not be_nil
         expect(result).to be_a(SDK::Action)
@@ -53,9 +51,9 @@ describe SDK::ActionReader do
     context "when given fault" do
 
       it "creates the expected action" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<action><fault><reason>myreason</reason></fault></action>')
-        })
+        reader = SDK::XmlReader.new(
+          '<action><fault><reason>myreason</reason></fault></action>'
+        )
         result = SDK::ActionReader.read_one(reader)
         expect(result).to be_a(SDK::Action)
         expect(result.fault).to be_a(SDK::Fault)
@@ -67,14 +65,12 @@ describe SDK::ActionReader do
     context "when given status and fault" do
 
       it "creates the expected action" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new(
-            '<action>' +
-              '<status><state>mystate</state></status>' +
-              '<fault><reason>myreason</reason></fault>' +
-            '</action>'
-          )
-        })
+        reader = SDK::XmlReader.new(
+          '<action>' +
+            '<status><state>mystate</state></status>' +
+            '<fault><reason>myreason</reason></fault>' +
+          '</action>'
+        )
         result = SDK::ActionReader.read_one(reader)
         expect(result).to be_a(SDK::Action)
         expect(result.status).to be_a(SDK::Status)

@@ -230,17 +230,15 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addLine("def %1$s(opts = {})", actionName);
 
         // Generate the method:
-        buffer.addLine("io = StringIO.new");
-        buffer.addLine("writer = XmlWriter.new(:io => io, :indent => true)");
+        buffer.addLine("writer = XmlWriter.new(nil, true)");
         buffer.addLine("writer.write_start('action')");
         method.parameters()
             .filter(Parameter::isIn)
             .sorted()
             .forEach(this::generateWriteActionParameter);
         buffer.addLine("writer.write_end");
+        buffer.addLine("body = writer.string");
         buffer.addLine("writer.close");
-        buffer.addLine("io.close");
-        buffer.addLine("body = io.string");
         buffer.addLine("request = Request.new({");
         buffer.addLine(  ":method => :POST,");
         buffer.addLine(  ":path => \"#{@path}/%1$s\",", getPath(methodName));
@@ -390,8 +388,7 @@ public class ServicesGenerator implements RubyGenerator {
         Type type = parameter.getType();
         String tag = schemaNames.getSchemaTagName(name);
         buffer.addLine("begin");
-        buffer.addLine(  "io = StringIO.new");
-        buffer.addLine(  "writer = XmlWriter.new(:io => io, :indent => true)");
+        buffer.addLine(  "writer = XmlWriter.new(nil, true)");
         if (type instanceof StructType) {
             RubyName writer = rubyNames.getWriterName(type);
             buffer.addLine("%1$s.write_one(%2$s, writer, '%3$s')", writer.getClassName(), variable, tag);
@@ -402,18 +399,16 @@ public class ServicesGenerator implements RubyGenerator {
             RubyName writer = rubyNames.getWriterName(elementType);
             buffer.addLine("%1$s.write_many(%2$s, writer, '%3$s')", writer.getClassName(), variable, tag);
         }
+        buffer.addLine(  "request.body = writer.string");
         buffer.addLine("ensure");
         buffer.addLine(  "writer.close");
-        buffer.addLine(  "io.close");
         buffer.addLine("end");
-        buffer.addLine("request.body = io.string");
     }
 
     private void generateReturnResponseBody(Parameter parameter) {
         Type type = parameter.getType();
         buffer.addLine("begin");
-        buffer.addLine(  "io = StringIO.new(response.body)");
-        buffer.addLine(  "reader = XmlReader.new(:io => io)");
+        buffer.addLine(  "reader = XmlReader.new(response.body)");
         if (type instanceof StructType) {
             RubyName reader = rubyNames.getReaderName(type);
             buffer.addLine("return %1$s.read_one(reader)", reader.getClassName());
@@ -426,7 +421,6 @@ public class ServicesGenerator implements RubyGenerator {
         }
         buffer.addLine("ensure");
         buffer.addLine(  "reader.close");
-        buffer.addLine(  "io.close");
         buffer.addLine("end");
     }
 

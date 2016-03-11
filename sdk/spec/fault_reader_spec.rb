@@ -23,9 +23,7 @@ describe SDK::FaultReader do
     context "when given an empty XML" do
 
       it "creates the expected fault" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<fault/>')
-        })
+        reader = SDK::XmlReader.new('<fault/>')
         result = SDK::FaultReader.read_one(reader)
         reader.close
         expect(result).to_not be_nil
@@ -39,9 +37,7 @@ describe SDK::FaultReader do
     context "when given only reason" do
 
       it "creates the expected fault" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<fault><reason>myreason</reason></fault>')
-        })
+        reader = SDK::XmlReader.new('<fault><reason>myreason</reason></fault>')
         result = SDK::FaultReader.read_one(reader)
         expect(result).to_not be_nil
         expect(result).to be_a(SDK::Fault)
@@ -54,9 +50,7 @@ describe SDK::FaultReader do
     context "when given only detail" do
 
       it "creates the expected fault" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<fault><detail>mydetail</detail></fault>')
-        })
+        reader = SDK::XmlReader.new('<fault><detail>mydetail</detail></fault>')
         result = SDK::FaultReader.read_one(reader)
         expect(result).to_not be_nil
         expect(result).to be_a(SDK::Fault)
@@ -69,9 +63,9 @@ describe SDK::FaultReader do
     context "when given reason and detail" do
 
       it "creates the expected fault" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<fault><reason>myreason</reason><detail>mydetail</detail></fault>')
-        })
+        reader = SDK::XmlReader.new(
+          '<fault><reason>myreason</reason><detail>mydetail</detail></fault>'
+        )
         result = SDK::FaultReader.read_one(reader)
         expect(result).to_not be_nil
         expect(result).to be_a(SDK::Fault)

@@ -23,9 +23,7 @@ describe SDK::XmlReader do
     context "given attribute with value" do
 
       it "returns the value" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<root id="123"/>')
-        })
+        reader = SDK::XmlReader.new('<root id="123"/>')
         expect(reader.node_name).to eql('root')
         expect(reader.get_attribute('id')).to eql('123')
       end
@@ -35,9 +33,7 @@ describe SDK::XmlReader do
     context "given empty attribute" do
 
       it "returns empty string" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<root id=""/>')
-        })
+        reader = SDK::XmlReader.new('<root id=""/>')
         expect(reader.get_attribute('id')).to eql('')
       end
 
@@ -46,9 +42,7 @@ describe SDK::XmlReader do
     context "given non existent attribute" do
 
       it "returns nil" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<root/>')
-        })
+        reader = SDK::XmlReader.new('<root/>')
         expect(reader.get_attribute('id')).to be(nil)
       end
 
@@ -61,9 +55,7 @@ describe SDK::XmlReader do
     context "given an empty element" do
 
       it "returns nil" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<root/>')
-        })
+        reader = SDK::XmlReader.new('<root/>')
         expect(reader.read_element).to be(nil)
       end
 
@@ -72,9 +64,7 @@ describe SDK::XmlReader do
     context "given blank element" do
 
       it "returns empty string" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<root></root>')
-        })
+        reader = SDK::XmlReader.new('<root></root>')
         expect(reader.read_element).to eql('')
       end
 
@@ -87,9 +77,7 @@ describe SDK::XmlReader do
     context "given an empty element" do
 
       it "returns nil" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<list></list>')
-        })
+        reader = SDK::XmlReader.new('<list></list>')
         reader.read
         expect(reader.read_elements).to eql([])
       end
@@ -99,9 +87,7 @@ describe SDK::XmlReader do
     context "given an a list with an empty element" do
 
       it "returns a list containing nil" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<list><item/></list>')
-        })
+        reader = SDK::XmlReader.new('<list><item/></list>')
         reader.read
         expect(reader.read_elements).to eql([nil])
       end
@@ -111,9 +97,7 @@ describe SDK::XmlReader do
     context "given an a list with a blank element" do
 
       it "returns a list containing an empty string" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<list><item></item></list>')
-        })
+        reader = SDK::XmlReader.new('<list><item></item></list>')
         reader.read
         expect(reader.read_elements).to eql([''])
       end
@@ -123,9 +107,7 @@ describe SDK::XmlReader do
     context "given an a list with one element" do
 
       it "returns a list containing it" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<list><item>first</item></list>')
-        })
+        reader = SDK::XmlReader.new('<list><item>first</item></list>')
         reader.read
         expect(reader.read_elements).to eql(['first'])
       end
@@ -135,9 +117,7 @@ describe SDK::XmlReader do
     context "given an a list with two elements" do
 
       it "returns a list containing them" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<list><item>first</item><item>second</item></list>')
-        })
+        reader = SDK::XmlReader.new('<list><item>first</item><item>second</item></list>')
         reader.read
         expect(reader.read_elements).to eql(['first', 'second'])
       end
@@ -151,9 +131,7 @@ describe SDK::XmlReader do
     context "given preceding text" do
 
       it "skips it and returns true" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<root>text<target/></root>')
-        })
+        reader = SDK::XmlReader.new('<root>text<target/></root>')
         reader.read
         expect(reader.forward).to be true
         expect(reader.node_name).to eql('target')
@@ -164,9 +142,7 @@ describe SDK::XmlReader do
     context "given end of document" do
 
       it "returns false" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<root/>')
-        })
+        reader = SDK::XmlReader.new('<root/>')
         reader.read
         expect(reader.forward).to be false
       end
@@ -176,9 +152,7 @@ describe SDK::XmlReader do
     context "given an empty element" do
 
       it "returns true and stays in the empty element" do
-        reader = SDK::XmlReader.new({
-          :io => StringIO.new('<root><target/></root>')
-        })
+        reader = SDK::XmlReader.new('<root><target/></root>')
         reader.read
         expect(reader.forward).to be true
         expect(reader.node_name).to eql('target')
