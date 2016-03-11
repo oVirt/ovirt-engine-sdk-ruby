@@ -105,6 +105,10 @@ module OvirtSDK4
     # @option opts [Boolean] :kerberos (false) A boolean flag indicating if Kerberos uthentication should be used
     #   instead of the default basic authentication.
     #
+    # @option opts [Boolean] :timeout (0) The maximun total time to wait for the response, in seconds. A value of zero
+    #   (the default) means wait for ever. If the timeout expires before the response is received an exception will be
+    #   raised.
+    #
     def initialize(opts = {})
       # Get the values of the parameters and assign default values:
       url = opts[:url]
@@ -115,6 +119,7 @@ module OvirtSDK4
       debug = opts[:debug] || false
       log = opts[:log]
       kerberos = opts[:kerberos] || false
+      timeout = opts[:timeout] || 0
 
       # Check mandatory parameters:
       if url.nil?
@@ -156,6 +161,9 @@ module OvirtSDK4
           @curl.cacert = ca_file
         end
       end
+
+      # Configure the timeout:
+      @curl.timeout = timeout
 
       # Configure debug mode:
       @close_log = false
