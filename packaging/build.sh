@@ -1,11 +1,11 @@
 #!/bin/bash -ex
 
 # Name and version of the package:
-gem_version="${gem_version:=4.0.0.alpha10}"
+gem_version="${gem_version:=4.0.0.alpha11}"
 gem_url="${gem_url:=https://rubygems.org/downloads/ovirt-engine-sdk-${gem_version}.gem}"
 rpm_version="${rpm_version:=4.0.0}"
 rpm_dist="${rpm_dist:=$(rpm --eval '%dist')}"
-rpm_release="${rpm_release:=0.0.alpha10${rpm_dist}}"
+rpm_release="${rpm_release:=0.0.alpha11${rpm_dist}}"
 
 # Generate the .spec file from the template for the distribution where the
 # build process is running:
