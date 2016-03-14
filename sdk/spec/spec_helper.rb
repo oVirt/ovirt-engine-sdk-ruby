@@ -89,6 +89,15 @@ module Helpers # :nodoc:
     })
   end
 
+  def default_kerberos_connection
+    return SDK::Connection.new({
+      :url => default_url,
+      :ca_file => default_ca_file,
+      :debug => default_debug,
+      :kerberos => true
+    })
+  end
+
   def load_parameters
     @parameters = File.open('spec/parameters.yaml') do |file|
       YAML::load(file)
@@ -106,11 +115,13 @@ RSpec.configure do |c|
     load_parameters
   end
 
-  # Run the integration test only if the "integration" option is enabled. This means that in order to run the
-  # integration tests you will need to use a command like this:
+  # Run the integration and integration_kerberos test only if the "integration" or "integration_kerberos" option is
+  # enabled. This means that in order to run the integration tests you will need to use a command like this:
   #
   #   rspec --tag integration
+  #   or
+  #   rspec --tag integration_kerberos
   #
   # These tests can't run by default, because they require a live engine.
-  c.filter_run_excluding :integration => true
+  c.filter_run_excluding :integration => true, :integration_kerberos => true
 end
