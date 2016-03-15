@@ -105,7 +105,7 @@ module OvirtSDK4
     # @option opts [Boolean] :kerberos (false) A boolean flag indicating if Kerberos uthentication should be used
     #   instead of the default basic authentication.
     #
-    # @option opts [Boolean] :timeout (0) The maximun total time to wait for the response, in seconds. A value of zero
+    # @option opts [Integer] :timeout (0) The maximun total time to wait for the response, in seconds. A value of zero
     #   (the default) means wait for ever. If the timeout expires before the response is received an exception will be
     #   raised.
     #
