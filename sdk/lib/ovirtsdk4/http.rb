@@ -28,7 +28,6 @@ module OvirtSDK4
   class Request
     attr_accessor :method
     attr_accessor :path
-    attr_accessor :matrix
     attr_accessor :query
     attr_accessor :headers
     attr_accessor :body
@@ -40,7 +39,6 @@ module OvirtSDK4
       self.method = opts[:method] || :GET
       self.path = opts[:path] || ''
       self.headers = opts[:headers] || {}
-      self.matrix = opts[:matrix] || {}
       self.query = opts[:query] || {}
       self.body = opts[:body]
     end
@@ -304,7 +302,6 @@ module OvirtSDK4
       @curl.url = build_url({
         :path => request.path,
         :query => request.query,
-        :matrix => request.matrix,
       })
 
       # Add headers, avoiding those that have no value:
@@ -569,17 +566,13 @@ module OvirtSDK4
     end
 
     ##
-    # Builds a request URL from a path, and the sets of matrix and query parameters.
+    # Builds a request URL from a path, and the set of query parameters.
     #
     # @params opts [Hash] The options used to build the URL.
     #
     # @option opts [String] :path The path that will be added to the base URL. The default is an empty string.
     #
     # @option opts [Hash<String, String>] :query ({}) A hash containing the query parameters to add to the URL. The
-    #   keys of the hash should be strings containing the names of the parameters, and the values should be strings
-    #   containing the values.
-    #
-    # @option opts [Hash<String, String>] :matrix ({}) A hash containing the matrix parameters to add to the URL. The
     #   keys of the hash should be strings containing the names of the parameters, and the values should be strings
     #   containing the values.
     #
@@ -591,15 +584,9 @@ module OvirtSDK4
       # Get the values of the parameters and assign default values:
       path = opts[:path] || ''
       query = opts[:query] || {}
-      matrix = opts[:matrix] || {}
 
       # Add the path and the parameters:
       url = @url.to_s + path
-      if not matrix.empty?
-        matrix.each do |key, value|
-          url = url + ';' + URI.encode_www_form({key => value})
-        end
-      end
       if not query.empty?
         url = url + '?' + URI.encode_www_form(query)
       end

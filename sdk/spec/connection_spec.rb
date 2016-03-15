@@ -75,43 +75,6 @@ describe SDK::Connection do
 
     end
 
-    context "when given base, path and matrix parameter" do
-
-      it "builds the expected URL" do
-        url = @connection.build_url({
-          :path => "/vms",
-          :matrix => {'max' => '10'},
-        })
-        expect(url).to eql(default_url + "/vms;max=10")
-      end
-
-    end
-
-    context "when given base, path and multiple matrix parameters" do
-
-      it "builds the expected URL" do
-        url = @connection.build_url({
-          :path => "/vms",
-          :matrix => {'max' => '10', 'current' => 'true'},
-        })
-        expect(url).to eql(default_url + "/vms;max=10;current=true")
-      end
-
-    end
-
-    context "when given base, path and both query and matrix parameters" do
-
-      it "builds the expected URL" do
-        url = @connection.build_url({
-          :path => "/vms",
-          :matrix => {'current' => 'true'},
-          :query => {'max' => '10'},
-        })
-        expect(url).to eql(default_url + "/vms;current=true?max=10")
-      end
-
-    end
-
     context "when given a query parameter with white space in the value" do
 
       it "the white space is encoded correctly" do
@@ -120,18 +83,6 @@ describe SDK::Connection do
           :query => {'search' => 'My VM'},
         })
         expect(url).to eql(default_url + "/vms?search=My+VM")
-      end
-
-    end
-
-    context "when given a matrix parameter with white space in the value" do
-
-      it "the white space is encoded correctly" do
-        url = @connection.build_url({
-          :path => "/vms",
-          :matrix => {'search' => 'My VM'},
-        })
-        expect(url).to eql(default_url + "/vms;search=My+VM")
       end
 
     end
@@ -148,36 +99,12 @@ describe SDK::Connection do
 
     end
 
-    context "when given a matrix parameter with an equals sign inside the value" do
-
-      it "the equals sign is encoded correctly" do
-        url = @connection.build_url({
-          :path => "/vms",
-          :matrix => {'search' => 'name=myvm'},
-        })
-        expect(url).to eql(default_url + "/vms;search=name%3Dmyvm")
-      end
-
-    end
-
     context "when given an empty set of query parameters" do
 
       it "the set is ignored and not added to the URL" do
         url = @connection.build_url({
           :path => "/vms",
           :query => {},
-        })
-        expect(url).to eql(default_url + "/vms")
-      end
-
-    end
-
-    context "when given an empty set of matrix parameters" do
-
-      it "the set is ignored and not added to the URL" do
-        url = @connection.build_url({
-          :path => "/vms",
-          :matrix => {},
         })
         expect(url).to eql(default_url + "/vms")
       end
