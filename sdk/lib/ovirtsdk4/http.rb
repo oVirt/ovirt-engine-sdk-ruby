@@ -109,6 +109,10 @@ module OvirtSDK4
     #   (the default) means wait for ever. If the timeout expires before the response is received an exception will be
     #   raised.
     #
+    # @option opts [Boolean] :compress (false) A boolean flag indicating if the SDK should ask the server to send
+    #   compressed responses. Note that this is a hint for the server, and that it may return uncompressed data even
+    #   when this parameter is set to `true`.
+    #
     def initialize(opts = {})
       # Get the values of the parameters and assign default values:
       url = opts[:url]
@@ -120,6 +124,7 @@ module OvirtSDK4
       log = opts[:log]
       kerberos = opts[:kerberos] || false
       timeout = opts[:timeout] || 0
+      compress = opts[:compress] || false
 
       # Check mandatory parameters:
       if url.nil?
@@ -164,6 +169,12 @@ module OvirtSDK4
 
       # Configure the timeout:
       @curl.timeout = timeout
+
+      # Configure compression of responses (setting the value to a zero length string means accepting all the
+      # compression types that libcurl supports):
+      if compress
+        @curl.encoding = ''
+      end
 
       # Configure debug mode:
       @close_log = false
