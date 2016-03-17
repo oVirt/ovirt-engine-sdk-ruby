@@ -20,31 +20,31 @@ describe SDK::ClustersService do
 
   before(:each) do
     @connection = default_kerberos_connection
-    @clusters_service = @connection.system_service.clusters_service
+    @service = @connection.system_service.clusters_service
   end
 
   after(:each) do
     @connection.close
   end
 
-  describe ".clusters", :integration_kerberos => true do
+  describe ".clusters", :kerberos => true do
 
     context "getting the reference to the service using Kerberos" do
 
       it "doesn't return nil" do
-        expect(@clusters_service).not_to be_nil
+        expect(@service).not_to be_nil
       end
 
     end
 
   end
 
-  describe ".list", :integration_kerberos => true do
+  describe ".list", :kerberos => true do
 
     context "without parameters using Kerberos for authentication" do
 
       it "returns a list, maybe empty" do
-        clusters = @clusters_service.list
+        clusters = @service.list
         expect(clusters).not_to be_nil
         expect(clusters).to be_an(Array)
       end
@@ -54,7 +54,7 @@ describe SDK::ClustersService do
     context "with an unfeasible query" do
 
       it "returns an empty array" do
-        clusters = @clusters_service.list({:search => 'name=ugly'})
+        clusters = @service.list({:search => 'name=ugly'})
         expect(clusters).to eql([])
       end
 

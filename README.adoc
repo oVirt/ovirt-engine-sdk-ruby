@@ -60,31 +60,17 @@ default, when the project is built, only a subset of the tests is
 executed, those that don't require a live engine and network
 connectivity.
 
-To run the tests that require a live engine you will need to have an
-oVirt engine up and running, put the connection details into the
-`spec/parameters.yaml` file and run the `rspec` command line tool with
-the the `--tag integration` option:
-
-  $ cd sdk
-  $ cat > spec/parameters.yaml <<.
-  default_url: https://myengine.example.com/ovirt-engine/api
-  default_user: admin@internal
-  default_password: mypassword
-  default_debug: false
-  .
-  $ rspec --tag integration
-
 To run the Kerberos tests you will need to have a oVirt engine up and running
 with Kerberos authentication setup, put the connection details into the
 `spec/parameters.yaml` file and run the `rspec` command line tool with the
-`--tag integration_kerberos` option
+`--tag kerberos` option
 
   $ cd sdk
   $ cat > spec/parameters.yaml <<.
   default_url: https://myengine.example.com/ovirt-engine/api
   default_debug: false
   .
-  $ rspec --tag integration_kerberos
+  $ rspec --tag kerberos
 
 The `default_debug` option is translated into the `:debug` parameter of
 the constructor of the `Connection` class used for the integration tests

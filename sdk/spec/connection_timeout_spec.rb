@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015 Red Hat, Inc.
+# Copyright (c) 2015-2016 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,11 +16,17 @@
 
 require 'spec_helper'
 
-describe SDK::VmsService do
+describe SDK::Connection do
 
   before(:all) do
     start_server
-    @connection = test_connection
+    @connection = SDK::Connection.new(
+      :url => test_url,
+      :username => test_user,
+      :password => test_password,
+      :ca_file => test_ca_file,
+      :timeout => 1,
+    )
     @service = @connection.system_service.vms_service
   end
 
@@ -29,37 +35,13 @@ describe SDK::VmsService do
     stop_server
   end
 
-  describe ".vms" do
+  describe ".send" do
 
-    context "getting the reference to the service" do
+    context "when timeout is set" do
 
-      it "doesn't return nil" do
-        expect(@service).not_to be_nil
-      end
-
-    end
-
-  end
-
-  describe ".list" do
-
-    context "without parameters" do
-
-      it "returns a list, maybe empty" do
-        set_xml_response('vms', 200, '<vms/>')
-        vms = @service.list
-        expect(vms).not_to be_nil
-        expect(vms).to be_an(Array)
-      end
-
-    end
-
-    context "with an unfeasible query" do
-
-      it "returns an empty array" do
-        set_xml_response('vms', 200, '<vms/>')
-        vms = @service.list(:search => 'name=ugly')
-        expect(vms).to eql([])
+      it "the request fails when the timeout expires" do
+        set_xml_response('vms', 200, '<vms/>', delay = 2)
+        expect { @service.list }.to raise_error(/timeout/i)
       end
 
     end

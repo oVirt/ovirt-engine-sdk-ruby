@@ -18,33 +18,36 @@ require 'spec_helper'
 
 describe SDK::ClustersService do
 
-  before(:each) do
-    @connection = default_connection
-    @clusters_service = @connection.system_service.clusters_service
+  before(:all) do
+    start_server
+    @connection = test_connection
+    @service = @connection.system_service.clusters_service
   end
 
-  after(:each) do
+  after(:all) do
     @connection.close
+    stop_server
   end
 
-  describe ".clusters", :integration => true do
+  describe ".clusters" do
 
     context "getting the reference to the service" do
 
       it "doesn't return nil" do
-        expect(@clusters_service).not_to be_nil
+        expect(@service).not_to be_nil
       end
 
     end
 
   end
 
-  describe ".list", :integration => true do
+  describe ".list" do
 
     context "without parameters" do
 
       it "returns a list, maybe empty" do
-        clusters = @clusters_service.list
+        set_xml_response('clusters', 200, '<clusters/>')
+        clusters = @service.list
         expect(clusters).not_to be_nil
         expect(clusters).to be_an(Array)
       end
@@ -54,7 +57,8 @@ describe SDK::ClustersService do
     context "with an unfeasible query" do
 
       it "returns an empty array" do
-        clusters = @clusters_service.list({:search => 'name=ugly'})
+        set_xml_response('clusters', 200, '<clusters/>')
+        clusters = @service.list(:search => 'name=ugly')
         expect(clusters).to eql([])
       end
 

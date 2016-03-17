@@ -14,11 +14,13 @@
 # limitations under the License.
 #
 
+require 'json'
 require 'openssl'
 require 'socket'
 require 'tempfile'
 require 'uri'
-require 'yaml'
+require 'webrick'
+require 'webrick/https'
 
 require 'ovirtsdk4'
 
@@ -28,65 +30,44 @@ SDK = OvirtSDK4
 # This module contains utility functions to be used in all the examples.
 module Helpers # :nodoc:
 
-  def default_url
-    return @parameters['default_url']
+  # The authentication details used by the embedded tests web server:
+  REALM = 'API'
+  USER = 'admin@internal'
+  PASSWORD = 'vzhJgfyaDPHRhg'
+  TOKEN = 'bvY7txV9ltmmRQ'
+
+  # The host and port and path used by the embedded tests web server:
+  HOST = 'localhost'
+  PORT = 8000
+  PREFIX = '/ovirt-engine'
+
+  def test_user
+    return USER
   end
 
-  def default_user
-    return @parameters['default_user']
+  def test_password
+    return PASSWORD
   end
 
-  def default_password
-    return @parameters['default_password']
+  def test_prefix
+    return PREFIX
   end
 
-  def default_ca_file
-    # Check if the CA file is already part of the parameters:
-    ca_file = @parameters['default_ca_file']
-
-    if ca_file.nil?
-      # Try to get the CA certificate starting the TLS handshake and getting the last certificate of the chain
-      # presented by the server:
-      parsed_url = URI.parse(default_url)
-      begin
-        tcp_socket = TCPSocket.open(parsed_url.host, parsed_url.port)
-        ssl_socket = OpenSSL::SSL::SSLSocket.new(tcp_socket)
-        ssl_socket.connect
-        ca_text = ssl_socket.peer_cert_chain.last.to_pem
-      ensure
-        unless ssl_socket.nil?
-          ssl_socket.close
-        end
-        unless tcp_socket.nil?
-          tcp_socket.close
-        end
-      end
-
-      # Create a temporary file to store the CA certificate:
-      ca_fd = Tempfile.new('ca')
-      ca_fd.write(ca_text)
-      ca_fd.close()
-      ca_file = ca_fd.path
-
-      # Update the hash of parameters:
-      @parameters['default_ca_file'] = ca_file
-    end
-
-    return ca_file
+  def test_url
+    return "https://#{HOST}:#{PORT}#{PREFIX}/api"
   end
 
-  def default_debug
-    return @parameters['default_debug']
+  def test_connection
+    return SDK::Connection.new(
+      :url => test_url,
+      :username => test_user,
+      :password => test_password,
+      :ca_file => test_ca_file,
+    )
   end
 
-  def default_connection
-    return SDK::Connection.new({
-      :url => default_url,
-      :username => default_user,
-      :password => default_password,
-      :ca_file => default_ca_file,
-      :debug => default_debug,
-    })
+  def test_ca_file
+    return 'spec/pki/ca.crt'
   end
 
   def default_kerberos_connection
@@ -98,10 +79,67 @@ module Helpers # :nodoc:
     })
   end
 
-  def load_parameters
-    @parameters = File.open('spec/parameters.yaml') do |file|
-      YAML::load(file)
+  def start_server(host = 'localhost')
+    # Load the private key and the certificate corresponding to the given host name:
+    key = OpenSSL::PKey::RSA.new(File.read("spec/pki/#{host}.key"))
+    crt = OpenSSL::X509::Certificate.new(File.read("spec/pki/#{host}.crt"))
+
+    # Prepare the authentication configuration:
+    db_file = Tempfile.new('users')
+    db_path = db_file.path
+    db_file.close
+    db_file.unlink
+    db = WEBrick::HTTPAuth::Htpasswd.new(db_path)
+    db.auth_type = WEBrick::HTTPAuth::BasicAuth
+    db.set_passwd(REALM, USER, PASSWORD)
+    db.flush
+    @authenticator = WEBrick::HTTPAuth::BasicAuth.new(
+      :Realm => REALM,
+      :UserDB => db,
+    )
+
+    # Prepare a loggers that write to files, so that the log output isn't mixed with the tests output:
+    server_log = WEBrick::Log.new('spec/server.log', WEBrick::Log::DEBUG)
+    access_log = File.open('spec/access.log', 'w')
+
+    # Create the web server:
+    @server = WEBrick::HTTPServer.new(
+      :BindAddress => '127.0.0.1',
+      :Port => 8000,
+      :SSLEnable => true,
+      :SSLPrivateKey => key,
+      :SSLCertificate => crt,
+      :Logger => server_log,
+      :AccessLog => [[access_log, WEBrick::AccessLog::COMBINED_LOG_FORMAT]],
+    )
+
+    # Create the handler for authentication requests:
+    @server.mount_proc "#{PREFIX}/sso/oauth/token" do |request, response|
+      response['Content-Type'] = 'application/json'
+      response.status = 200
+      response.body = JSON.generate(
+        :access_token => TOKEN,
+      )
     end
+
+    # Start the server in a different thread, as the call to the "start" method blocks the current thread:
+    @thread = Thread.new {
+      @server.start
+    }
+  end
+
+  def set_xml_response(path, status, body, delay = 0)
+    @server.mount_proc "#{PREFIX}/api/#{path}" do |request, response|
+      sleep(delay)
+      response['Content-Type'] = 'application/xml'
+      response.body = body
+      response.status = status
+    end
+  end
+
+  def stop_server
+    @server.shutdown
+    @thread.join
   end
 
 end
@@ -110,18 +148,11 @@ RSpec.configure do |c|
   # Include the helpers module in all the examples.
   c.include Helpers
 
-  # Load the parameters before running the tests:
-  c.before(:all) do
-    load_parameters
-  end
-
-  # Run the integration and integration_kerberos test only if the "integration" or "integration_kerberos" option is
-  # enabled. This means that in order to run the integration tests you will need to use a command like this:
+  # Run the Kerberos tests only if the "kerberos" option is enabled. This means that in order to run the integration
+  # tests you will need to use a command like this:
   #
-  #   rspec --tag integration
-  #   or
-  #   rspec --tag integration_kerberos
+  #   rspec --tag kerberos
   #
   # These tests can't run by default, because they require a live engine.
-  c.filter_run_excluding :integration => true, :integration_kerberos => true
+  c.filter_run_excluding :kerberos => true
 end
