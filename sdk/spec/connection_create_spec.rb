@@ -20,6 +20,7 @@ describe SDK::Connection do
 
   before(:all) do
     start_server
+    set_xml_response('', 200, '<api/>')
   end
 
   after(:all) do
@@ -108,6 +109,20 @@ describe SDK::Connection do
         expect(log.size).to be > 0
         log.close
         log.unlink
+      end
+
+    end
+
+    context "with Kerberos enabled" do
+
+      it "works correctly" do
+        options = {
+          :url => test_url,
+          :kerberos => true,
+          :ca_file => test_ca_file,
+        }
+        connection = SDK::Connection.new(options)
+        connection.close
       end
 
     end

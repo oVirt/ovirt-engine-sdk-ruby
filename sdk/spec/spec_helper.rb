@@ -38,7 +38,6 @@ module Helpers # :nodoc:
 
   # The host and port and path used by the embedded tests web server:
   HOST = 'localhost'
-  PORT = 8000
   PREFIX = '/ovirt-engine'
 
   def test_user
@@ -49,12 +48,38 @@ module Helpers # :nodoc:
     return PASSWORD
   end
 
+  def test_host
+    return HOST
+  end
+
+  def test_port
+    if @port.nil?
+      range = 60000..61000
+      port = range.first
+      begin
+        server = TCPServer.new(test_host, port)
+      rescue Errno::EADDRINUSE
+        port += 1
+        retry if port <= range.last
+        raise "Can't find a free port in range #{range}"
+      ensure
+        server.close unless server.nil?
+      end
+      @port = port
+    end
+    return @port
+  end
+
   def test_prefix
     return PREFIX
   end
 
   def test_url
-    return "https://#{HOST}:#{PORT}#{PREFIX}/api"
+    return "https://#{test_host}:#{test_port}#{test_prefix}/api"
+  end
+
+  def test_ca_file
+    return 'spec/pki/ca.crt'
   end
 
   def test_connection
@@ -64,19 +89,6 @@ module Helpers # :nodoc:
       :password => test_password,
       :ca_file => test_ca_file,
     )
-  end
-
-  def test_ca_file
-    return 'spec/pki/ca.crt'
-  end
-
-  def default_kerberos_connection
-    return SDK::Connection.new({
-      :url => default_url,
-      :ca_file => default_ca_file,
-      :debug => default_debug,
-      :kerberos => true
-    })
   end
 
   def start_server(host = 'localhost')
@@ -104,8 +116,8 @@ module Helpers # :nodoc:
 
     # Create the web server:
     @server = WEBrick::HTTPServer.new(
-      :BindAddress => '127.0.0.1',
-      :Port => 8000,
+      :BindAddress => test_host,
+      :Port => test_port,
       :SSLEnable => true,
       :SSLPrivateKey => key,
       :SSLCertificate => crt,
@@ -113,10 +125,19 @@ module Helpers # :nodoc:
       :AccessLog => [[access_log, WEBrick::AccessLog::COMBINED_LOG_FORMAT]],
     )
 
-    # Create the handler for authentication requests:
+    # Create the handler for password authentication requests:
     @server.mount_proc "#{PREFIX}/sso/oauth/token" do |request, response|
-      response['Content-Type'] = 'application/json'
       response.status = 200
+      response['Content-Type'] = 'application/json'
+      response.body = JSON.generate(
+        :access_token => TOKEN,
+      )
+    end
+
+    # Create the handler for Kerberos authentication requests:
+    @server.mount_proc "#{PREFIX}/sso/oauth/token-http-auth" do |request, response|
+      response.status = 200
+      response['Content-Type'] = 'application/json'
       response.body = JSON.generate(
         :access_token => TOKEN,
       )
@@ -130,10 +151,16 @@ module Helpers # :nodoc:
 
   def set_xml_response(path, status, body, delay = 0)
     @server.mount_proc "#{PREFIX}/api/#{path}" do |request, response|
-      sleep(delay)
-      response['Content-Type'] = 'application/xml'
-      response.body = body
-      response.status = status
+      authorization = request['Authorization']
+      if authorization != "Bearer #{TOKEN}"
+        response.status = 401
+        response.body = ''
+      else
+        sleep(delay)
+        response['Content-Type'] = 'application/xml'
+        response.body = body
+        response.status = status
+      end
     end
   end
 
@@ -147,12 +174,4 @@ end
 RSpec.configure do |c|
   # Include the helpers module in all the examples.
   c.include Helpers
-
-  # Run the Kerberos tests only if the "kerberos" option is enabled. This means that in order to run the integration
-  # tests you will need to use a command like this:
-  #
-  #   rspec --tag kerberos
-  #
-  # These tests can't run by default, because they require a live engine.
-  c.filter_run_excluding :kerberos => true
 end
