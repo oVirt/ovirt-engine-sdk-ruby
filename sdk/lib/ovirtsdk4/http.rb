@@ -77,6 +77,21 @@ module OvirtSDK4
     ##
     # Creates a new connection to the API server.
     #
+    # Note that all the parameters with names starting with `sso` are intended for use with external authentication
+    # services, using the http://oauth.net/2/[OAuth2] protocol. But the typical usage doesn't require them, as they
+    # are automatically calculated to use the authentication service that is part of the engine. A typical connection
+    # can be created specifying just the `url`, `username`, `password` and `ca_file` parameters:
+    #
+    # [source,ruby]
+    # ----
+    # connection = OvirtSDK4::Connection.new(
+    #   :url => 'https://engine.example.com/ovirt-engine/api',
+    #   :username => 'admin@internal',
+    #   :password => '...',
+    #   :ca_file => '/etc/pki/ovirt-engine/ca.pem',
+    # )
+    # ----
+    #
     # @param opts [Hash] The options used to create the connection.
     #
     # @option opts [String] :url A string containing the base URL of the server, usually something like
@@ -112,12 +127,10 @@ module OvirtSDK4
     #   compressed responses. Note that this is a hint for the server, and that it may return uncompressed data even
     #   when this parameter is set to `true`.
     #
-    # @option opts [String] :sso_url A string containing the base SSO URL of the server, usually something like
-    #   `\https://server.example.com/ovirt-engine/sso/oauth/token?`
-    #   `\grant_type=password&scope=ovirt-app-api` for password authentication or
-    #   `\https://server.example.com/ovirt-engine/sso/oauth/token-http-auth?`
-    #   `\grant_type=urn:ovirt:params:oauth:grant-type:http&scope=ovirt-app-api` for kerberos authentication
-    #   Default SSO url is computed from the `url` if no `sso_url` is provided.
+    # @option opts [String] :sso_url A string containing the base URL of the authentication service. This needs to be
+    #   specified only when using an external authentication service. By default this URL is automatically calculated
+    #   from the value of the `url` parameter, so that authentication will be performed using the authentication
+    #   service that is part of the engine.
     #
     # @option opts [Boolean] :sso_insecure A boolean flag that indicates if the SSO server TLS certificate and
     #    host name should be checked. Default is value of `insecure`.
