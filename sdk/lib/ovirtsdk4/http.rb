@@ -86,7 +86,7 @@ module OvirtSDK4
     #
     # @option opts [String] :password The password of the user.
     #
-    # @option opts [Boolean] :insecure (true) A boolean flag that indicates if the server TLS certificate and host
+    # @option opts [Boolean] :insecure (false) A boolean flag that indicates if the server TLS certificate and host
     #   name should be checked.
     #
     # @option opts [String] :ca_file The name of a PEM file containing the trusted CA certificates. The certificate
