@@ -134,6 +134,15 @@ module Helpers # :nodoc:
       )
     end
 
+    # Create the handler for SSO logout requests:
+    @server.mount_proc "#{PREFIX}/services/sso-logout" do |request, response|
+      response.status = 200
+      response['Content-Type'] = 'application/json'
+      response.body = JSON.generate(
+          :access_token => TOKEN,
+      )
+    end
+
     # Create the handler for Kerberos authentication requests:
     @server.mount_proc "#{PREFIX}/sso/oauth/token-http-auth" do |request, response|
       response.status = 200

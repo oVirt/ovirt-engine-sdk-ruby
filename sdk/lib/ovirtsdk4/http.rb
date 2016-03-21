@@ -132,6 +132,11 @@ module OvirtSDK4
     #   from the value of the `url` parameter, so that authentication will be performed using the authentication
     #   service that is part of the engine.
     #
+    # @option opts [String] :sso_revoke_url A string containing the base URL of the SSO revoke service. This needs to be
+    #   specified only when using an external authentication service. By default this URL is automatically calculated
+    #   from the value of the `url` parameter, so that SSO token revoke will be performed using the SSO service that
+    #   is part of the engine.
+    #
     # @option opts [Boolean] :sso_insecure A boolean flag that indicates if the SSO server TLS certificate and
     #    host name should be checked. Default is value of `insecure`.
     #
@@ -169,6 +174,7 @@ module OvirtSDK4
       timeout = opts[:timeout] || 0
       compress = opts[:compress] || false
       sso_url = opts[:sso_url]
+      sso_revoke_url = opts[:sso_revoke_url]
       sso_insecure = opts[:sso_insecure] || insecure
       sso_ca_file = opts[:sso_ca_file] || ca_file
       sso_debug = opts[:sso_debug] || debug
@@ -186,6 +192,7 @@ module OvirtSDK4
 
       # Save SSO parameters:
       @sso_url = sso_url
+      @sso_revoke_url = sso_revoke_url
       @username = username
       @password = password
       @kerberos = kerberos
@@ -195,15 +202,10 @@ module OvirtSDK4
       @sso_debug = sso_debug
       @sso_timeout = sso_timeout
       @log_file = log
-      @sso_token_name = sso_token_name;
+      @sso_token_name = sso_token_name
 
       # Create the cURL handle:
       @curl = Curl::Easy.new
-
-      # Configure cookies so that they are enabled but stored only in memory:
-      @curl.enable_cookies = true
-      @curl.cookiefile = '/dev/null'
-      @curl.cookiejar = '/dev/null'
 
       # Configure TLS parameters:
       if @url.scheme == 'https'
@@ -304,7 +306,7 @@ module OvirtSDK4
     #
     # @api private
     #
-    def send(request, last = false)
+    def send(request)
 
       # Check if we already have an SSO access token:
       if @sso_token.nil?
@@ -325,11 +327,6 @@ module OvirtSDK4
       @curl.headers['Content-Type'] = 'application/xml'
       @curl.headers['Accept'] = 'application/xml'
       @curl.headers['Authorization'] = 'Bearer ' + @sso_token
-
-      # All requests except the last one should indicate that we want to use persistent authentication:
-      if !last
-        @curl.headers['Prefer'] = 'persistent-auth'
-      end
 
       # Send the request and wait for the response:
       case request.method
@@ -360,18 +357,63 @@ module OvirtSDK4
     # @api private
     #
     def get_access_token
+      # If SSO url is not supplied build default one:
+      if @sso_url.nil?
+        @sso_url = URI(build_sso_auth_url)
+      else
+        @sso_url = URI(@sso_url)
+      end
+
+      sso_response = get_sso_response(@sso_url)
+
+      if sso_response.is_a?(Array)
+        sso_response = sso_response[0]
+      end
+
+      if !sso_response["error"].nil?
+        raise Error.new("Error during SSO authentication #{sso_response['error_code']} : #{sso_response['error']}")
+      end
+
+      return sso_response[@sso_token_name]
+    end
+
+    ##
+    # Revoke the SSO access token.
+    #
+    # @api private
+    #
+    def revoke_access_token
+      # If SSO revoke url is not supplied build default one:
+      if @sso_revoke_url.nil?
+        @sso_revoke_url = URI(build_sso_revoke_url)
+      else
+        @sso_revoke_url = URI(@sso_revoke_url)
+      end
+
+      sso_response = get_sso_response(@sso_revoke_url)
+
+      if sso_response.is_a?(Array)
+        sso_response = sso_response[0]
+      end
+
+      if !sso_response["error"].nil?
+        raise Error.new("Error during SSO revoke #{sso_response['error_code']} : #{sso_response['error']}")
+      end
+    end
+
+    ##
+    # Execute a get request to the SSO server and return the response.
+    #
+    # @return [Hash] The JSON response.
+    #
+    # @api private
+    #
+    def get_sso_response(sso_base_url)
       # Create the cURL handle for SSO:
       sso_curl = Curl::Easy.new
 
       # Configure the timeout:
       sso_curl.timeout = @sso_timeout
-
-      # If SSO url is not supplied build default one:
-      if @sso_url.nil?
-        @sso_url = build_sso_auth_url
-      end
-
-      @sso_url = URI(@sso_url)
 
       # Configure debug mode:
       sso_close_log = false
@@ -410,7 +452,7 @@ module OvirtSDK4
 
       begin
         # Configure TLS parameters:
-        if @sso_url.scheme == 'https'
+        if sso_base_url.scheme == 'https'
           if @sso_insecure
             sso_curl.ssl_verify_peer = false
             sso_curl.ssl_verify_host = false
@@ -427,7 +469,7 @@ module OvirtSDK4
         params = {}
 
         # The base SSO URL:
-        sso_url = @sso_url.to_s
+        sso_url = sso_base_url.to_s
 
         # Configure authentication:
         if @kerberos
@@ -456,18 +498,8 @@ module OvirtSDK4
         # Request access token:
         sso_curl.http_get
 
-        # Parse the JSON response:
-        sso_response = JSON.parse(sso_curl.body_str)
-
-        if sso_response.is_a?(Array)
-          sso_response = sso_response[0]
-        end
-
-        if !sso_response["error"].nil?
-          raise Error.new("Error during SSO authentication #{sso_response['error_code']} : #{sso_response['error']}")
-        end
-
-        return sso_response[@sso_token_name]
+        # Parse and return the JSON response:
+        return JSON.parse(sso_curl.body_str)
       ensure
         sso_curl.close
         # Close the log file, if we did open it:
@@ -485,7 +517,7 @@ module OvirtSDK4
     #
     def build_sso_auth_url
       # Get the base URL:
-      @sso_url = @url.to_s[0..@url.to_s.rindex('/')]
+      sso_url = @url.to_s[0..@url.to_s.rindex('/')]
 
       # The SSO access scope:
       scope = 'ovirt-app-api'
@@ -500,7 +532,21 @@ module OvirtSDK4
       end
 
       # Build and return the SSO URL:
-      return "#{@sso_url}sso/oauth/#{entry_point}?grant_type=#{grant_type}&scope=#{scope}"
+      return "#{sso_url}sso/oauth/#{entry_point}?grant_type=#{grant_type}&scope=#{scope}"
+    end
+
+    ##
+    # Builds a request URL to revoke the SSO access token.
+    # @return [String] The URL.
+    #
+    # @api private
+    #
+    def build_sso_revoke_url
+      # Get the base URL:
+      sso_url = @url.to_s[0..@url.to_s.rindex('/')]
+
+      # Build and return the SSO revoke URL:
+      return "#{sso_url}services/sso-logout?scope=&token=#{@sso_token}"
     end
 
     ##
@@ -567,7 +613,10 @@ module OvirtSDK4
       request = Request.new({
         :method => :HEAD,
       })
-      send(request, true)
+      send(request)
+
+      # Revoke the SSO access token:
+      revoke_access_token
 
       # Close the log file, if we did open it:
       if @close_log
