@@ -80,14 +80,12 @@ limitations under the License.
               <goal>java</goal>
             </goals>
             <configuration>
-              <mainClass>org.ovirt.sdk.ruby.Main</mainClass>
+              <mainClass>org.ovirt.api.metamodel.tool.Main</mainClass>
               <arguments>
-                <argument>--model</argument>
-                <argument>${project.basedir}/target/model.jar</argument>
-                <argument>--out</argument>
-                <argument>${project.basedir}/lib</argument>
-                <argument>--gem-version</argument>
-                <argument>${gem.version}</argument>
+                <argument>org.ovirt.sdk.ruby.Tool</argument>
+                <argument>--model=${project.basedir}/target/model.jar</argument>
+                <argument>--out=${project.basedir}/lib</argument>
+                <argument>--gem-version=${gem.version}</argument>
               </arguments>
               <includePluginDependencies>true</includePluginDependencies>
               <includeProjectDependencies>false</includeProjectDependencies>
