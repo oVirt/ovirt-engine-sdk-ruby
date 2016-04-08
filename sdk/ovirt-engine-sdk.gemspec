@@ -1,5 +1,5 @@
 #--
-# Copyright (c) 2015 Red Hat, Inc.
+# Copyright (c) 2015-2016 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency('curb', '~> 0.8')
 
   # Build time dependencies:
+  spec.add_development_dependency('rake-compiler', '~> 0.9')
   spec.add_development_dependency('rspec', '~> 3.3')
   spec.add_development_dependency('yard', '~> 0.8')
 
