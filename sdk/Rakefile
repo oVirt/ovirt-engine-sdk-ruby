@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 
 #
-# Copyright (c) 2015 Red Hat, Inc.
+# Copyright (c) 2015-2016 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@
 require 'rake'
 require 'rake/extensiontask'
 require 'rspec/core/rake_task'
+require 'rubygems'
+require 'rubygems/package_task'
 
 # The names of the gem and the extension:
 GEM_NAME = 'ovirt-engine-sdk'
