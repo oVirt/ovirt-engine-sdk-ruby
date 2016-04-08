@@ -40,21 +40,21 @@ static void ov_xml_writer_check_closed(ov_xml_writer_object* object) {
 }
 
 static void ov_xml_writer_mark(ov_xml_writer_object *object) {
-    // Mark the IO object as reachable:
+    /* Mark the IO object as reachable: */
     if (!NIL_P(object->io)) {
         rb_gc_mark(object->io);
     }
 }
 
 static void ov_xml_writer_free(ov_xml_writer_object *object) {
-    // Free the libxml writer, the buffer is automatically closed:
+    /* Free the libxml writer, the buffer is automatically closed: */
     if (object->writer != NULL) {
         xmlTextWriterPtr tmp = object->writer;
         object->writer = NULL;
         xmlFreeTextWriter(tmp);
     }
 
-    // Free this object:
+    /* Free this object: */
     xfree(object);
 }
 
@@ -67,16 +67,18 @@ static VALUE ov_xml_writer_alloc(VALUE klass) {
 }
 
 static int ov_xml_writer_callback(void *context, const char *buffer, int length) {
+    VALUE count;
+    VALUE data;
     ov_xml_writer_object *object = (ov_xml_writer_object*) context;
 
-    // Do nothing if the writer is already closed:
+    /* Do nothing if the writer is already closed: */
     if (object->writer == NULL) {
         return 0;
     }
 
-    // Convert the buffer to a Ruby string and write it to the IO object, using the "write" method:
-    VALUE data = rb_str_new(buffer, length);
-    VALUE count = rb_funcall(object->io, WRITE_ID, 1, data);
+    /* Convert the buffer to a Ruby string and write it to the IO object, using the "write" method: */
+    data = rb_str_new(buffer, length);
+    count = rb_funcall(object->io, WRITE_ID, 1, data);
 
     return NUM2INT(count);
 }
@@ -162,12 +164,15 @@ static VALUE ov_xml_writer_string(VALUE self) {
 }
 
 static VALUE ov_xml_writer_write_start(VALUE self, VALUE name) {
-    ov_xml_writer_object *object;
+    char* c_name = NULL;
+    int rc = 0;
+    ov_xml_writer_object* object = NULL;
+
     Data_Get_Struct(self, ov_xml_writer_object, object);
     ov_xml_writer_check_closed(object);
     Check_Type(name, T_STRING);
-    char *c_name = StringValueCStr(name);
-    int rc = xmlTextWriterStartElement(object->writer, BAD_CAST c_name);
+    c_name = StringValueCStr(name);
+    rc = xmlTextWriterStartElement(object->writer, BAD_CAST c_name);
     if (rc < 0) {
         rb_raise(ov_error_class, "Can't start XML element");
     }
@@ -175,10 +180,12 @@ static VALUE ov_xml_writer_write_start(VALUE self, VALUE name) {
 }
 
 static VALUE ov_xml_writer_write_end(VALUE self) {
-    ov_xml_writer_object *object;
+    int rc = 0;
+    ov_xml_writer_object* object = NULL;
+
     Data_Get_Struct(self, ov_xml_writer_object, object);
     ov_xml_writer_check_closed(object);
-    int rc = xmlTextWriterEndElement(object->writer);
+    rc = xmlTextWriterEndElement(object->writer);
     if (rc < 0) {
         rb_raise(ov_error_class, "Can't end XML element");
     }
@@ -186,14 +193,18 @@ static VALUE ov_xml_writer_write_end(VALUE self) {
 }
 
 static VALUE ov_xml_writer_write_attribute(VALUE self, VALUE name, VALUE value) {
-    ov_xml_writer_object *object;
+    char* c_name = NULL;
+    char* c_value = NULL;
+    int rc = 0;
+    ov_xml_writer_object* object = NULL;
+
     Data_Get_Struct(self, ov_xml_writer_object, object);
     ov_xml_writer_check_closed(object);
     Check_Type(name, T_STRING);
     Check_Type(value, T_STRING);
-    char *c_name = StringValueCStr(name);
-    char *c_value = StringValueCStr(value);
-    int rc = xmlTextWriterWriteAttribute(object->writer, BAD_CAST c_name, BAD_CAST c_value);
+    c_name = StringValueCStr(name);
+    c_value = StringValueCStr(value);
+    rc = xmlTextWriterWriteAttribute(object->writer, BAD_CAST c_name, BAD_CAST c_value);
     if (rc < 0) {
         rb_raise(ov_error_class, "Can't write attribute with name \"%s\" and value \"%s\"", c_name, c_value);
     }
@@ -201,14 +212,18 @@ static VALUE ov_xml_writer_write_attribute(VALUE self, VALUE name, VALUE value) 
 }
 
 static VALUE ov_xml_writer_write_element(VALUE self, VALUE name, VALUE value) {
-    ov_xml_writer_object *object;
+    char* c_name = NULL;
+    char* c_value = NULL;
+    int rc = 0;
+    ov_xml_writer_object* object = NULL;
+
     Data_Get_Struct(self, ov_xml_writer_object, object);
     ov_xml_writer_check_closed(object);
     Check_Type(name, T_STRING);
     Check_Type(value, T_STRING);
-    char *c_name = StringValueCStr(name);
-    char *c_value = StringValueCStr(value);
-    int rc = xmlTextWriterWriteElement(object->writer, BAD_CAST c_name, BAD_CAST c_value);
+    c_name = StringValueCStr(name);
+    c_value = StringValueCStr(value);
+    rc = xmlTextWriterWriteElement(object->writer, BAD_CAST c_name, BAD_CAST c_value);
     if (rc < 0) {
         rb_raise(ov_error_class, "Can't write element with name \"%s\" and value \"%s\"", c_name, c_value);
     }
@@ -229,7 +244,8 @@ static VALUE ov_xml_writer_flush(VALUE self) {
 }
 
 static VALUE ov_xml_writer_close(VALUE self) {
-    ov_xml_writer_object *object;
+    ov_xml_writer_object* object = NULL;
+
     Data_Get_Struct(self, ov_xml_writer_object, object);
     ov_xml_writer_check_closed(object);
     xmlFreeTextWriter(object->writer);
