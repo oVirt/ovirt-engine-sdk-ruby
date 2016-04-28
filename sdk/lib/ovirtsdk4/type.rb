@@ -1,4 +1,4 @@
-#--
+#
 # Copyright (c) 2016-2016 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#++
+#
 
 module OvirtSDK4
 
-  ##
+  #
   # This module is a mixin that contains the methods common to struct and list types.
   #
   module Type
 
-    ##
+    #
     # Returns the value of the `href` attribute.
     #
     # @return [String]
@@ -30,7 +30,7 @@ module OvirtSDK4
       return @href
     end
 
-    ##
+    #
     # Sets the value of the `href` attribute.
     #
     # @param value [String]
@@ -41,13 +41,13 @@ module OvirtSDK4
 
   end
 
-  ##
+  #
   # This is the base class for all the struct types.
   #
   class Struct
     include Type
 
-    ##
+    #
     # Empty constructor.
     #
     def initialize(opts = {})
@@ -56,7 +56,7 @@ module OvirtSDK4
 
   end
 
-  ##
+  #
   # This is the base class for all the list types.
   #
   class List < Array

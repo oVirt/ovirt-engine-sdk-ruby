@@ -89,9 +89,23 @@ public class RubyBuffer {
     }
 
     /**
-     * Adds a line to the body of the file.
+     * Adds a line to the file. If the line contains new line characters then it will be broken and multiple lines and
+     * each one will be processed in sequence. For example, if these lines aren't indented, the result will be indented
+     * anyhow.
      */
     public void addLine(String line) {
+        if (line != null) {
+            String[] parts = line.split("\\n");
+            for (String part : parts) {
+                addLineNoSplit(part);
+            }
+        }
+    }
+
+    /**
+     * Adds a line to the file without taking into account new line characters.
+     */
+    private void addLineNoSplit(String line) {
         // Check of the line is the begin or end of a block:
         boolean isBegin =
             line.endsWith("(") ||
@@ -148,8 +162,8 @@ public class RubyBuffer {
     }
 
     /**
-     * Adds a formatted line to the body of the class. The given {@code args} are formatted using the
-     * provided {@code format} using the {@link String#format(String, Object...)} method.
+     * Adds a formatted line to the file. The given {@code args} are formatted using the provided {@code format} using
+     * the {@link String#format(String, Object...)} method.
      */
     public void addLine(String format, Object ... args) {
         StringBuilder buffer = new StringBuilder();
@@ -160,13 +174,60 @@ public class RubyBuffer {
     }
 
     /**
+     * Adds a comment to the file. If the line contains new line characters then it will be broken and multiple lines
+     * and each one will be processed in sequence. For example, if these lines aren't indented, the result will be
+     * indented anyhow.
+     */
+    public void addComment(String line) {
+        if (line != null) {
+            String[] parts = line.split("\\n");
+            for (String part : parts) {
+                addCommentNoSplit(part);
+            }
+        }
+    }
+
+    /**
+     * Adds a comment to the file without taking into account new line characters.
+     */
+    private void addCommentNoSplit(String line) {
+        StringBuilder buffer = new StringBuilder(2 + level * 2 + line.length());
+        for (int i = 0; i < level; i++) {
+            buffer.append("  ");
+        }
+        buffer.append("# ");
+        buffer.append(line);
+        line = buffer.toString();
+        lines.add(line);
+    }
+
+    /**
+     * Adds an empty comment to the file.
+     */
+    public void addComment() {
+        addComment("");
+    }
+
+    /**
+     * Adds a formatted comment to the file. The given {@code args} are formatted using the provided {@code format}
+     * using the {@link String#format(String, Object...)} method.
+     */
+    public void addComment(String format, Object ... args) {
+        StringBuilder buffer = new StringBuilder();
+        Formatter formatter = new Formatter(buffer);
+        formatter.format(format, args);
+        String line = buffer.toString();
+        addComment(line);
+    }
+
+    /**
      * Generates the complete source code of the class.
      */
     public String toString() {
         StringBuilder buffer = new StringBuilder();
 
         // License:
-        buffer.append("#--\n");
+        buffer.append("#\n");
         buffer.append("# Copyright (c) 2015-2016 Red Hat, Inc.\n");
         buffer.append("#\n");
         buffer.append("# Licensed under the Apache License, Version 2.0 (the \"License\");\n");
@@ -180,7 +241,7 @@ public class RubyBuffer {
         buffer.append("# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n");
         buffer.append("# See the License for the specific language governing permissions and\n");
         buffer.append("# limitations under the License.\n");
-        buffer.append("#++\n");
+        buffer.append("#\n");
         buffer.append("\n");
 
         // Require:

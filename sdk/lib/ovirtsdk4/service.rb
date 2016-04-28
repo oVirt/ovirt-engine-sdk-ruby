@@ -1,4 +1,4 @@
-#--
+#
 # Copyright (c) 2015-2016 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#++
+#
 
 module OvirtSDK4
 
-  ##
+  #
   # This is the base class for all the services of the SDK. It contains the utility methods used by all of them.
   #
   class Service
 
-    ##
+    #
     # Creates and raises an error containing the details of the given HTTP response and fault.
     #
     # This method is intended for internal use by other components of the SDK. Refrain from using it directly, as
@@ -54,7 +54,7 @@ module OvirtSDK4
       raise Error.new(message)
     end
 
-    ##
+    #
     # Reads the response body assuming that it contains a fault message, converts it to an Error and raises it.
     #
     # This method is intended for internal use by other components of the SDK. Refrain from using it directly, as
@@ -72,7 +72,7 @@ module OvirtSDK4
       raise_error(response, fault)
     end
 
-    ##
+    #
     # Reads the response body assuming that it contains an action, checks if it contains a fault message, and if it
     # does converts it to an Error and raises it. If it doesn't contain a fault then it just returns the action object.
     #

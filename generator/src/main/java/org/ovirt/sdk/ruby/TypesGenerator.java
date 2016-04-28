@@ -84,9 +84,9 @@ public class TypesGenerator implements RubyGenerator {
 
     private void generateStructs(Model model) {
         // Begin module:
-        buffer.addLine("##");
-        buffer.addLine("# These forward declarations are required in order to avoid circular dependencies.");
-        buffer.addLine("#");
+        buffer.addComment();
+        buffer.addComment("These forward declarations are required in order to avoid circular dependencies.");
+        buffer.addComment();
 
         // The declarations of the types need to appear in inheritance order, otherwise some symbols won't be
         // defined and that will produce errors. To order them correctly we need first to sort them by name, and
@@ -132,29 +132,32 @@ public class TypesGenerator implements RubyGenerator {
 
         // Constructor with a named parameter for each attribute:
         RubyName typeName = rubyNames.getTypeName(type);
-        buffer.addLine("##");
-        buffer.addLine("# Creates a new instance of the {%1$s} class.", typeName.getClassName());
-        buffer.addLine("#");
-        buffer.addLine("# @param opts [Hash] A hash containing the attributes of the object. The keys of the hash ");
-        buffer.addLine("#   should be symbols corresponding to the names of the attributes. The values of the hash ");
-        buffer.addLine("#   should be the values of the attributes.");
-        buffer.addLine("#");
+        buffer.addComment();
+        buffer.addComment("Creates a new instance of the {%1$s} class.", typeName.getClassName());
+        buffer.addComment();
+        buffer.addComment("@param opts [Hash] A hash containing the attributes of the object. The keys of the hash ");
+        buffer.addComment("  should be symbols corresponding to the names of the attributes. The values of the hash ");
+        buffer.addComment("  should be the values of the attributes.");
+        buffer.addComment();
         members.stream().sorted().forEach(member -> {
             Type memberType = member.getType();
             Name memberName = member.getName();
             String docType = yardDoc.getType(memberType);
             String docName = rubyNames.getMemberStyleName(memberName);
             if (memberType instanceof PrimitiveType || memberType instanceof EnumType) {
-                buffer.addLine("# @option opts [%1$s] :%2$s The value of attribute `%2$s`.", docType, docName);
+                buffer.addComment("@option opts [%1$s] :%2$s The value of attribute `%2$s`.", docType, docName);
+                buffer.addComment();
             }
             else if (memberType instanceof StructType) {
-                buffer.addLine("# @option opts [%1$s, Hash] :%2$s The value of attribute `%2$s`.", docType, docName);
+                buffer.addComment("@option opts [%1$s, Hash] :%2$s The value of attribute `%2$s`.", docType, docName);
+                buffer.addComment();
             }
             else if (memberType instanceof ListType) {
-                buffer.addLine("# @option opts [%1$s, Array<Hash>] :%2$s The values of attribute `%2$s`.", docType, docName);
+                buffer.addComment("@option opts [%1$s, Array<Hash>] :%2$s The values of attribute `%2$s`.", docType, docName);
+                buffer.addComment();
             }
         });
-        buffer.addLine("#");
+        buffer.addComment();
         buffer.addLine("def initialize(opts = {})");
         buffer.addLine(  "super(opts)");
         members.stream().sorted().forEach(member -> {
@@ -178,11 +181,11 @@ public class TypesGenerator implements RubyGenerator {
         Name name = member.getName();
         Type type = member.getType();
         String property = rubyNames.getMemberStyleName(name);
-        buffer.addLine("##");
-        buffer.addLine("# Returns the value of the `%1$s` attribute.", property);
-        buffer.addLine("#");
-        buffer.addLine("# @return [%1$s]", yardDoc.getType(type));
-        buffer.addLine("#");
+        buffer.addComment();
+        buffer.addComment("Returns the value of the `%1$s` attribute.", property);
+        buffer.addComment();
+        buffer.addComment("@return [%1$s]", yardDoc.getType(type));
+        buffer.addComment();
         buffer.addLine("def %1$s", property);
         buffer.addLine(  "return @%1$s", property);
         buffer.addLine("end");
@@ -193,24 +196,24 @@ public class TypesGenerator implements RubyGenerator {
         Name name = member.getName();
         Type type = member.getType();
         String property = rubyNames.getMemberStyleName(name);
-        buffer.addLine("##");
-        buffer.addLine("# Sets the value of the `%1$s` attribute.", property);
-        buffer.addLine("#");
+        buffer.addComment();
+        buffer.addComment("Sets the value of the `%1$s` attribute.", property);
+        buffer.addComment();
         if (type instanceof PrimitiveType || type instanceof EnumType) {
-            buffer.addLine("# @param value [%1$s]", yardDoc.getType(type));
-            buffer.addLine("#");
+            buffer.addComment("@param value [%1$s]", yardDoc.getType(type));
+            buffer.addComment();
             buffer.addLine("def %1$s=(value)", property);
             buffer.addLine(  "@%1$s = value", property);
             buffer.addLine("end");
         }
         else if (type instanceof StructType) {
             RubyName typeName = rubyNames.getTypeName(type);
-            buffer.addLine("# @param value [%1$s, Hash]", yardDoc.getType(type));
-            buffer.addLine("#");
-            buffer.addLine("# The `value` parameter can be an instance of {%1$s} or a hash.", typeName);
-            buffer.addLine("# If it is a hash then a new instance will be created passing the hash as the ");
-            buffer.addLine("# `opts` parameter to the constructor.");
-            buffer.addLine("#");
+            buffer.addComment("@param value [%1$s, Hash]", yardDoc.getType(type));
+            buffer.addComment();
+            buffer.addComment("The `value` parameter can be an instance of {%1$s} or a hash.", typeName);
+            buffer.addComment("If it is a hash then a new instance will be created passing the hash as the ");
+            buffer.addComment("`opts` parameter to the constructor.");
+            buffer.addComment();
             buffer.addLine("def %1$s=(value)", property);
             buffer.addLine(  "if value.is_a?(Hash)");
             buffer.addLine(    "value = %1$s.new(value)", typeName.getClassName());
@@ -219,7 +222,7 @@ public class TypesGenerator implements RubyGenerator {
             buffer.addLine("end");
         }
         else if (type instanceof ListType) {
-            buffer.addLine("# @param list [%1$s]", yardDoc.getType(type));
+            buffer.addComment("@param list [%1$s]", yardDoc.getType(type));
             ListType listType = (ListType) type;
             Type elementType = listType.getElementType();
             if (elementType instanceof PrimitiveType || elementType instanceof EnumType) {

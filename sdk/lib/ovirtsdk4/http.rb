@@ -1,4 +1,4 @@
-#--
+#
 # Copyright (c) 2015-2016 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#++
+#
 
 require 'curb'
 require 'json'
@@ -20,7 +20,7 @@ require 'uri'
 
 module OvirtSDK4
 
-  ##
+  #
   # This class represents an HTTP request.
   #
   # @api private
@@ -32,7 +32,7 @@ module OvirtSDK4
     attr_accessor :headers
     attr_accessor :body
 
-    ##
+    #
     # Creates a new HTTP request.
     #
     def initialize(opts = {})
@@ -45,7 +45,7 @@ module OvirtSDK4
 
   end
 
-  ##
+  #
   # This class represents an HTTP response.
   #
   # @api private
@@ -56,7 +56,7 @@ module OvirtSDK4
     attr_accessor :headers
     attr_accessor :message
 
-    ##
+    #
     # Creates a new HTTP response.
     #
     def initialize(opts = {})
@@ -67,14 +67,14 @@ module OvirtSDK4
     end
   end
 
-  ##
+  #
   # This class is responsible for managing an HTTP connection to the engine server. It is intended as the entry
   # point for the SDK, and it provides access to the `system` service and, from there, to the rest of the services
   # provided by the API.
   #
   class Connection
 
-    ##
+    #
     # Creates a new connection to the API server.
     #
     # Note that all the parameters with names starting with `sso` are intended for use with external authentication
@@ -265,7 +265,7 @@ module OvirtSDK4
 
     end
 
-    ##
+    #
     # Returns the base URL of this connection.
     #
     # @return [String]
@@ -274,7 +274,7 @@ module OvirtSDK4
       return @url
     end
 
-    ##
+    #
     # Returns a reference to the root of the services tree.
     #
     # @return [SystemService]
@@ -284,7 +284,7 @@ module OvirtSDK4
       return @system_service
     end
 
-    ##
+    #
     # Returns a reference to the service corresponding to the given path. For example, if the `path` parameter
     # is `vms/123/disks` then it will return a reference to the service that manages the disks for the virtual
     # machine with identifier `123`.
@@ -297,11 +297,10 @@ module OvirtSDK4
       return system_service.service(path)
     end
 
-    ##
+    #
     # Sends an HTTP request and waits for the response.
     #
     # @param request [Request] The Request object containing the details of the HTTP request to send.
-    # @param last [Boolean] A boolean flag indicating if this is the last request.
     # @return [Response] A request object containing the details of the HTTP response received.
     #
     # @api private
@@ -349,7 +348,7 @@ module OvirtSDK4
       return response
     end
 
-    ##
+    #
     # Obtains the access token from SSO to be used for Bearer authentication.
     #
     # @return [String] The URL.
@@ -377,7 +376,7 @@ module OvirtSDK4
       return sso_response[@sso_token_name]
     end
 
-    ##
+    #
     # Revoke the SSO access token.
     #
     # @api private
@@ -401,7 +400,7 @@ module OvirtSDK4
       end
     end
 
-    ##
+    #
     # Execute a get request to the SSO server and return the response.
     #
     # @return [Hash] The JSON response.
@@ -509,7 +508,7 @@ module OvirtSDK4
       end
     end
 
-    ##
+    #
     # Builds a request URL to acquire the access token from SSO. The URLS are different for basic auth and Kerberos,
     # @return [String] The URL.
     #
@@ -535,7 +534,7 @@ module OvirtSDK4
       return "#{sso_url}sso/oauth/#{entry_point}?grant_type=#{grant_type}&scope=#{scope}"
     end
 
-    ##
+    #
     # Builds a request URL to revoke the SSO access token.
     # @return [String] The URL.
     #
@@ -549,7 +548,7 @@ module OvirtSDK4
       return "#{sso_url}services/sso-logout?scope=&token=#{@sso_token}"
     end
 
-    ##
+    #
     # Tests the connectivity with the server. If connectivity works correctly it returns `true`. If there is any
     # connectivity problem it will either return `false` or raise an exception if the `raise_exception` parameter is
     # `true`.
@@ -567,7 +566,7 @@ module OvirtSDK4
       end
     end
 
-    ##
+    #
     # Indicates if the given object is a link. An object is a link if it has an `href` attribute.
     #
     # @return [Boolean]
@@ -576,7 +575,7 @@ module OvirtSDK4
       return !object.href.nil?
     end
 
-    ##
+    #
     # Follows the `href` attribute of the given object, retrieves the target object and returns it.
     #
     # @param object [Type] The object containing the `href` attribute.
@@ -605,7 +604,7 @@ module OvirtSDK4
       return service.get
     end
 
-    ##
+    #
     # Releases the resources used by this connection.
     #
     def close
@@ -627,7 +626,7 @@ module OvirtSDK4
       @curl.close
     end
 
-    ##
+    #
     # Builds a request URL from a path, and the set of query parameters.
     #
     # @params opts [Hash] The options used to build the URL.

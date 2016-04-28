@@ -1,4 +1,4 @@
-#--
+#
 # Copyright (c) 2015 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,11 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#++
+#
 
 module OvirtSDK4
 
-  ##
+  #
   # This is the base class for all the XML readers used by the SDK. It contains the utility methods used by all
   # of them.
   #
@@ -24,7 +24,7 @@ module OvirtSDK4
   #
   class Reader
 
-    ##
+    #
     # Reads a string value, assuming that the cursor is positioned at the start element that contains the value.
     #
     # @param reader [XmlReader]
@@ -34,7 +34,7 @@ module OvirtSDK4
       return reader.read_element
     end
 
-    ##
+    #
     # Reads a list of string values, assuming that the cursor is positioned at the start of the element that contains
     # the first value.
     #
@@ -45,7 +45,7 @@ module OvirtSDK4
       return reader.read_elements
     end
 
-    ##
+    #
     # Converts the given text to a boolean value.
     #
     # @param text [String]
@@ -63,7 +63,7 @@ module OvirtSDK4
       end
     end
 
-    ##
+    #
     # Reads a boolean value, assuming that the cursor is positioned at the start element that contains the value.
     #
     # @param reader [XmlReader]
@@ -73,7 +73,7 @@ module OvirtSDK4
       return Reader.parse_boolean(reader.read_element)
     end
 
-    ##
+    #
     # Reads a list of boolean values, assuming that the cursor is positioned at the start element that contains
     # the values.
     #
@@ -84,7 +84,7 @@ module OvirtSDK4
       return reader.read_elements.map { |text| Reader.parse_boolean(text) }
     end
 
-    ##
+    #
     # Converts the given text to an integer value.
     #
     # @param text [String]
@@ -99,7 +99,7 @@ module OvirtSDK4
       end
     end
 
-    ##
+    #
     # Reads an integer value, assuming that the cursor is positioned at the start element that contains the value.
     #
     # @param reader [XmlReader]
@@ -109,7 +109,7 @@ module OvirtSDK4
       return Reader.parse_integer(reader.read_element)
     end
 
-    ##
+    #
     # Reads a list of integer values, assuming that the cursor is positioned at the start element that contains the
     # values.
     #
@@ -120,7 +120,7 @@ module OvirtSDK4
       return reader.read_elements.map { |text| Reader.parse_integer(text) }
     end
 
-    ##
+    #
     # Converts the given text to a decimal value.
     #
     # @return [Fixnum]
@@ -134,7 +134,7 @@ module OvirtSDK4
       end
     end
 
-    ##
+    #
     # Reads a decimal value, assuming that the cursor is positioned at the start element that contains the value.
     #
     # @param reader [XmlReader]
@@ -144,7 +144,7 @@ module OvirtSDK4
       return Reader.parse_decimal(reader.read_element)
     end
 
-    ##
+    #
     # Reads a list of decimal values, assuming that the cursor is positioned at the start element that contains the
     # values.
     #
@@ -155,7 +155,7 @@ module OvirtSDK4
       return reader.read_elements.map { |text| Reader.parse_decimal(text) }
     end
 
-    ##
+    #
     # Converts the given text to a date value.
     #
     # @param text [String]
@@ -170,7 +170,7 @@ module OvirtSDK4
       end
     end
 
-    ##
+    #
     # Reads a date value, assuming that the cursor is positioned at the start element that contains the value.
     #
     # @param reader [XmlReader]
@@ -180,7 +180,7 @@ module OvirtSDK4
       return Reader.parse_date(reader.read_element)
     end
 
-    ##
+    #
     # Reads a list of dates values, assuming that the cursor is positioned at the start element that contains the
     # values.
     #

@@ -1,4 +1,4 @@
-#--
+#
 # Copyright (c) 2015-2016 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,11 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#++
+#
 
 module OvirtSDK4
 
-  ##
+  #
   # This is the base class for all the XML writers used by the SDK. It contains the utility methods used by
   # all of them.
   #
@@ -24,7 +24,7 @@ module OvirtSDK4
   #
   class Writer
 
-    ##
+    #
     # Writes an element with the given name and string value.
     #
     # @param writer [XmlWriter]
@@ -35,7 +35,7 @@ module OvirtSDK4
       writer.write_element(name, value)
     end
 
-    ##
+    #
     # Converts the given boolean value to an string.
     #
     # @param value [Boolean]
@@ -49,7 +49,7 @@ module OvirtSDK4
       end
     end
 
-    ##
+    #
     # Writes an element with the given name and boolean value.
     #
     # @param writer [XmlWriter]
@@ -60,7 +60,7 @@ module OvirtSDK4
       writer.write_element(name, Writer.render_boolean(value))
     end
 
-    ##
+    #
     # Converts the given integer value to an string.
     #
     # @param value [Integer]
@@ -70,7 +70,7 @@ module OvirtSDK4
       return value.to_s
     end
 
-    ##
+    #
     # Writes an element with the given name and integer value.
     #
     # @param writer [XmlWriter]
@@ -81,7 +81,7 @@ module OvirtSDK4
       writer.write_element(name, Writer.render_integer(value))
     end
 
-    ##
+    #
     # Converts the given decimal value to an string.
     #
     # @param value [Fixnum]
@@ -91,7 +91,7 @@ module OvirtSDK4
       return value.to_s
     end
 
-    ##
+    #
     # Writes an element with the given name and decimal value.
     #
     # @param writer [XmlWriter]
@@ -102,7 +102,7 @@ module OvirtSDK4
       writer.write_element(name, Writer.render_decimal(value))
     end
 
-    ##
+    #
     # Converts the given date value to an string.
     #
     # @param value [DateTime]
@@ -112,7 +112,7 @@ module OvirtSDK4
       return value.xmlschema
     end
 
-    ##
+    #
     # Writes an element with the given name and date value.
     #
     # @param writer [XmlWriter]
