@@ -269,7 +269,7 @@ public class TypesGenerator implements RubyGenerator {
     private void generateEnumValue(EnumValue value) {
         String constantName = rubyNames.getConstantStyleName(value.getName());
         String constantValue = rubyNames.getMemberStyleName(value.getName());
-        buffer.addLine("%s = '%s'", constantName, constantValue);
+        buffer.addLine("%s = '%s'.freeze", constantName, constantValue);
     }
 
     private void generateClassDeclaration(StructType type) {

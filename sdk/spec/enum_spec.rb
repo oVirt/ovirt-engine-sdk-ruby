@@ -24,6 +24,10 @@ describe SDK::Architecture do
       expect(SDK::Architecture::X86_64).to eql('x86_64')
     end
 
+    it "is frozen" do
+      expect(SDK::Architecture::X86_64.frozen?).to be(true)
+    end
+
   end
 
 end
