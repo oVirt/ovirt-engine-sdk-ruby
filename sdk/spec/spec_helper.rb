@@ -160,6 +160,11 @@ module Helpers # :nodoc:
 
   def set_xml_response(path, status, body, delay = 0)
     @server.mount_proc "#{PREFIX}/api/#{path}" do |request, response|
+      # Save the request details:
+      @last_request_method = request.request_method
+      @last_request_body = request.body
+
+      # Check credentials, and if they are correct return the response:
       authorization = request['Authorization']
       if authorization != "Bearer #{TOKEN}"
         response.status = 401
@@ -176,6 +181,14 @@ module Helpers # :nodoc:
   def stop_server
     @server.shutdown
     @thread.join
+  end
+
+  def last_request_method
+    return @last_request_method
+  end
+
+  def last_request_body
+    return @last_request_body
   end
 
 end

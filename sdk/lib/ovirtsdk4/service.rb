@@ -73,8 +73,8 @@ module OvirtSDK4
     end
 
     ##
-    # Reads the response body assuming that it contains an action, checks if it contains an exception, and if it
-    # does converts it to an Error and raises it.
+    # Reads the response body assuming that it contains an action, checks if it contains a fault message, and if it
+    # does converts it to an Error and raises it. If it doesn't contain a fault then it just returns the action object.
     #
     # This method is intended for internal use by other components of the SDK. Refrain from using it directly, as
     # backwards compatibility isn't guaranteed.
@@ -91,6 +91,7 @@ module OvirtSDK4
       unless action.fault.nil?
         raise_error(response, action.fault)
       end
+      return action
     end
 
   end

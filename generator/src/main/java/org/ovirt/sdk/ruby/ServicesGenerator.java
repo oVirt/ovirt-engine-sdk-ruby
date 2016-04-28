@@ -26,7 +26,6 @@ import java.util.Deque;
 import java.util.Optional;
 import javax.inject.Inject;
 
-import org.ovirt.api.metamodel.concepts.EnumType;
 import org.ovirt.api.metamodel.concepts.ListType;
 import org.ovirt.api.metamodel.concepts.Locator;
 import org.ovirt.api.metamodel.concepts.Method;
@@ -230,13 +229,9 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addLine("def %1$s(opts = {})", actionName);
 
         // Generate the method:
+        buffer.addLine("action = Action.new(opts)");
         buffer.addLine("writer = XmlWriter.new(nil, true)");
-        buffer.addLine("writer.write_start('action')");
-        method.parameters()
-            .filter(Parameter::isIn)
-            .sorted()
-            .forEach(this::generateWriteActionParameter);
-        buffer.addLine("writer.write_end");
+        buffer.addLine("ActionWriter.write_one(action, writer)");
         buffer.addLine("body = writer.string");
         buffer.addLine("writer.close");
         buffer.addLine("request = Request.new({");
@@ -247,7 +242,11 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addLine("response = @connection.send(request)");
         buffer.addLine("case response.code");
         buffer.addLine("when 200");
-        buffer.addLine(  "check_action(response)");
+        buffer.addLine(  "action = check_action(response)");
+        method.parameters()
+            .filter(Parameter::isOut)
+            .findFirst()
+            .ifPresent(this::generateActionResponse);
         buffer.addLine("else");
         buffer.addLine(  "check_fault(response)");
         buffer.addLine("end");
@@ -257,43 +256,8 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addLine();
     }
 
-    private void generateWriteActionParameter(Parameter parameter) {
-        Type type = parameter.getType();
-        Name name = parameter.getName();
-        String symbol = rubyNames.getMemberStyleName(name);
-        String tag = schemaNames.getSchemaTagName(name);
-        buffer.addLine("value = opts[:%1$s]", symbol);
-        if (type instanceof PrimitiveType) {
-            Model model = type.getModel();
-            if (type == model.getStringType()) {
-                buffer.addLine("writer.write_string('%1$s', value) unless value.nil?", tag);
-            }
-            else if (type == model.getBooleanType()) {
-                buffer.addLine("writer.write_boolean('%1$s', value) unless value.nil?", tag);
-            }
-            else if (type == model.getIntegerType()) {
-                buffer.addLine("writer.write_integer('%1$s', value) unless value.nil?", tag);
-            }
-            else if (type == model.getDecimalType()) {
-                buffer.addLine("writer.write_decimal('%1$s', value) unless value.nil?", tag);
-            }
-            else if (type == model.getDateType()) {
-                buffer.addLine("writer.write_date('%1$s', value) unless value.nil?", tag);
-            }
-        }
-        else if (type instanceof EnumType) {
-            buffer.addLine("writer.write_string('%1$s', value) unless value.nil?", tag);
-        }
-        else if (type instanceof StructType) {
-            RubyName writer = rubyNames.getWriterName(type);
-            buffer.addLine("%1$s.write_one(value, writer) unless value.nil?", writer.getClassName());
-        }
-        else if (type instanceof ListType) {
-            ListType listType = (ListType) type;
-            Type elementType = listType.getElementType();
-            RubyName writer = rubyNames.getWriterName(elementType);
-            buffer.addLine("%1$s.write_many(value, writer) unless value.nil?", writer.getClassName());
-        }
+    private void generateActionResponse(Parameter parameter) {
+        buffer.addLine("return action.%1$s", rubyNames.getMemberStyleName(parameter.getName()));
     }
 
     private void generateHttpGet(Method method) {
