@@ -31,13 +31,14 @@ describe SDK::Connection do
 
     context "in secure mode" do
 
-      it "a exception is raised if no CA certificate is provided" do
+      it "no exception is raised if no CA certificate is provided" do
         options = {
           :url => test_url,
           :username => test_user,
           :password => test_password,
         }
-        expect { SDK::Connection.new(options) }.to raise_error(ArgumentError)
+        connection = SDK::Connection.new(options)
+        connection.close
       end
 
       it "no exception is raised if a CA certificate is provided" do

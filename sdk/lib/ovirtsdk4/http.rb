@@ -105,7 +105,8 @@ module OvirtSDK4
     #   name should be checked.
     #
     # @option opts [String] :ca_file The name of a PEM file containing the trusted CA certificates. The certificate
-    #   presented by the server will be verified using these CA certificates.
+    #   presented by the server will be verified using these CA certificates. If not set then the system wide CA
+    #   certificates store is used.
     #
     # @option opts [Boolean] :debug (false) A boolean flag indicating if debug output should be generated. If the
     #   values is `true` all the data sent to and received from the server will be written to `$stdout`. Be aware that
@@ -212,11 +213,8 @@ module OvirtSDK4
         if insecure
           @curl.ssl_verify_peer = false
           @curl.ssl_verify_host = false
-        elsif ca_file.nil?
-          raise ArgumentError.new("The \"ca_file\" argument is mandatory when using TLS.")
-        elsif not ::File.file?(ca_file)
-          raise ArgumentError.new("The CA file \"#{ca_file}\" doesn't exist.")
-        else
+        elsif !ca_file.nil?
+          raise ArgumentError.new("The CA file \"#{ca_file}\" doesn't exist.") unless ::File.file?(ca_file)
           @curl.cacert = ca_file
         end
       end
@@ -455,11 +453,8 @@ module OvirtSDK4
           if @sso_insecure
             sso_curl.ssl_verify_peer = false
             sso_curl.ssl_verify_host = false
-          elsif @sso_ca_file.nil?
-            raise ArgumentError.new("The \"sso_ca_file\" argument is mandatory when using TLS.")
-          elsif not ::File.file?(@sso_ca_file)
-            raise ArgumentError.new("The CA file \"#{@sso_ca_file}\" doesn't exist.")
-          else
+          elsif !@sso_ca_file.nil?
+            raise ArgumentError.new("The CA file \"#{@sso_ca_file}\" doesn't exist.") unless ::File.file?(@sso_ca_file)
             sso_curl.cacert = @sso_ca_file
           end
         end
