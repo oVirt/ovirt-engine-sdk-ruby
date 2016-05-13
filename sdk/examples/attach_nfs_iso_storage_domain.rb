@@ -61,8 +61,7 @@ attached_sd_service = attached_sds_service.storage_domain_service(sd.id)
 begin
   sleep(5)
   sd = attached_sd_service.get
-  state = sd.status.state
-end while state != OvirtSDK4::StorageDomainStatus::ACTIVE
+end while sd.status != OvirtSDK4::StorageDomainStatus::ACTIVE
 
 # Close the connection to the server:
 connection.close

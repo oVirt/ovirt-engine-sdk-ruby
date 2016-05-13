@@ -57,8 +57,7 @@ disk_service = disks_service.disk_service(disk.id)
 begin
   sleep(5)
   disk = disk_service.get
-  state = disk.status.state
-end while state != OvirtSDK4::DiskStatus::OK
+end while disk.status != OvirtSDK4::DiskStatus::OK
 
 # Close the connection to the server:
 connection.close

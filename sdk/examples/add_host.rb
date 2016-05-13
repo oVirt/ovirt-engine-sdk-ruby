@@ -50,8 +50,7 @@ host_service = hosts_service.host_service(host.id)
 begin
   sleep(5)
   host = host_service.get
-  state = host.status.state
-end while state != OvirtSDK4::HostStatus::UP
+end while host.status != OvirtSDK4::HostStatus::UP
 
 # Close the connection to the server:
 connection.close

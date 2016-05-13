@@ -37,13 +37,12 @@ describe SDK::ActionReader do
 
       it "creates the expected action" do
         reader = SDK::XmlReader.new(
-          '<action><status><state>mystate</state></status></action>'
+          '<action><status>mystatus</status></action>'
         )
         result = SDK::ActionReader.read_one(reader)
         expect(result).to_not be_nil
         expect(result).to be_a(SDK::Action)
-        expect(result.status).to be_a(SDK::Status)
-        expect(result.status.state).to eql('mystate')
+        expect(result.status).to eql('mystatus')
       end
 
     end
@@ -67,14 +66,13 @@ describe SDK::ActionReader do
       it "creates the expected action" do
         reader = SDK::XmlReader.new(
           '<action>' +
-            '<status><state>mystate</state></status>' +
+            '<status>mystatus</status>' +
             '<fault><reason>myreason</reason></fault>' +
           '</action>'
         )
         result = SDK::ActionReader.read_one(reader)
         expect(result).to be_a(SDK::Action)
-        expect(result.status).to be_a(SDK::Status)
-        expect(result.status.state).to eql('mystate')
+        expect(result.status).to eql('mystatus')
         expect(result.fault).to be_a(SDK::Fault)
         expect(result.fault.reason).to eql('myreason')
       end

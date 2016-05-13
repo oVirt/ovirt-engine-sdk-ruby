@@ -46,8 +46,7 @@ vm_service.stop
 begin
   sleep(5)
   vm = vm_service.get
-  state = vm.status.state
-end while state != OvirtSDK4::VmStatus::DOWN
+end while vm.status != OvirtSDK4::VmStatus::DOWN
 
 # Close the connection to the server:
 connection.close

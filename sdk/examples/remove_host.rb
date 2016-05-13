@@ -40,7 +40,7 @@ host = hosts_service.list({:search => 'name=myhost'})[0]
 host_service = hosts_service.host_service(host.id)
 
 # If the host isn't down or in maintenance then move it to maintenance:
-unless host.status.state == OvirtSDK4::HostStatus::MAINTENANCE
+unless host.status == OvirtSDK4::HostStatus::MAINTENANCE
   host_service.deactivate
 end
 
