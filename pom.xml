@@ -50,7 +50,7 @@ limitations under the License.
     <model.version>4.0.20</model.version>
 
     <!-- The version of the gem: -->
-    <gem.suffix>.alpha12</gem.suffix>
+    <gem.suffix>.alpha13</gem.suffix>
     <gem.version>4.0.0${gem.suffix}</gem.version>
 
   </properties>

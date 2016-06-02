@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ovirt-engine-sdk (4.0.0.alpha12)
+    ovirt-engine-sdk (4.0.0.alpha13)
       curb (~> 0.8)
 
 GEM

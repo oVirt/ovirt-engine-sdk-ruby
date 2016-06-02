@@ -36,7 +36,8 @@ export JAVA_HOME="${JAVA_HOME:=/usr/lib/jvm/java-1.8.0}"
 # the date:
 date="$(date --utc +%Y%m%d)"
 commit="$(git log -1 --pretty=format:%h)"
-suffix=".${date}git${commit}"
+#suffix=".${date}git${commit}"
+suffix=".alpha13"
 
 # Build the SDK code generator, run it, and build the gem:
 mvn package -s "${settings}" -Dgem.suffix="${suffix}"
@@ -49,7 +50,8 @@ cp "${gem_file}" packaging/
 pushd packaging
   export gem_version="$(echo ${gem_file} | sed -e 's/^.*-//' -e 's/\.gem//')"
   export gem_url="$(basename ${gem_file})"
-  export rpm_release="0.0${suffix}$(rpm --eval '%dist')"
+  #export rpm_release="0.0${suffix}$(rpm --eval '%dist')"
+  export rpm_release="0.13${suffix}$(rpm --eval '%dist')"
   ./build.sh
 popd
 
