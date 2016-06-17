@@ -39,7 +39,7 @@ public class Tool {
     // The names of the command line options:
     private static final String MODEL_OPTION = "model";
     private static final String OUT_OPTION = "out";
-    private static final String GEM_VERSION_OPTION = "gem-version";
+    private static final String VERSION_OPTION = "version";
 
     // Reference to the objects used to calculate Ruby names:
     @Inject private RubyNames rubyNames;
@@ -79,8 +79,8 @@ public class Tool {
 
         // Option to specify the version number of the gem:
         options.addOption(Option.builder()
-            .longOpt(GEM_VERSION_OPTION)
-            .desc("The the version number of the gem, for example \"4.0.0.alpha0\".")
+            .longOpt(VERSION_OPTION)
+            .desc("The the version number of the SDK, for example \"4.0.0.Alpha0\".")
             .type(File.class)
             .required(true)
             .hasArg(true)
@@ -105,8 +105,14 @@ public class Tool {
         File modelFile = (File) line.getParsedOptionValue(MODEL_OPTION);
         File outDir = (File) line.getParsedOptionValue(OUT_OPTION);
 
-        // Extract the version of the gem:
-        String gemVersion = line.getOptionValue(GEM_VERSION_OPTION);
+        // Extract the version of the:
+        String version = line.getOptionValue(VERSION_OPTION);
+
+        // The version will usually come from the root POM of the project, where it will use upper case for suffixes
+        // like "Alpha" or "Beta". In addition it will have the "-SNAPSHOT" suffix for non release versions. We need
+        // to remove the "-SNAPSHOT" suffix, and convert the result to lower case, as the common practice for Ruby
+        // is to use "alpha" or "beta", lower case.
+        version = version.replaceAll("-SNAPSHOT$", "").toLowerCase();
 
         // Analyze the model files:
         Model model = new Model();
@@ -118,7 +124,7 @@ public class Tool {
         builtinTypes.addBuiltinTypes(model);
 
         // Configure the object used to generate names:
-        rubyNames.setVersion(gemVersion);
+        rubyNames.setVersion(version);
 
         // Run the generators:
         if (outDir != null) {

@@ -26,9 +26,13 @@ limitations under the License.
   <groupId>org.ovirt.engine.api</groupId>
   <artifactId>ruby-sdk-parent</artifactId>
   <packaging>pom</packaging>
-  <version>4.0.0-SNAPSHOT</version>
+  <version>4.0.0.Alpha14-SNAPSHOT</version>
 
   <name>oVirt Ruby SDK Parent</name>
+
+  <description>
+    Ruby SDK for the oVirt Engine API.
+  </description>
 
   <url>http://www.ovirt.org</url>
 
@@ -40,6 +44,22 @@ limitations under the License.
     </license>
   </licenses>
 
+  <developers>
+    <developer>
+      <name>Juan Hernandez</name>
+      <email>juan.hernandez@redhat.com</email>
+      <organization>oVirt</organization>
+      <organizationUrl>http://www.ovirt.org</organizationUrl>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:git://gerrit.ovirt.org/ovirt-engine-sdk-ruby.git</connection>
+    <developerConnection>scm:git:git://gerrit.ovirt.org/ovirt-engine-sdk-ruby.git</developerConnection>
+    <url>git://gerrit.ovirt.org/ovirt-engine-sdk-ruby.git</url>
+    <tag>HEAD</tag>
+  </scm>
+
   <properties>
 
     <!-- Make sure that we always compile with UTF-8 encoding: -->
@@ -49,10 +69,6 @@ limitations under the License.
     <metamodel.version>1.0.13</metamodel.version>
     <model.version>4.0.20</model.version>
 
-    <!-- The version of the gem: -->
-    <gem.suffix>.alpha13</gem.suffix>
-    <gem.version>4.0.0${gem.suffix}</gem.version>
-
   </properties>
 
   <modules>
@@ -61,6 +77,24 @@ limitations under the License.
   </modules>
 
   <build>
+
+    <pluginManagement>
+      <plugins>
+
+        <!-- Make sure we use Java 8. -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.1</version>
+          <configuration>
+            <source>1.8</source>
+            <target>1.8</target>
+          </configuration>
+        </plugin>
+
+      </plugins>
+    </pluginManagement>
+
     <plugins>
 
       <plugin>
@@ -73,7 +107,68 @@ limitations under the License.
         </configuration>
       </plugin>
 
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>2.4</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>2.5.2</version>
+        <configuration>
+          <tagNameFormat>@{version}</tagNameFormat>
+          <pushChanges>false</pushChanges>
+        </configuration>
+      </plugin>
+
     </plugins>
   </build>
+
+  <profiles>
+
+    <profile>
+      <id>sign</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.6</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+  </profiles>
+
+  <distributionManagement>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+    <repository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+    </repository>
+  </distributionManagement>
 
 </project>

@@ -4,8 +4,10 @@
 *.rpm
 *.so
 *.spec
+*.tar.gz
 .bash_history
 .idea/
+exported-artifacts/
 sdk/doc/
 sdk/lib/ovirtsdk4/readers.rb
 sdk/lib/ovirtsdk4/services.rb
@@ -16,4 +18,5 @@ sdk/pkg/
 sdk/spec/access.log
 sdk/spec/server.log
 sdk/tmp/
+settings.xml
 target/

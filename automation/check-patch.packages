@@ -1,10 +1,1 @@
-gcc
-git
-java-1.8.0-openjdk-devel
-libxml2-devel
-maven
-ruby
-ruby-devel
-rubygem-curb
-rubygem-rake-compiler
-rubygem-rspec
+build.packages
