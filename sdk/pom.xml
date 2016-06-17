@@ -26,13 +26,22 @@ limitations under the License.
   <parent>
     <groupId>org.ovirt.engine.api</groupId>
     <artifactId>ruby-sdk-parent</artifactId>
-    <version>4.0.0-SNAPSHOT</version>
+    <version>4.0.0.Alpha14-SNAPSHOT</version>
   </parent>
 
   <artifactId>ruby-sdk</artifactId>
   <packaging>pom</packaging>
 
   <name>oVirt Ruby SDK Gem</name>
+
+  <properties>
+
+    <!-- By default the version of the SDK will be calculated from the
+         version of the project, but it is defined as a property so that
+         it can be overriden (by automation scripts, for example): -->
+    <sdk.version>${project.version}</sdk.version>
+
+  </properties>
 
   <build>
     <plugins>
@@ -85,7 +94,7 @@ limitations under the License.
                 <argument>org.ovirt.sdk.ruby.Tool</argument>
                 <argument>--model=${project.basedir}/target/model.jar</argument>
                 <argument>--out=${project.basedir}/lib</argument>
-                <argument>--gem-version=${gem.version}</argument>
+                <argument>--version=${sdk.version}</argument>
               </arguments>
               <includePluginDependencies>true</includePluginDependencies>
               <includeProjectDependencies>false</includeProjectDependencies>
