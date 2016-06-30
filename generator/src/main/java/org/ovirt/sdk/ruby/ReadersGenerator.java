@@ -16,11 +16,16 @@ limitations under the License.
 
 package org.ovirt.sdk.ruby;
 
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import javax.inject.Inject;
 
 import org.ovirt.api.metamodel.concepts.EnumType;
+import org.ovirt.api.metamodel.concepts.Link;
 import org.ovirt.api.metamodel.concepts.ListType;
 import org.ovirt.api.metamodel.concepts.Model;
 import org.ovirt.api.metamodel.concepts.Name;
@@ -146,6 +151,36 @@ public class ReadersGenerator implements RubyGenerator {
         buffer.addLine("end");
         buffer.addLine();
 
+        // Generate the method that reads links to lists:
+        List<Link> listLinks = type.links()
+            .filter(link -> link.getType() instanceof ListType)
+            .sorted()
+            .collect(toList());
+        if (!listLinks.isEmpty()) {
+            buffer.addLine("def self.read_link(reader, object)");
+            buffer.addLine(  "# Process the attributes:");
+            buffer.addLine(  "rel = reader.get_attribute('rel')");
+            buffer.addLine(  "href = reader.get_attribute('href')");
+            buffer.addLine(  "if rel && href");
+            buffer.addLine(    "list = %1$s.new", rubyNames.getBaseListName().getClassName());
+            buffer.addLine(    "list.href = href");
+            buffer.addLine(    "case rel");
+            listLinks.forEach(link -> {
+                Name name = link.getName();
+                String property = rubyNames.getMemberStyleName(name);
+                String rel = name.words().map(String::toLowerCase).collect(joining());
+                buffer.addLine("when '%1$s'", rel);
+                buffer.addLine(  "object.%1$s = list", property);
+            });
+            buffer.addLine(    "end");
+            buffer.addLine(  "end");
+            buffer.addLine();
+            buffer.addLine(  "# Discard the rest of the element:");
+            buffer.addLine(  "reader.next_element");
+            buffer.addLine("end");
+            buffer.addLine();
+        }
+
         // End class:
         buffer.addLine("end");
         buffer.addLine();
@@ -168,12 +203,21 @@ public class ReadersGenerator implements RubyGenerator {
     }
 
     private void generateElementsRead(StructType type) {
-        long count = type.attributes().count() + type.links().count();
-        if (count > 0) {
+        long attributesCount = type.attributes().count();
+        long linksCount = type.links().count();
+        long listLinksCount = type.links()
+            .filter(link -> link.getType() instanceof ListType)
+            .count();
+        long membersCount = attributesCount + linksCount;
+        if (membersCount > 0) {
             buffer.addLine("while reader.forward do");
             buffer.addLine(  "case reader.node_name");
             type.attributes().sorted().forEach(this::generateElementRead);
             type.links().sorted().forEach(this::generateElementRead);
+            if (listLinksCount > 0) {
+                buffer.addLine("when 'link'");
+                buffer.addLine(  "read_link(reader, object)");
+            }
             buffer.addLine(  "else");
             buffer.addLine(    "reader.next_element");
             buffer.addLine(  "end");

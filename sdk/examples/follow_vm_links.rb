@@ -38,9 +38,10 @@ vms_service = connection.system_service.vms_service
 vm = vms_service.list({:search => 'name=myvm'})[0]
 
 # When the server returns a virtual machine it will return links to
-# related objects, like the cluster and the template, something like
-# this:
+# related objects, like the cluster, the templatea and the permissions,
+# something like this:
 #
+# <link href="/api/vms/123/permissions" rel="permissions"/>
 # <cluster id="123" href="/api/clusters/123"/>
 # <template id="456" href="/api/templates/456"/>
 #
@@ -48,10 +49,14 @@ vm = vms_service.list({:search => 'name=myvm'})[0]
 # the complete content of these related objects.
 cluster = connection.follow_link(vm.cluster)
 template = connection.follow_link(vm.template)
+permissions = connection.follow_link(vm.permissions)
 
 # Now we can use the details of the cluster and the template:
 puts "cluster: #{cluster.name}"
 puts "template: #{template.name}"
+permissions.each do |permission|
+  puts "role: #{permission.role.id}"
+end
 
 # Close the connection to the server:
 connection.close

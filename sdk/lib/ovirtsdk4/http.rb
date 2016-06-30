@@ -592,11 +592,15 @@ module OvirtSDK4
         raise Error.new("The URL '#{href}' isn't compatible with the base URL of the connection")
       end
 
-      # Remove the prefix from the URL, follow the path to the relevant service and invoke the "get" method to
-      # retrieve its representation:
+      # Remove the prefix from the URL, follow the path to the relevant service and invoke the "get" or "list" method
+      # to retrieve its representation:
       path = href[prefix.length..-1]
       service = service(path)
-      return service.get
+      if object.is_a?(Array)
+        service.list
+      else
+        service.get
+      end
     end
 
     #

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015 Red Hat, Inc.
+# Copyright (c) 2015-2016 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -90,6 +90,108 @@ describe SDK::VmReader do
         expect(result).to_not be_nil
         expect(result).to be_a(SDK::Vm)
         expect(result.href).to eql('myhref')
+      end
+
+    end
+
+    context "when given a link to a list" do
+
+      it "the corresponding attribute is populated" do
+        reader = SDK::XmlReader.new(
+          '<vm>' +
+            '<link rel="nics" href="/vms/123/nics"/>' +
+          '</vm>'
+        )
+        result = SDK::VmReader.read_one(reader)
+        expect(result).to_not be_nil
+        expect(result).to be_a(SDK::Vm)
+        expect(result.nics).to_not be_nil
+        expect(result.nics).to be_a(SDK::List)
+        expect(result.nics.href).to eql('/vms/123/nics')
+      end
+
+      it "the next attribute is read correctly" do
+        reader = SDK::XmlReader.new(
+          '<vm>' +
+            '<link rel="nics" href="/vms/123/nics"/>' +
+            '<name>myvm</name>' +
+          '</vm>'
+        )
+        result = SDK::VmReader.read_one(reader)
+        expect(result).to_not be_nil
+        expect(result).to be_a(SDK::Vm)
+        expect(result.name).to eql('myvm')
+      end
+
+      it "the link is ignored if there is no such link" do
+        reader = SDK::XmlReader.new(
+          '<vm>' +
+            '<link rel="junks" href="/junks"/>' +
+          '</vm>'
+        )
+        result = SDK::VmReader.read_one(reader)
+        expect(result).to_not be_nil
+        expect(result).to be_a(SDK::Vm)
+        expect(result.nics).to be_nil
+      end
+
+      it "the link is ignored if it has no rel" do
+        reader = SDK::XmlReader.new(
+          '<vm>' +
+            '<link href="/junks"/>' +
+          '</vm>'
+        )
+        result = SDK::VmReader.read_one(reader)
+        expect(result).to_not be_nil
+        expect(result).to be_a(SDK::Vm)
+        expect(result.nics).to be_nil
+      end
+
+      it "the link is ignored if it has no href" do
+        reader = SDK::XmlReader.new(
+          '<vm>' +
+            '<link rel="nics"/>' +
+          '</vm>'
+        )
+        result = SDK::VmReader.read_one(reader)
+        expect(result).to_not be_nil
+        expect(result).to be_a(SDK::Vm)
+        expect(result.nics).to be_nil
+      end
+    end
+
+    context "when given a multiple links to lists" do
+
+      it "the corresponding attributes are populated" do
+        reader = SDK::XmlReader.new(
+          '<vm>' +
+            '<link rel="nics" href="/vms/123/nics"/>' +
+            '<link rel="cdroms" href="/vms/123/cdroms"/>' +
+          '</vm>'
+        )
+        result = SDK::VmReader.read_one(reader)
+        expect(result).to_not be_nil
+        expect(result).to be_a(SDK::Vm)
+        expect(result.nics).to_not be_nil
+        expect(result.nics).to be_a(SDK::List)
+        expect(result.nics.href).to eql('/vms/123/nics')
+        expect(result.cdroms).to_not be_nil
+        expect(result.cdroms).to be_a(SDK::List)
+        expect(result.cdroms.href).to eql('/vms/123/cdroms')
+      end
+
+      it "the next attribute is read correctly" do
+        reader = SDK::XmlReader.new(
+          '<vm>' +
+            '<link rel="nics" href="/vms/123/nics"/>' +
+            '<link rel="cdroms" href="/vms/123/cdroms"/>' +
+            '<name>myvm</name>' +
+          '</vm>'
+        )
+        result = SDK::VmReader.read_one(reader)
+        expect(result).to_not be_nil
+        expect(result).to be_a(SDK::Vm)
+        expect(result.name).to eql('myvm')
       end
 
     end
