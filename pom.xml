@@ -128,6 +128,7 @@ limitations under the License.
         <configuration>
           <tagNameFormat>@{version}</tagNameFormat>
           <pushChanges>false</pushChanges>
+          <autoVersionSubmodules>true</autoVersionSubmodules>
         </configuration>
       </plugin>
 
