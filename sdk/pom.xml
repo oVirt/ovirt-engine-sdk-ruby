@@ -26,7 +26,7 @@ limitations under the License.
   <parent>
     <groupId>org.ovirt.engine.api</groupId>
     <artifactId>ruby-sdk-parent</artifactId>
-    <version>4.0.0.Alpha14-SNAPSHOT</version>
+    <version>4.1.0.alpha1-SNAPSHOT</version>
   </parent>
 
   <artifactId>ruby-sdk</artifactId>
