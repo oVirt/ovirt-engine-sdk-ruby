@@ -14,8 +14,6 @@
 # limitations under the License.
 #
 
-require 'spec_helper'
-
 describe SDK::Vm do
 
   describe ".disks=" do

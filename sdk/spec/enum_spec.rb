@@ -14,8 +14,6 @@
 # limitations under the License.
 #
 
-require 'spec_helper'
-
 describe SDK::Architecture do
 
   describe "::X86_64" do
