@@ -325,6 +325,9 @@ module OvirtSDK4
       @curl.headers['Accept'] = 'application/xml'
       @curl.headers['Authorization'] = 'Bearer ' + @sso_token
 
+      # Clear any data that may be in the buffers:
+      @curl.post_body = nil
+
       # Send the request and wait for the response:
       case request.method
       when :DELETE
