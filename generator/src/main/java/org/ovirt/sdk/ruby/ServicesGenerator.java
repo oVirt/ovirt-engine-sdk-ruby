@@ -387,20 +387,18 @@ public class ServicesGenerator implements RubyGenerator {
     }
 
     private void generateWriteRequestBody(Parameter parameter, String variable) {
-        Name name = parameter.getName();
         Type type = parameter.getType();
-        String tag = schemaNames.getSchemaTagName(name);
         buffer.addLine("begin");
         buffer.addLine(  "writer = XmlWriter.new(nil, true)");
         if (type instanceof StructType) {
             RubyName writer = rubyNames.getWriterName(type);
-            buffer.addLine("%1$s.write_one(%2$s, writer, '%3$s')", writer.getClassName(), variable, tag);
+            buffer.addLine("%1$s.write_one(%2$s, writer)", writer.getClassName(), variable);
         }
         else if (type instanceof ListType) {
             ListType listType = (ListType) type;
             Type elementType = listType.getElementType();
             RubyName writer = rubyNames.getWriterName(elementType);
-            buffer.addLine("%1$s.write_many(%2$s, writer, '%3$s')", writer.getClassName(), variable, tag);
+            buffer.addLine("%1$s.write_many(%2$s, writer)", writer.getClassName(), variable);
         }
         buffer.addLine(  "request.body = writer.string");
         buffer.addLine("ensure");
