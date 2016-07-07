@@ -16,14 +16,14 @@
 
 describe SDK::Vm do
 
-  describe ".disks=" do
+  describe ".disk_attachments=" do
 
     context "when given nil" do
 
       it "it is converted to nil" do
         vm = SDK::Vm.new
-        vm.disks = nil
-        expect(vm.disks).to be(nil)
+        vm.disk_attachments = nil
+        expect(vm.disk_attachments).to be(nil)
       end
 
     end
@@ -32,8 +32,8 @@ describe SDK::Vm do
 
       it "it is converted to a list" do
         vm = SDK::Vm.new
-        vm.disks = []
-        expect(vm.disks).to be_a(SDK::List)
+        vm.disk_attachments = []
+        expect(vm.disk_attachments).to be_a(SDK::List)
       end
 
     end

@@ -173,11 +173,11 @@ describe SDK::Connection do
 
     end
 
-    context "given 'vms/123/disks'" => true do
+    context "given 'vms/123/diskattachments'" => true do
 
-      it "returns a reference to the virtual machine disks service" do
-        result = @connection.service('vms/123/disks')
-        expect(result).to be_a(SDK::VmDisksService)
+      it "returns a reference to the virtual machine disk attachments service" do
+        result = @connection.service('vms/123/diskattachments')
+        expect(result).to be_a(SDK::DiskAttachmentsService)
       end
 
     end

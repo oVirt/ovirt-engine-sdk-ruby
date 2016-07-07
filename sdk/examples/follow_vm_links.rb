@@ -19,8 +19,8 @@
 require 'ovirtsdk4'
 
 # This example will connect to the server, retrieve the detail of a
-# virtual machine and then it will follow the link to the disks of the
-# virtual machine:
+# virtual machine and then it will follow the links to the permissions
+# of the virtual machine:
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new({
