@@ -284,10 +284,10 @@ module OvirtSDK4
 
     #
     # Returns a reference to the service corresponding to the given path. For example, if the `path` parameter
-    # is `vms/123/disks` then it will return a reference to the service that manages the disks for the virtual
-    # machine with identifier `123`.
+    # is `vms/123/diskattachments` then it will return a reference to the service that manages the disk
+    # attachments for the virtual machine with identifier `123`.
     #
-    # @param path [String] The path of the service, for example `vms/123/disks`.
+    # @param path [String] The path of the service, for example `vms/123/diskattachments`.
     # @return [Service]
     # @raise [Error] If there is no service corresponding to the given path.
     #

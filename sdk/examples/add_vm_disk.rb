@@ -18,7 +18,7 @@
 
 require 'ovirtsdk4'
 
-# This example will connect to the server and add a disk to an existing
+# This example will connect to the server and attach a disk to an existing
 # virtual machine.
 
 # Create the connection to the server:
@@ -35,25 +35,30 @@ connection = OvirtSDK4::Connection.new({
 vms_service = connection.system_service.vms_service
 vm = vms_service.list({:search => 'name=myvm'})[0]
 
-# Locate the service that manages the disks of the virtual machine:
-disks_service = vms_service.vm_service(vm.id).disks_service
+# Locate the service that manages the disk attachments of the virtual
+# machine:
+disk_attachments_service = vms_service.vm_service(vm.id).disk_attachments_service
 
-# Use the "add" method of the disks service to add the disk:
-disk = disks_service.add(
-  OvirtSDK4::Disk.new({
-    :name => 'mydisk',
-    :description => 'My disk',
-    :interface => OvirtSDK4::DiskInterface::VIRTIO,
-    :format => OvirtSDK4::DiskFormat::COW,
-    :provisioned_size => 1 * 2**20,
-    :storage_domains => [{
+# Use the "add" method of the disk attachments service to add the disk:
+disk_attachment = disk_attachments_service.add(
+  OvirtSDK4::DiskAttachment.new(
+    :disk => {
+      :name => 'mydisk',
+      :description => 'My disk',
+      :format => OvirtSDK4::DiskFormat::COW,
+      :provisioned_size => 1 * 2**20,
+      :storage_domains => [{
         :name => 'mydata',
-    }],
-  })
+      }],
+    },
+    :interface => OvirtSDK4::DiskInterface::VIRTIO,
+    :bootable => false,
+  )
 )
 
 # Wait till the disk is OK:
-disk_service = disks_service.disk_service(disk.id)
+disks_service = connection.system_service.disks_service
+disk_service = disks_service.disk_service(disk_attachment.disk.id)
 begin
   sleep(5)
   disk = disk_service.get
