@@ -39,6 +39,60 @@ module OvirtSDK4
       @href = value
     end
 
+    #
+    # Returns the attribute corresponding to the given set of keys, but will not generate a `NoMethodError` when
+    # the value corresponding to the key is `nil`, it will return `nil` instead. It is intended to simplify access
+    # to deeply nested attributes within an structure, and mostly copied from the Ruby 2.3 `dig` method available
+    # for hashes.
+    #
+    # For example, to access the alias of the first disk attached to a virtual machine that is part of an event without
+    # having to check for `nil` several times:
+    #
+    # [source,ruby]
+    # ----
+    # event = ...
+    # first_disk_id = event.dig(:vm, :disk_attachments, 0, :disk, :alias)
+    # ----
+    #
+    # Which is equivalent to this:
+    #
+    # [source,ruby]
+    # ----
+    # event = ...
+    # first_disk_id = nil
+    # vm = event.vm
+    # if !vm.nil?
+    #   disk_attachments = vm.disk_attachments
+    #   if !disk_attachments.nil?
+    #     first_disk_attachment = disk_attachments[0]
+    #     if !first_disk_attachment.nil?
+    #       disk = first_disk_attachment.disk
+    #       if !disk.nil?
+    #         first_disk_id = disk.id
+    #       end
+    #     end
+    #   end
+    # end
+    # ----
+    #
+    # @param keys [Array<Symbol, Integer>] An array of symbols corresponding to attribute names of structs, or integers
+    #   corresponding to list indexes.
+    #
+    def dig(*keys)
+      current = self
+      keys.each do |key|
+        if key.is_a?(Symbol)
+          current = current.send(key)
+        elsif key.is_a?(Integer)
+          current = current[key]
+        else
+          raise TypeError.new("The key '#{key}' isn't a symbol or integer")
+        end
+        break if current.nil?
+      end
+      current
+    end
+
   end
 
   #
