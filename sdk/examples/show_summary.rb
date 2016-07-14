@@ -16,6 +16,7 @@
 # limitations under the License.
 #
 
+require 'logger'
 require 'ovirtsdk4'
 
 # This example will connect to the server and display a summary of the
@@ -28,6 +29,7 @@ connection = OvirtSDK4::Connection.new({
   :password => 'redhat123',
   :ca_file => 'ca.pem',
   :debug => true,
+  :log => Logger.new('example.log'),
 })
 
 # Get API information from the root service:

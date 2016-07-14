@@ -16,6 +16,7 @@
 # limitations under the License.
 #
 
+require 'logger'
 require 'ovirtsdk4'
 
 # This example shows how to set a custom serial number in a virtual
@@ -28,6 +29,7 @@ connection = OvirtSDK4::Connection.new({
   :password => 'redhat123',
   :ca_file => 'ca.pem',
   :debug => true,
+  :log => Logger.new('example.log'),
 })
 
 # Locate the virtual machines service and use it to find the virtual

@@ -34,6 +34,8 @@ describe SDK::Connection do
           :url => test_url,
           :username => test_user,
           :password => test_password,
+          :debug => test_debug,
+          :log => test_log,
         }
         connection = SDK::Connection.new(options)
         connection.close
@@ -45,6 +47,8 @@ describe SDK::Connection do
           :username => test_user,
           :password => test_password,
           :ca_file => test_ca_file,
+          :debug => test_debug,
+          :log => test_log,
         }
         connection = SDK::Connection.new(options)
         connection.close
@@ -60,54 +64,11 @@ describe SDK::Connection do
           :username => test_user,
           :password => test_password,
           :insecure => true,
+          :debug => test_debug,
+          :log => test_log,
         }
         connection = SDK::Connection.new(options)
         connection.close
-      end
-
-    end
-
-    context "given a log file that doesn't exist" do
-
-      it "the file is created" do
-        fd = Tempfile.new('log')
-        log = fd.path
-        fd.close
-        fd.unlink
-        options = {
-          :url => test_url,
-          :username => test_user,
-          :password => test_password,
-          :ca_file => test_ca_file,
-          :debug => true,
-          :log => log,
-        }
-        connection = SDK::Connection.new(options)
-        connection.close
-        expect(File.exists?(log)).to be true
-        expect(File.size(log)).to be > 0
-        File.delete(log)
-      end
-
-    end
-
-    context "given a log IO object" do
-
-      it "something is written to it" do
-        log = Tempfile.new('log')
-        options = {
-          :url => test_url,
-          :username => test_user,
-          :password => test_password,
-          :ca_file => test_ca_file,
-          :debug => true,
-          :log => log,
-        }
-        connection = SDK::Connection.new(options)
-        connection.close
-        expect(log.size).to be > 0
-        log.close
-        log.unlink
       end
 
     end
@@ -119,6 +80,8 @@ describe SDK::Connection do
           :url => test_url,
           :kerberos => true,
           :ca_file => test_ca_file,
+          :debug => test_debug,
+          :log => test_log,
         }
         connection = SDK::Connection.new(options)
         connection.close

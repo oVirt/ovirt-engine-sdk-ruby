@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 
 #
-# Copyright (c) 2015 Red Hat, Inc.
+# Copyright (c) 2015-2016 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 # limitations under the License.
 #
 
+require 'logger'
 require 'ovirtsdk4'
 
 # This example will connect to the server, search for a VM by name and
@@ -28,6 +29,7 @@ connection = OvirtSDK4::Connection.new({
   :password => 'redhat123',
   :ca_file => 'ca.pem',
   :debug => true,
+  :log => Logger.new('example.log'),
 })
 
 # Find the service that manages VMs:

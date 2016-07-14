@@ -16,6 +16,7 @@
 # limitations under the License.
 #
 
+require 'logger'
 require 'ovirtsdk4'
 
 # This example will connect to the server using Kerberos:
@@ -27,6 +28,7 @@ connection = OvirtSDK4::Connection.new({
   :sso_log => './sso.log',
   :ca_file => 'ca.pem',
   :debug => true,
+  :log => Logger.new('example.log'),
 })
 
 # Get the reference to the system service:
