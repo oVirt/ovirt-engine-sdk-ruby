@@ -16,6 +16,7 @@
 # limitations under the License.
 #
 
+require 'logger'
 require 'ovirtsdk4'
 
 # This example shows how to connect to Github server to obtain the OAuth2 access token. The access token won't work
@@ -30,6 +31,7 @@ connection = OvirtSDK4::Connection.new({
   :ca_file => 'ca.pem',
   :sso_token_name => 'hashed_token',
   :debug => true,
+  :log => Logger.new('example.log'),
 })
 
 # Get the reference to the system service:

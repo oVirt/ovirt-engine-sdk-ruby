@@ -24,6 +24,8 @@ describe SDK::Connection do
       :password => test_password,
       :ca_file => test_ca_file,
       :timeout => 1,
+      :debug => test_debug,
+      :log => test_log,
     )
     @service = @connection.system_service.vms_service
   end
@@ -45,5 +47,4 @@ describe SDK::Connection do
     end
 
   end
-
 end

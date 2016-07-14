@@ -16,6 +16,7 @@
 # limitations under the License.
 #
 
+require 'logger'
 require 'ovirtsdk4'
 
 # This example will connect to the server, retrieve the detail of a
@@ -29,6 +30,7 @@ connection = OvirtSDK4::Connection.new({
   :password => 'redhat123',
   :ca_file => 'ca.pem',
   :debug => true,
+  :log => Logger.new('example.log'),
 })
 
 # Get the reference to the service that manages virtual machines:

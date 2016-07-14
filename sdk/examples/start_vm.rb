@@ -16,6 +16,7 @@
 # limitations under the License.
 #
 
+require 'logger'
 require 'ovirtsdk4'
 
 # This example will connect to the server and start a virtual machine.
@@ -27,6 +28,7 @@ connection = OvirtSDK4::Connection.new({
   :password => 'redhat123',
   :ca_file => 'ca.pem',
   :debug => true,
+  :log => Logger.new('example.log'),
 })
 
 # Get the reference to the "vms" service:

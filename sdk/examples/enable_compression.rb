@@ -16,6 +16,7 @@
 # limitations under the License.
 #
 
+require 'logger'
 require 'ovirtsdk4'
 
 # This example shows how to enable compression of the responses sent by
@@ -29,6 +30,7 @@ connection = OvirtSDK4::Connection.new({
   :ca_file => 'ca.pem',
   :compress => true,
   :debug => false,
+  :log => Logger.new('example.log'),
 })
 
 # Note that when compression and debug are enabled the raw compressed

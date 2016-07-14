@@ -15,9 +15,9 @@
 #
 
 require 'json'
+require 'logger'
 require 'openssl'
 require 'socket'
-require 'tempfile'
 require 'uri'
 require 'webrick'
 require 'webrick/https'
@@ -82,12 +82,22 @@ module Helpers # :nodoc:
     return 'spec/pki/ca.crt'
   end
 
+  def test_debug
+    true
+  end
+
+  def test_log
+    @log ||= Logger.new('spec/clien.log')
+  end
+
   def test_connection
     return SDK::Connection.new(
       :url => test_url,
       :username => test_user,
       :password => test_password,
       :ca_file => test_ca_file,
+      :debug => test_debug,
+      :log => test_log,
     )
   end
 

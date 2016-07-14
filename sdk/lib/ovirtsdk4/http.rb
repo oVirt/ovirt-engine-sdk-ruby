@@ -109,13 +109,10 @@ module OvirtSDK4
     #   certificates store is used.
     #
     # @option opts [Boolean] :debug (false) A boolean flag indicating if debug output should be generated. If the
-    #   values is `true` all the data sent to and received from the server will be written to `$stdout`. Be aware that
-    #   user names and passwords will also be written, so handle it with care.
+    #   values is `true` and the `log` parameter isn't `nil` then the data sent to and received from the server will be
+    #   written to the log. Be aware that user names and passwords will also be written, so handle with care.
     #
-    # @option opts [String, IO] :log The log file where the debug output will be written. The value can be an string
-    #   containing a file name or an IO object. If it is a file name then the file will be created if it doesn't
-    #   exist, and the debug output will be added to the end. The file will be closed when the connection is closed.
-    #   If it is an IO object then the debug output will be written directly, and it won't be closed.
+    # @option opts [Logger] :log The logger where the log messages will be written.
     #
     # @option opts [Boolean] :kerberos (false) A boolean flag indicating if Kerberos uthentication should be used
     #   instead of the default basic authentication.
@@ -145,16 +142,6 @@ module OvirtSDK4
     #   certificate presented by the SSO server will be verified using these CA certificates. Default is value of
     #   `ca_file`.
     #
-    # @option opts [Boolean] :sso_debug A boolean flag indicating if SSO debug output should be generated. If the
-    #   values is `true` all the data sent to and received from the SSO server will be written to `$stdout`. Be aware
-    #   that user names and passwords will also be written, so handle it with care. Default is value of `debug`.
-    #
-    # @option opts [String, IO] :sso_log The log file where the SSO debug output will be written. The value can be a
-    #   string containing a file name or an IO object. If it is a file name then the file will be created if it doesn't
-    #   exist, and the SSO debug output will be added to the end. The file will be closed when the connection is closed.
-    #   If it is an IO object then the SSO debug output will be written directly, and it won't be closed. Default is
-    #   value of `log`.
-    #
     # @option opts [Boolean] :sso_timeout The maximun total time to wait for the SSO response, in seconds. A value
     #   of zero means wait for ever. If the timeout expires before the SSO response is received an exception will be
     #   raised. Default is value of `timeout`.
@@ -169,8 +156,8 @@ module OvirtSDK4
       password = opts[:password]
       insecure = opts[:insecure] || false
       ca_file = opts[:ca_file]
-      debug = opts[:debug] || false
-      log = opts[:log]
+      @debug = opts[:debug] || false
+      @log = opts[:log]
       kerberos = opts[:kerberos] || false
       timeout = opts[:timeout] || 0
       compress = opts[:compress] || false
@@ -178,8 +165,6 @@ module OvirtSDK4
       sso_revoke_url = opts[:sso_revoke_url]
       sso_insecure = opts[:sso_insecure] || insecure
       sso_ca_file = opts[:sso_ca_file] || ca_file
-      sso_debug = opts[:sso_debug] || debug
-      sso_log = opts[:sso_log] || log
       sso_timeout = opts[:sso_timeout] || timeout
       sso_token_name = opts[:sso_token_name] || 'access_token'
 
@@ -199,10 +184,7 @@ module OvirtSDK4
       @kerberos = kerberos
       @sso_insecure = sso_insecure
       @sso_ca_file = sso_ca_file
-      @sso_log_file = sso_log
-      @sso_debug = sso_debug
       @sso_timeout = sso_timeout
-      @log_file = log
       @sso_token_name = sso_token_name
 
       # Create the cURL handle:
@@ -229,35 +211,13 @@ module OvirtSDK4
       end
 
       # Configure debug mode:
-      @close_log = false
-      if debug
-        if log.nil?
-          @log = STDOUT
-        elsif log.is_a?(String)
-          @log = ::File.open(log, 'a')
-          @close_log = true
-        else
-          @log = log
-        end
+      if @debug && @log
         @curl.verbose = true
-        @curl.on_debug do |type, data|
-          case type
-          when Curl::CURLINFO_DATA_IN
-            prefix = '< '
-          when Curl::CURLINFO_DATA_OUT
-            prefix = '> '
-          when Curl::CURLINFO_HEADER_IN
-            prefix = '< '
-          when Curl::CURLINFO_HEADER_OUT
-            prefix = '> '
-          else
-            prefix = '* '
-          end
+        @curl.on_debug do |_, data|
           lines = data.gsub("\r\n", "\n").strip.split("\n")
           lines.each do |line|
-            @log.puts(prefix + line)
+            @log.debug(line)
           end
-          @log.flush
         end
       end
 
@@ -416,37 +376,13 @@ module OvirtSDK4
       sso_curl.timeout = @sso_timeout
 
       # Configure debug mode:
-      sso_close_log = false
-      if @sso_debug
-        if @sso_log_file.nil?
-          sso_log = STDOUT
-        elsif @sso_log_file == @log_file
-          sso_log = @log
-        elsif @sso_log_file.is_a?(String)
-          sso_log = ::File.open(@sso_log_file, 'a')
-          sso_close_log = true
-        else
-          sso_log = @sso_log_file
-        end
+      if @debug && @log
         sso_curl.verbose = true
-        sso_curl.on_debug do |type, data|
-          case type
-            when Curl::CURLINFO_DATA_IN
-              prefix = '< '
-            when Curl::CURLINFO_DATA_OUT
-              prefix = '> '
-            when Curl::CURLINFO_HEADER_IN
-              prefix = '< '
-            when Curl::CURLINFO_HEADER_OUT
-              prefix = '> '
-            else
-              prefix = '* '
-          end
+        sso_curl.on_debug do |_, data|
           lines = data.gsub("\r\n", "\n").strip.split("\n")
           lines.each do |line|
-            sso_log.puts(prefix + line)
+            @log.debug(line)
           end
-          sso_log.flush
         end
       end
 
@@ -499,10 +435,6 @@ module OvirtSDK4
         return JSON.parse(sso_curl.body_str)
       ensure
         sso_curl.close
-        # Close the log file, if we did open it:
-        if sso_close_log
-          sso_log.close
-        end
       end
     end
 
@@ -618,11 +550,6 @@ module OvirtSDK4
 
       # Revoke the SSO access token:
       revoke_access_token
-
-      # Close the log file, if we did open it:
-      if @close_log
-        @log.close
-      end
 
       # Release resources used by the cURL handle:
       @curl.close
