@@ -62,6 +62,7 @@ mv %{buildroot}%{gem_instdir}/lib/*.so %{buildroot}%{gem_extdir_mri}/lib
 
 %files
 %dir %{gem_instdir}
+%doc %{gem_instdir}/CHANGES.adoc
 %doc %{gem_instdir}/README.adoc
 %exclude %{gem_cache}
 %exclude %{gem_docdir}
@@ -73,6 +74,7 @@ mv %{buildroot}%{gem_instdir}/lib/*.so %{buildroot}%{gem_extdir_mri}/lib
 %{gem_spec}
 
 %files doc
+%doc %{gem_instdir}/CHANGES.adoc
 %doc %{gem_instdir}/README.adoc
 %license %{gem_instdir}/LICENSE.txt
 %{gem_docdir}

@@ -48,6 +48,7 @@ Gem::Specification.new do |spec|
 
   # Files:
   spec.files = Dir.glob([
+    'CHANGES.adoc',
     'LICENSE.txt',
     'README.adoc',
     'ext/**/*.{rb,c,h}',

@@ -1,0 +1,13 @@
+= Changes
+
+This document describes the relevant changes between releases of the
+API model.
+
+== 4.0.0.alpha16 / Jul 15 2016
+
+New features:
+
+* Use `Logger` instead of file for the `:log` parameter of the
+  connection class.
+
+* Add `dig` method to all types.
