@@ -3,6 +3,24 @@
 This document describes the relevant changes between releases of the
 API model.
 
+== 4.0.0.alpha17 / Jul 19 2016
+
+Update to model 4.0.28.
+
+New features:
+
+* Added `switch_type` attribute to `Host` type.
+
+* Add `permits` to the cluster level type.
+
+* Add the `current` parameter to the virtual machine graphics consoles
+  service.
+
+Bug fixes:
+
+* Fix the name of the output parameter of the method to list affinity
+  groups, should be `groups` instead of `list`.
+
 == 4.0.0.alpha16 / Jul 15 2016
 
 New features:
