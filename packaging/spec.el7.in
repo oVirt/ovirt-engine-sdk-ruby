@@ -8,7 +8,7 @@ Release: 0.1%{?dist}
 Group: Development/Languages
 License: ASL 2.0
 URL: http://ovirt.org/wiki/SDK
-Source: ovirt-engine-sdk-ruby-4.0.0.alpha0.gem
+Source: https://rubygems.org/downloads/%{gem_name}-%{gem_version}.gem
 
 BuildRequires: gcc
 BuildRequires: libxml2-devel
