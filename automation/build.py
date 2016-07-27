@@ -292,7 +292,7 @@ def main():
     spec_lines[release_tag[1]] = "Release: %s%%{?dist}\n" % rpm_release
     spec_lines[source_tag[1]] = "Source: %s\n" % gem_path
     spec_lines[gem_version_global[1]] = "%%global gem_version %s\n" % full_version
-    spec_path = "rubygem-ovirt-engine-sdk.spec"
+    spec_path = "rubygem-ovirt-engine-sdk4.spec"
     with open(spec_path, "w") as spec_fd:
         spec_fd.writelines(spec_lines)
 
