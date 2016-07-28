@@ -104,6 +104,77 @@ describe SDK::Connection do
 
     end
 
+    context "with token and no user or password" do
+
+      it "works correctly" do
+        connection = SDK::Connection.new(
+          :url => test_url,
+          :token => test_token,
+          :ca_file => test_ca_file,
+          :debug => test_debug,
+          :log => test_log,
+        )
+        connection.close
+      end
+
+    end
+
+  end
+
+  describe "#authenticate" do
+
+    context "with user name and password" do
+
+      it "returns the expected token" do
+        connection = SDK::Connection.new(
+          :url => test_url,
+          :username => test_user,
+          :password => test_password,
+          :ca_file => test_ca_file,
+          :debug => test_debug,
+          :log => test_log,
+        )
+        token = connection.authenticate
+        expect(token).to eql(test_token)
+        connection.close
+      end
+
+    end
+
+    context "with Kerberos" do
+
+      it "returns the expected token" do
+        connection = SDK::Connection.new(
+          :url => test_url,
+          :kerberos => true,
+          :ca_file => test_ca_file,
+          :debug => test_debug,
+          :log => test_log,
+        )
+        token = connection.authenticate
+        expect(token).to eql(test_token)
+        connection.close
+      end
+
+    end
+
+    context "with token" do
+
+      it "returns the expected token" do
+        connection = SDK::Connection.new(
+          :url => test_url,
+          :token => test_token,
+          :ca_file => test_ca_file,
+          :debug => test_debug,
+          :log => test_log,
+        )
+        token = connection.authenticate
+        expect(token).to eql(test_token)
+        connection.close
+      end
+
+    end
+
   end
 
 end

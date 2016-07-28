@@ -101,6 +101,10 @@ module OvirtSDK4
     #
     # @option opts [String] :password The password of the user.
     #
+    # @options opts [String] :token The token used to authenticate. Optionally the caller can explicitly provide
+    #   the token, instead of the user name and password. If the token isn't provided then it will be automatically
+    #   created.
+    #
     # @option opts [Boolean] :insecure (false) A boolean flag that indicates if the server TLS certificate and host
     #   name should be checked.
     #
@@ -154,6 +158,7 @@ module OvirtSDK4
       url = opts[:url]
       username = opts[:username]
       password = opts[:password]
+      token = opts[:token]
       insecure = opts[:insecure] || false
       ca_file = opts[:ca_file]
       @debug = opts[:debug] || false
@@ -181,6 +186,7 @@ module OvirtSDK4
       @sso_revoke_url = sso_revoke_url
       @username = username
       @password = password
+      @token = token
       @kerberos = kerberos
       @sso_insecure = sso_insecure
       @sso_ca_file = sso_ca_file
@@ -266,9 +272,7 @@ module OvirtSDK4
     def send(request)
 
       # Check if we already have an SSO access token:
-      if @sso_token.nil?
-        @sso_token = get_access_token
-      end
+      @token ||= get_access_token
 
       # Build the URL:
       @curl.url = build_url({
@@ -283,7 +287,7 @@ module OvirtSDK4
       @curl.headers['Version'] = '4'
       @curl.headers['Content-Type'] = 'application/xml'
       @curl.headers['Accept'] = 'application/xml'
-      @curl.headers['Authorization'] = 'Bearer ' + @sso_token
+      @curl.headers['Authorization'] = "Bearer #{@token}"
 
       # Clear any data that may be in the buffers:
       @curl.post_body = nil
@@ -479,7 +483,7 @@ module OvirtSDK4
       url.path = '/ovirt-engine/services/sso-logout'
       url.query = URI.encode_www_form(
         :scope => '',
-        :token => @sso_token,
+        :token => @token,
       )
       url.to_s
     end
@@ -500,6 +504,18 @@ module OvirtSDK4
         raise if raise_exception
         return false
       end
+    end
+
+    #
+    # Performs the authentication process and returns the authentication token. Usually there is no need to
+    # call this method, as authentication is performed automatically when needed. But in some situations it
+    # may be useful to perform authentication explicitly, and then use the obtained token to create other
+    # connections, using the `token` parameter of the constructor instead of the user name and password.
+    #
+    # @return [String]
+    #
+    def authenticate
+      @token ||= get_access_token
     end
 
     #
