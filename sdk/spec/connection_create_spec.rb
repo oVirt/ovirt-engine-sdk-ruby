@@ -89,6 +89,21 @@ describe SDK::Connection do
 
     end
 
+    context "with version suffix" do
+
+      it "works correctly" do
+        options = {
+          :url => "#{test_url}/v4",
+          :ca_file => test_ca_file,
+          :debug => test_debug,
+          :log => test_log,
+        }
+        connection = SDK::Connection.new(options)
+        connection.close
+      end
+
+    end
+
   end
 
 end

@@ -445,9 +445,6 @@ module OvirtSDK4
     # @api private
     #
     def build_sso_auth_url
-      # Get the base URL:
-      sso_url = @url.to_s[0..@url.to_s.rindex('/')]
-
       # The SSO access scope:
       scope = 'ovirt-app-api'
 
@@ -460,8 +457,14 @@ module OvirtSDK4
         entry_point = 'token'
       end
 
-      # Build and return the SSO URL:
-      return "#{sso_url}sso/oauth/#{entry_point}?grant_type=#{grant_type}&scope=#{scope}"
+      # Copy the base URL and modify it to point to the SSO authentication service:
+      url = URI(@url.to_s)
+      url.path = "/ovirt-engine/sso/oauth/#{entry_point}"
+      url.query = URI.encode_www_form(
+        :grant_type => grant_type,
+        :scope => scope,
+      )
+      url.to_s
     end
 
     #
@@ -471,11 +474,14 @@ module OvirtSDK4
     # @api private
     #
     def build_sso_revoke_url
-      # Get the base URL:
-      sso_url = @url.to_s[0..@url.to_s.rindex('/')]
-
-      # Build and return the SSO revoke URL:
-      return "#{sso_url}services/sso-logout?scope=&token=#{@sso_token}"
+      # Copy the base URL and modify it to point to the SSO logout service:
+      url = URI(@url.to_s)
+      url.path = '/ovirt-engine/services/sso-logout'
+      url.query = URI.encode_www_form(
+        :scope => '',
+        :token => @sso_token,
+      )
+      url.to_s
     end
 
     #
