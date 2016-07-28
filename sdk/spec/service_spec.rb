@@ -47,6 +47,48 @@ describe SDK::Service do
 
     end
 
+    context "given an empty response, with blank body" do
+
+      before(:all) do
+        @service = SDK::Service.new
+        @response = SDK::Response.new(
+          :code => 209,
+          :message => 'mymessage',
+          :body => '',
+        )
+      end
+
+      it "raises an exception containing the code" do
+        expect { @service.check_fault(@response) }.to raise_error(SDK::Error, /209/)
+      end
+
+      it "raises an exception containing the message" do
+        expect { @service.check_fault(@response) }.to raise_error(SDK::Error, /mymessage/)
+      end
+
+    end
+
+    context "given an empty response, with nil body" do
+
+      before(:all) do
+        @service = SDK::Service.new
+        @response = SDK::Response.new(
+          :code => 209,
+          :message => 'mymessage',
+          :body => nil,
+        )
+      end
+
+      it "raises an exception containing the code" do
+        expect { @service.check_fault(@response) }.to raise_error(SDK::Error, /209/)
+      end
+
+      it "raises an exception containing the message" do
+        expect { @service.check_fault(@response) }.to raise_error(SDK::Error, /mymessage/)
+      end
+
+    end
+
   end
 
   describe ".check_action" do
