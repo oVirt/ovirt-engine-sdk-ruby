@@ -48,6 +48,10 @@ module Helpers # :nodoc:
     return PASSWORD
   end
 
+  def test_token
+    TOKEN
+  end
+
   def test_host
     return HOST
   end
