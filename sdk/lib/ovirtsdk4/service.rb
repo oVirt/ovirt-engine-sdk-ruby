@@ -63,11 +63,14 @@ module OvirtSDK4
     # @api private
     #
     def check_fault(response)
-      begin
-        reader = XmlReader.new(response.body)
-        fault = FaultReader.read_one(reader)
-      ensure
-        reader.close
+      fault = nil
+      unless response.body.to_s.empty?
+        begin
+          reader = XmlReader.new(response.body)
+          fault = FaultReader.read_one(reader)
+        ensure
+          reader.close
+        end
       end
       raise_error(response, fault)
     end
