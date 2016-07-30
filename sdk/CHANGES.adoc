@@ -3,6 +3,12 @@
 This document describes the relevant changes between releases of the
 API model.
 
+== 4.0.0.alpha19 / Jul 30 2016
+
+New features:
+
+* Add support for Mac OS X.
+
 == 4.0.0.alpha18 / Jul 29 2016
 
 Update to model 4.0.29:
