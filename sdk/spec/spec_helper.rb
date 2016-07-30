@@ -87,7 +87,7 @@ module Helpers # :nodoc:
   end
 
   def test_log
-    @log ||= Logger.new('spec/clien.log')
+    @log ||= Logger.new('spec/client.log')
   end
 
   def test_connection

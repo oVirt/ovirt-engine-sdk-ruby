@@ -17,6 +17,7 @@ sdk/lib/ovirtsdk4/version.rb
 sdk/lib/ovirtsdk4/writers.rb
 sdk/pkg/
 sdk/spec/access.log
+sdk/spec/client.log
 sdk/spec/server.log
 sdk/tmp/
 settings.xml
