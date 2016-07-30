@@ -23,6 +23,9 @@ limitations under the License.
 #include "ov_error.h"
 #include "ov_xml_writer.h"
 
+/* Class: */
+VALUE ov_xml_writer_class;
+
 /* Identifiers: */
 static ID STRING_ID;
 static ID STRING_IO_ID;

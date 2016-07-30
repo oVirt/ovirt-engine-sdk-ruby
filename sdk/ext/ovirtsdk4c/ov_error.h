@@ -18,7 +18,7 @@ limitations under the License.
 #define __OV_ERROR_H__
 
 // Classes:
-VALUE ov_error_class;
+extern VALUE ov_error_class;
 
 // Initialization function:
 extern void ov_error_define(void);

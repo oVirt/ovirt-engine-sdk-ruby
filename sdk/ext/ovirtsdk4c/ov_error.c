@@ -19,6 +19,9 @@ limitations under the License.
 #include "ov_module.h"
 #include "ov_error.h"
 
+/* Class: */
+VALUE ov_error_class;
+
 void ov_error_define(void) {
     ov_error_class = rb_define_class_under(ov_module, "Error", rb_eStandardError);
 }

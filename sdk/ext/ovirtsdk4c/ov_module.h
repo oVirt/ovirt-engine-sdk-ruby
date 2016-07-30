@@ -18,7 +18,7 @@ limitations under the License.
 #define __OV_MODULE_H__
 
 // Module:
-VALUE ov_module;
+extern VALUE ov_module;
 
 // Initialization function:
 extern void ov_module_define(void);

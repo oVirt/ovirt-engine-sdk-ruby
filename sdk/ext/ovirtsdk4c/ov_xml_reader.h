@@ -18,7 +18,7 @@ limitations under the License.
 #define __OV_XML_READER_H__
 
 // Classes:
-VALUE ov_xml_reader_class;
+extern VALUE ov_xml_reader_class;
 
 // Initialization function:
 extern void ov_xml_reader_define(void);

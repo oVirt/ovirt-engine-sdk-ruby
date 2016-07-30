@@ -1,3 +1,4 @@
+*.bundle
 *.class
 *.gem
 *.iml
