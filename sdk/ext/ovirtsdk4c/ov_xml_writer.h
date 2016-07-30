@@ -18,7 +18,7 @@ limitations under the License.
 #define __OV_XML_WRITER_H__
 
 // Classes:
-VALUE ov_xml_writer_class;
+extern VALUE ov_xml_writer_class;
 
 // Initialization function:
 extern void ov_xml_writer_define(void);

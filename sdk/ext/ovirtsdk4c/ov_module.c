@@ -18,6 +18,9 @@ limitations under the License.
 
 #include "ov_module.h"
 
+/* Module: */
+VALUE ov_module;
+
 // Initialization function:
 void ov_module_define(void) {
     ov_module = rb_define_module("OvirtSDK4");

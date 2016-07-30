@@ -19,8 +19,10 @@
 require 'mkmf'
 
 # Check that "libxml2" is available:
-unless pkg_config('libxml-2.0')
+unless find_executable('xml2-config')
   raise 'The "libxml2" package isn\'t available.'
 end
+$CPPFLAGS = "#{`xml2-config --cflags`.strip} #{$CPPFLAGS}"
+$LDFLAGS = "#{`xml2-config --libs`.strip} #{$LDFLAGS}"
 
 create_makefile 'ovirtsdk4c'
