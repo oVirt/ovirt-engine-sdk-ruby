@@ -22,6 +22,7 @@ import static java.util.stream.Collectors.toList;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 
 import org.ovirt.api.metamodel.concepts.EnumType;
@@ -47,7 +48,7 @@ public class ReadersGenerator implements RubyGenerator {
     @Inject private RubyNames rubyNames;
 
     // The buffer used to generate the Ruby code:
-    private RubyBuffer buffer;
+    @Inject private RubyBuffer buffer;
 
     public void setOut(File newOut) {
         out = newOut;
@@ -56,7 +57,7 @@ public class ReadersGenerator implements RubyGenerator {
     public void generate(Model model) {
         // Calculate the file name:
         String fileName = rubyNames.getModulePath() + "/readers";
-        buffer = new RubyBuffer();
+        buffer = CDI.current().select(RubyBuffer.class).get();
         buffer.setFileName(fileName);
 
         // Generate the source:

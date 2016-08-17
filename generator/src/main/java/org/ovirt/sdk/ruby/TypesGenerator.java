@@ -24,7 +24,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
-import java.util.stream.Stream;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 
 import org.ovirt.api.metamodel.concepts.EnumType;
@@ -58,7 +58,7 @@ public class TypesGenerator implements RubyGenerator {
     public void generate(Model model) {
         // Calculate the file name:
         String fileName = rubyNames.getModulePath() + "/types";
-        buffer = new RubyBuffer();
+        buffer = CDI.current().select(RubyBuffer.class).get();
         buffer.setFileName(fileName);
 
         // Begin module:
@@ -135,9 +135,12 @@ public class TypesGenerator implements RubyGenerator {
         buffer.addComment();
         buffer.addComment("Creates a new instance of the {%1$s} class.", typeName.getClassName());
         buffer.addComment();
-        buffer.addComment("@param opts [Hash] A hash containing the attributes of the object. The keys of the hash ");
-        buffer.addComment("  should be symbols corresponding to the names of the attributes. The values of the hash ");
-        buffer.addComment("  should be the values of the attributes.");
+        buffer.addYardTag(
+            "param",
+            "opts [Hash] A hash containing the attributes of the object. The keys of the hash\n" +
+            "should be symbols corresponding to the names of the attributes. The values of the hash\n" +
+            "should be the values of the attributes."
+        );
         buffer.addComment();
         members.stream().sorted().forEach(member -> {
             Type memberType = member.getType();
@@ -145,15 +148,15 @@ public class TypesGenerator implements RubyGenerator {
             String docType = yardDoc.getType(memberType);
             String docName = rubyNames.getMemberStyleName(memberName);
             if (memberType instanceof PrimitiveType || memberType instanceof EnumType) {
-                buffer.addComment("@option opts [%1$s] :%2$s The value of attribute `%2$s`.", docType, docName);
+                buffer.addYardTag("option", "opts [%1$s] :%2$s The value of attribute `%2$s`.", docType, docName);
                 buffer.addComment();
             }
             else if (memberType instanceof StructType) {
-                buffer.addComment("@option opts [%1$s, Hash] :%2$s The value of attribute `%2$s`.", docType, docName);
+                buffer.addYardTag("option", "opts [%1$s, Hash] :%2$s The value of attribute `%2$s`.", docType, docName);
                 buffer.addComment();
             }
             else if (memberType instanceof ListType) {
-                buffer.addComment("@option opts [%1$s, Array<Hash>] :%2$s The values of attribute `%2$s`.", docType, docName);
+                buffer.addYardTag("option", "opts [%1$s, Array<Hash>] :%2$s The values of attribute `%2$s`.", docType, docName);
                 buffer.addComment();
             }
         });
@@ -184,7 +187,7 @@ public class TypesGenerator implements RubyGenerator {
         buffer.addComment();
         buffer.addComment("Returns the value of the `%1$s` attribute.", property);
         buffer.addComment();
-        buffer.addComment("@return [%1$s]", yardDoc.getType(type));
+        buffer.addYardTag("return", "[%1$s]", yardDoc.getType(type));
         buffer.addComment();
         buffer.addLine("def %1$s", property);
         buffer.addLine(  "return @%1$s", property);
@@ -200,7 +203,7 @@ public class TypesGenerator implements RubyGenerator {
         buffer.addComment("Sets the value of the `%1$s` attribute.", property);
         buffer.addComment();
         if (type instanceof PrimitiveType || type instanceof EnumType) {
-            buffer.addComment("@param value [%1$s]", yardDoc.getType(type));
+            buffer.addYardTag("param", "value [%1$s]", yardDoc.getType(type));
             buffer.addComment();
             buffer.addLine("def %1$s=(value)", property);
             buffer.addLine(  "@%1$s = value", property);
@@ -208,7 +211,7 @@ public class TypesGenerator implements RubyGenerator {
         }
         else if (type instanceof StructType) {
             RubyName typeName = rubyNames.getTypeName(type);
-            buffer.addComment("@param value [%1$s, Hash]", yardDoc.getType(type));
+            buffer.addYardTag("param", "value [%1$s, Hash]", yardDoc.getType(type));
             buffer.addComment();
             buffer.addComment("The `value` parameter can be an instance of {%1$s} or a hash.", typeName);
             buffer.addComment("If it is a hash then a new instance will be created passing the hash as the ");
@@ -222,7 +225,7 @@ public class TypesGenerator implements RubyGenerator {
             buffer.addLine("end");
         }
         else if (type instanceof ListType) {
-            buffer.addComment("@param list [%1$s]", yardDoc.getType(type));
+            buffer.addYardTag("param", "list [%1$s]", yardDoc.getType(type));
             ListType listType = (ListType) type;
             Type elementType = listType.getElementType();
             if (elementType instanceof PrimitiveType || elementType instanceof EnumType) {

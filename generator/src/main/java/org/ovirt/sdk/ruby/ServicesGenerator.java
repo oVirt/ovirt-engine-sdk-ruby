@@ -26,6 +26,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 
 import org.ovirt.api.metamodel.concepts.ListType;
@@ -58,7 +59,6 @@ public class ServicesGenerator implements RubyGenerator {
     // Reference to the objects used to generate the code:
     @Inject private RubyNames rubyNames;
     @Inject private SchemaNames schemaNames;
-    @Inject private YardDoc yardDoc;
 
     // The buffer used to generate the Ruby code:
     private RubyBuffer buffer;
@@ -73,7 +73,7 @@ public class ServicesGenerator implements RubyGenerator {
     public void generate(Model model) {
         // Calculate the file name:
         String fileName = rubyNames.getModulePath() + "/services";
-        buffer = new RubyBuffer();
+        buffer = CDI.current().select(RubyBuffer.class).get();
         buffer.setFileName(fileName);
 
         // Generate the source:
@@ -140,11 +140,11 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addComment();
         buffer.addComment("Creates a new implementation of the service.");
         buffer.addComment();
-        buffer.addComment("@param connection [Connection] The connection to be used by this service.");
+        buffer.addYardTag("param", "connection [Connection] The connection to be used by this service.");
         buffer.addComment();
-        buffer.addComment("@param path [String] The relative path of this service, for example `vms/123/disks`.");
+        buffer.addYardTag("param", "path [String] The relative path of this service, for example `vms/123/disks`.");
         buffer.addComment();
-        buffer.addComment("@api private");
+        buffer.addYardTag("api", "private");
         buffer.addComment();
         buffer.addLine("def initialize(connection, path)");
         buffer.addLine(  "@connection = connection");
@@ -203,9 +203,9 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addComment();
         buffer.addComment(doc);
         buffer.addComment();
-        buffer.addComment("@param %1$s [%2$s]", arg, yardDoc.getType(parameterType));
+        buffer.addYardParam(parameter);
         buffer.addComment();
-        buffer.addComment("@return [%1$s]", yardDoc.getType(parameterType));
+        buffer.addYardReturn(parameter);
         buffer.addComment();
         buffer.addLine("def %1$s(%2$s, opts = {})", rubyNames.getMemberStyleName(methodName), arg);
 
@@ -295,15 +295,10 @@ public class ServicesGenerator implements RubyGenerator {
         }
         buffer.addComment(doc);
         buffer.addComment();
-        buffer.addComment("@param opts [Hash] Additional options.");
+        buffer.addYardTag("param", "opts [Hash] Additional options.");
         buffer.addComment();
-        if (!inParameters.isEmpty()) {
-            inParameters.forEach(parameter -> {
-                generateParameterDocumentation(parameter);
-                buffer.addComment();
-            });
-        }
-        buffer.addComment("@return [%1$s]", yardDoc.getType(mainParameter.getType()));
+        inParameters.forEach(buffer::addYardOption);
+        buffer.addYardReturn(mainParameter);
         buffer.addComment();
         Name methodName = method.getName();
         buffer.addLine("def %1$s(opts = {})", rubyNames.getMemberStyleName(methodName));
@@ -441,14 +436,9 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addComment();
         buffer.addComment(doc);
         buffer.addComment();
-        buffer.addComment("@param opts [Hash] Additional options.");
+        buffer.addYardTag("param", "opts [Hash] Additional options.");
         buffer.addComment();
-        if (!inParameters.isEmpty()) {
-            inParameters.forEach(parameter -> {
-                generateParameterDocumentation(parameter);
-                buffer.addComment();
-            });
-        }
+        inParameters.forEach(buffer::addYardOption);
         buffer.addLine("def %1$s(opts = {})", rubyNames.getMemberStyleName(name));
 
         // Generate the input parameters:
@@ -491,38 +481,12 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addLine("end");
     }
 
-    private void generateParameterDocumentation(Parameter parameter) {
-        Type type = parameter.getType();
-        Name name = parameter.getName();
-        String doc = parameter.getDoc();
-        if (doc != null) {
-            String[] lines = doc.split("\\n");
-            StringBuilder buffer = new StringBuilder();
-            buffer.append(lines[0]);
-            for (int i = 1; i < lines.length; i++) {
-                buffer.append("\n");
-                buffer.append("#   ");
-                buffer.append(lines[i]);
-            }
-            doc = buffer.toString();
-        }
-        else {
-            doc = "";
-        }
-        buffer.addLine(
-            "# @option opts [%1$s] :%2$s %3$s",
-            yardDoc.getType(type),
-            rubyNames.getMemberStyleName(name),
-            doc
-        );
-    }
-
     private void generateToS(Service service) {
         RubyName serviceName = rubyNames.getServiceName(service);
         buffer.addComment();
         buffer.addComment("Returns an string representation of this service.");
         buffer.addComment();
-        buffer.addComment("@return [String]");
+        buffer.addYardTag("return", "[String]");
         buffer.addComment();
         buffer.addLine("def to_s");
         buffer.addLine(  "return \"#<#{%1$s}:#{@path}>\"", serviceName.getClassName());
@@ -552,9 +516,9 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addComment();
         buffer.addComment(doc);
         buffer.addComment();
-        buffer.addComment("@param %1$s [String] The identifier of the `%2$s`.", argName, methodName);
+        buffer.addYardTag("param", "%1$s [String] The identifier of the `%2$s`.", argName, methodName);
         buffer.addComment();
-        buffer.addComment("@return [%1$s] A reference to the `%2$s` service.", serviceName.getClassName(), methodName);
+        buffer.addYardTag("return", "[%1$s] A reference to the `%2$s` service.", serviceName.getClassName(), methodName);
         buffer.addComment();
         buffer.addLine("def %1$s_service(%2$s)", methodName, argName);
         buffer.addLine(  "return %1$s.new(@connection, \"#{@path}/#{%2$s}\")", serviceName.getClassName(), argName);
@@ -573,7 +537,7 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addComment();
         buffer.addComment(doc);
         buffer.addComment();
-        buffer.addComment("@return [%1$s] A reference to `%2$s` service.", serviceName.getClassName(), methodName);
+        buffer.addYardTag("return", "[%1$s] A reference to `%2$s` service.", serviceName.getClassName(), methodName);
         buffer.addLine("def %1$s_service", methodName);
         buffer.addLine(  "return %1$s.new(@connection, \"#{@path}/%2$s\")", serviceName.getClassName(), urlSegment);
         buffer.addLine("end");
@@ -585,9 +549,9 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addComment();
         buffer.addComment("Locates the service corresponding to the given path.");
         buffer.addComment();
-        buffer.addComment("@param path [String] The path of the service.");
+        buffer.addYardTag("param", "path [String] The path of the service.");
         buffer.addComment();
-        buffer.addComment("@return [Service] A reference to the service.");
+        buffer.addYardTag("return", "[Service] A reference to the service.");
         buffer.addComment();
         buffer.addLine("def service(path)");
         buffer.addLine(  "if path.nil? || path == ''");

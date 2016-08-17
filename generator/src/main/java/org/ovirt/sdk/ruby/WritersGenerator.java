@@ -18,6 +18,7 @@ package org.ovirt.sdk.ruby;
 
 import java.io.File;
 import java.io.IOException;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 
 import org.ovirt.api.metamodel.concepts.EnumType;
@@ -54,7 +55,7 @@ public class WritersGenerator implements RubyGenerator {
     public void generate(Model model) {
         // Calculate the file name:
         String fileName = rubyNames.getModulePath() + "/writers";
-        buffer = new RubyBuffer();
+        buffer = CDI.current().select(RubyBuffer.class).get();
         buffer.setFileName(fileName);
 
         // Generate the source:
