@@ -31,18 +31,22 @@ import java.util.Formatter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 import org.apache.commons.io.FileUtils;
+import org.ovirt.api.metamodel.concepts.Parameter;
 
 /**
  * This class is a buffer intended to simplify generation of Ruby source code. It stores the name of the module, the
  * list of requires and the rest of the source separately, so that requires can be added on demand while generating the
  * rest of the source.
  */
+@Dependent
 public class RubyBuffer {
     // Reference to the object used to generate Ruby names:
     @Inject private RubyNames rubyNames;
+    @Inject private YardDoc yardDoc;
 
     // The name of the file:
     private String fileName;
@@ -218,6 +222,104 @@ public class RubyBuffer {
         formatter.format(format, args);
         String line = buffer.toString();
         addComment(line);
+    }
+
+    /**
+     * Adds a formatted comment tag to the file. The given {@code args} are formatted using the provided {@code format}
+     * using the {@link String#format(String, Object...)} method. The lines of the comment will be indented so that
+     * the <i>Yard</i> documentation processor will understand that they belong to the same tag.
+     *
+     * @param tag the name of the <i>Yard</i> tag, for example {@code param} or {@code option}
+     * @param format the format string used to create the text of the tag
+     * @param args the arguments used to create the text of the tag
+     */
+    public void addYardTag(String tag, String format, Object ... args) {
+        // Format the text and split it into lines:
+        StringBuilder text = new StringBuilder();
+        Formatter formatter = new Formatter(text);
+        formatter.format(format, args);
+        String[] lines = text.toString().split("\\n");
+
+        // The first line must be prefixed with the name of the tag:
+        StringBuilder first = new StringBuilder();
+        first.append("@");
+        first.append(tag);
+        if (!lines[0].isEmpty()) {
+            first.append(" ");
+            first.append(lines[0]);
+        }
+        addComment(first.toString());
+
+        // The rest of the lines need to be indented with two spaces, so that Yard will consider them part of the tag:
+        for (int i = 1; i < lines.length; i++) {
+            StringBuilder line = new StringBuilder(2 + lines[i].length());
+            line.append("  ");
+            line.append(lines[i]);
+            addComment(line.toString());
+        }
+    }
+
+    /**
+     * Adds a comment containing a Yard {@code @param} tag for the given parameter.
+     */
+    public void addYardParam(Parameter parameter) {
+        addYardParam(parameter, null);
+    }
+
+    /**
+     * Adds a comment containing a Yard {@code @param} tag for the given parameter.
+     */
+    public void addYardParam(Parameter parameter, String doc) {
+        if (doc == null) {
+            doc = parameter.getDoc();
+        }
+        if (doc == null) {
+            doc = "";
+        }
+        addYardTag(
+            "param",
+            "%1$s [%2$s] %3$s",
+            rubyNames.getMemberStyleName(parameter.getName()),
+            yardDoc.getType(parameter.getType()),
+            doc
+        );
+    }
+
+    /**
+     * Adds a comment containing a Yard {@code @option} tag for the given parameter.
+     */
+    public void addYardOption(Parameter parameter) {
+        addYardOption(parameter, null);
+    }
+
+    /**
+     * Adds a comment containing a Yard {@code @option} tag for the given parameter.
+     */
+    public void addYardOption(Parameter parameter, String doc) {
+        if (doc == null) {
+            doc = parameter.getDoc();
+        }
+        if (doc == null) {
+            doc = "";
+        }
+        addYardTag(
+            "option",
+            "opts [%1$s] :%2$s %3$s",
+            yardDoc.getType(parameter.getType()),
+            rubyNames.getMemberStyleName(parameter.getName()),
+            doc
+        );
+    }
+
+    /**
+     * Adds a comment containing a Yard {@code @return} tag for the given parameter.
+     */
+    public void addYardReturn(Parameter parameter) {
+        addYardTag(
+            "return",
+            "[%1$s]",
+            yardDoc.getType(parameter.getType())
+        );
     }
 
     /**

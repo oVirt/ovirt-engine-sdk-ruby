@@ -18,6 +18,7 @@ package org.ovirt.sdk.ruby;
 
 import java.io.File;
 import java.io.IOException;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 
 import org.ovirt.api.metamodel.concepts.Model;
@@ -41,7 +42,7 @@ public class VersionGenerator implements RubyGenerator {
 
     public void generate(Model model) throws IOException {
         // Generate the source:
-        buffer = new RubyBuffer();
+        buffer = CDI.current().select(RubyBuffer.class).get();
         buffer.setFileName(rubyNames.getModulePath() + File.separator + "version");
         generateVersion();
         try {
