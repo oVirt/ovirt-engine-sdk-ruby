@@ -34,6 +34,7 @@ import org.ovirt.api.metamodel.concepts.PrimitiveType;
 import org.ovirt.api.metamodel.concepts.StructMember;
 import org.ovirt.api.metamodel.concepts.StructType;
 import org.ovirt.api.metamodel.concepts.Type;
+import org.ovirt.api.metamodel.tool.Names;
 import org.ovirt.api.metamodel.tool.SchemaNames;
 
 /**
@@ -44,6 +45,7 @@ public class ReadersGenerator implements RubyGenerator {
     protected File out;
 
     // Reference to the objects used to generate the code:
+    @Inject private Names names;
     @Inject private SchemaNames schemaNames;
     @Inject private RubyNames rubyNames;
 
@@ -84,6 +86,20 @@ public class ReadersGenerator implements RubyGenerator {
             .map(StructType.class::cast)
             .sorted()
             .forEach(this::generateReader);
+
+        // Generate code to register the readers:
+        model.types()
+            .filter(StructType.class::isInstance)
+            .map(StructType.class::cast)
+            .sorted()
+            .forEach(type -> {
+                Name typeName = type.getName();
+                String singularTag = schemaNames.getSchemaTagName(typeName);
+                String pluralTag = schemaNames.getSchemaTagName(names.getPlural(typeName));
+                String className = rubyNames.getReaderName(type).getClassName();
+                buffer.addLine("Reader.register('%1$s', %2$s.method(:read_one))", singularTag, className);
+                buffer.addLine("Reader.register('%1$s', %2$s.method(:read_many))", pluralTag, className);
+            });
 
         // End module:
         buffer.endModule(moduleName);
