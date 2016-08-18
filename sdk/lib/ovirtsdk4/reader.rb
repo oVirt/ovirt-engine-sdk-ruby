@@ -191,6 +191,62 @@ module OvirtSDK4
       return reader.read_elements.map { |text| Reader.parse_date(text) }
     end
 
+    #
+    # This hash stores for each known tag a reference to the method that read the object corresponding for that tag. For
+    # example, for the `vm` tag it will contain a reference to the `VmReader.read_one` method, and for the `vms` tag
+    # it will contain a reference to the `VmReader.read_many` method.
+    #
+    @@readers = {}
+
+    #
+    # Registers a read method.
+    #
+    # @param tag [String] The tag name.
+    # @param reader [Method] The reference to the method that reads the object corresponding to the `tag`.
+    #
+    def self.register(tag, reader)
+      @@readers[tag] = reader
+    end
+
+    #
+    # Reads one object, determining the reader method to use based on the tag name of the first element. For example,
+    # if the first tag name is `vm` then it will create a `Vm` object, if it the tag is `vms` it will create an array
+    # of `Vm` objects, so on.
+    #
+    # @param source [String, XmlReader] The string, IO or XML reader where the input will be taken from.
+    #
+    def self.read(source)
+      # If the source is a string or IO object then create a XML reader from it:
+      cursor = nil
+      if source.is_a?(String) || source.is_a?(IO)
+        cursor = XmlReader.new(source)
+      elsif source.is_a?(XmlReader)
+        cursor = source
+      else
+        raise ArgumentError.new("Expected a 'String' or 'XmlReader', but got '#{source.class}'")
+      end
+
+      # Do the actual read, and make sure to always close the XML reader if we created it:
+      begin
+        # Do nothing if there aren't more tags:
+        return nil unless cursor.forward
+
+        # Select the specific reader according to the tag:
+        tag = cursor.node_name
+        reader = @@readers[tag]
+        if reader.nil?
+          raise Error.new("Can't find a reader for tag '#{tag}'")
+        end
+
+        # Read the object using the specific reader:
+        return reader.call(cursor)
+      ensure
+        if !cursor.nil? && !cursor.equal?(source)
+          cursor.close
+        end
+      end
+    end
+
   end
 
 end

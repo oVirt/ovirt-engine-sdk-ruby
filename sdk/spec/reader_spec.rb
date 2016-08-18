@@ -296,4 +296,96 @@ describe SDK::Reader do
 
   end
 
+  describe ".read" do
+
+    context "given a string" do
+      it "accepts it" do
+        SDK::Reader.read('<vm/>')
+      end
+    end
+
+    context "given an XML reader" do
+      it "accepts it" do
+        cursor = SDK::XmlReader.new('<vm/>')
+        SDK::Reader.read(cursor)
+        cursor.close
+      end
+
+      it "leaves it positioned in the next element" do
+        cursor = SDK::XmlReader.new('<root><vm/><next/></root>')
+        cursor.read
+        SDK::Reader.read(cursor)
+        expect(cursor.node_name).to eql('next')
+        cursor.close
+      end
+    end
+
+    context "given incorrect input type" do
+      it "raises an exception containing the offending type" do
+        expect { SDK::Reader.read(0) }.to raise_error(ArgumentError, /Fixnum/)
+      end
+    end
+
+    context "given incorrect input data" do
+      it "raises an exception containing the offending data" do
+        expect { SDK::Reader.read('<ugly/>') }.to raise_error(SDK::Error, /ugly/)
+      end
+    end
+
+    context "given a VM" do
+      it "creates a VM object" do
+        object = SDK::Reader.read('<vm/>')
+        expect(object).to be_a(SDK::Vm)
+      end
+    end
+
+    context "given two VMs" do
+      it "creates a list containing two Vm objects" do
+        list = SDK::Reader.read('<vms><vm/><vm/></vms>')
+        expect(list).to be_a(SDK::List)
+        expect(list.length).to eql(2)
+        expect(list[0]).to be_a(SDK::Vm)
+        expect(list[1]).to be_a(SDK::Vm)
+      end
+    end
+
+    context "given a disk" do
+      it "creates a Disk object" do
+        object = SDK::Reader.read('<disk/>')
+        expect(object).to be_a(SDK::Disk)
+      end
+    end
+
+    context "given two disks" do
+      it "creates a list containing two Disk objects" do
+        list = SDK::Reader.read('<disks><disk/><disk/></disks>')
+        expect(list).to be_a(SDK::List)
+        expect(list.length).to eql(2)
+        expect(list[0]).to be_a(SDK::Disk)
+        expect(list[1]).to be_a(SDK::Disk)
+      end
+    end
+
+    context "given two different consecutive objexts" do
+      it "they can be read with two calls" do
+        cursor = SDK::XmlReader.new('<root><vm/><disk/></root>')
+        cursor.read
+        vm = SDK::Reader.read(cursor)
+        disk = SDK::Reader.read(cursor)
+        expect(vm).to be_a(SDK::Vm)
+        expect(disk).to be_a(SDK::Disk)
+      end
+    end
+
+    context "given an empty document" do
+      it "returns nil" do
+        cursor = SDK::XmlReader.new('<root/>')
+        cursor.read
+        object = SDK::Reader.read(cursor)
+        expect(object).to be_nil
+      end
+    end
+
+  end
+
 end
