@@ -185,38 +185,57 @@ public class ServicesGenerator implements RubyGenerator {
     }
 
     private void generateAddHttpPost(Method method) {
-        // Get the main parameter:
-        Parameter parameter = method.parameters()
-            .filter(x -> x.isIn() && x.isOut())
-            .findFirst()
-            .orElse(null);
+        // Classify the parameters, as they have different treatment. The primary parameter will be the request body and
+        // the secondary parameters will be query parameters.
+        Parameter primaryParameter = getPrimaryParameter(method);
+        List<Parameter> secondaryParameters = getSecondaryParameters(method);
 
-        // Begin method:
+        // Document the method:
         Name methodName = method.getName();
-        Type parameterType = parameter.getType();
-        Name parameterName = parameter.getName();
-        String arg = rubyNames.getMemberStyleName(parameterName);
-        String doc = method.getDoc();
-        if (doc == null) {
-            doc = String.format("Adds a new `%1$s`.", arg);
+        Type primaryParameterType = primaryParameter.getType();
+        Name primaryParameterName = primaryParameter.getName();
+        String arg = rubyNames.getMemberStyleName(primaryParameterName);
+        String methodDoc = method.getDoc();
+        if (methodDoc == null) {
+            methodDoc = String.format("Adds a new `%1$s`.", arg);
         }
         buffer.addComment();
-        buffer.addComment(doc);
+        buffer.addComment(methodDoc);
         buffer.addComment();
-        buffer.addYardParam(parameter);
+
+        // Document the primary parameter:
+        String primaryParameterDoc = primaryParameter.getDoc();
+        if (primaryParameterDoc == null) {
+            primaryParameterDoc = String.format("The `%1$s` to add.", arg);
+        }
+        buffer.addYardParam(primaryParameter, primaryParameterDoc);
         buffer.addComment();
-        buffer.addYardReturn(parameter);
+
+        // Document the secondary parameters:
+        buffer.addYardTag("param", "opts [Hash] Additional options.");
         buffer.addComment();
+        secondaryParameters.forEach(parameter -> {
+            buffer.addYardOption(parameter);
+            buffer.addComment();
+        });
+
+        // Document the return value:
+        buffer.addYardReturn(primaryParameter);
+        buffer.addComment();
+
+        // Generate the method declaration:
         buffer.addLine("def %1$s(%2$s, opts = {})", rubyNames.getMemberStyleName(methodName), arg);
 
-        // Body:
-        generateConvertLiteral(parameterType, arg);
-        buffer.addLine("request = Request.new(:method => :POST, :path => @path)");
-        generateWriteRequestBody(parameter, arg);
+        // Generate the method body:
+        generateConvertLiteral(primaryParameterType, arg);
+        buffer.addLine("query = {}");
+        secondaryParameters.forEach(this::generateUrlParameter);
+        buffer.addLine("request = Request.new(:method => :POST, :path => @path, :query => query)");
+        generateWriteRequestBody(primaryParameter, arg);
         buffer.addLine("response = @connection.send(request)");
         buffer.addLine("case response.code");
         buffer.addLine("when 201, 202");
-        generateReturnResponseBody(parameter);
+        generateReturnResponseBody(primaryParameter);
         buffer.addLine("else");
         buffer.addLine(  "check_fault(response)");
         buffer.addLine("end");
@@ -287,27 +306,34 @@ public class ServicesGenerator implements RubyGenerator {
             .findFirst()
             .orElse(null);
 
-        // Begin method:
+        // Document the method:
         buffer.addComment();
-        String doc = method.getDoc();
-        if (doc == null) {
-            doc = "Returns the representation of the object managed by this service.";
+        String methodDoc = method.getDoc();
+        if (methodDoc == null) {
+            methodDoc = "Returns the representation of the object managed by this service.";
         }
-        buffer.addComment(doc);
+        buffer.addComment(methodDoc);
         buffer.addComment();
+
+        // Document the parameters:
         buffer.addYardTag("param", "opts [Hash] Additional options.");
         buffer.addComment();
-        inParameters.forEach(buffer::addYardOption);
+        inParameters.forEach(parameter -> {
+            buffer.addYardOption(parameter);
+            buffer.addComment();
+        });
+
+        // Document the return value:
         buffer.addYardReturn(mainParameter);
         buffer.addComment();
+
+        // Generate the method declaration:
         Name methodName = method.getName();
         buffer.addLine("def %1$s(opts = {})", rubyNames.getMemberStyleName(methodName));
 
-        // Generate the input parameters:
+        // Generate the method body:
         buffer.addLine("query = {}");
         inParameters.forEach(this::generateUrlParameter);
-
-        // Body:
         buffer.addLine("request = Request.new(:method => :GET, :path => @path, :query => query)");
         buffer.addLine("response = @connection.send(request)");
         buffer.addLine("case response.code");
@@ -323,34 +349,56 @@ public class ServicesGenerator implements RubyGenerator {
     }
 
     private void generateHttpPut(Method method) {
-        // Get the main parameter:
-        Parameter parameter = method.parameters()
-            .filter(x -> x.isIn() && x.isOut())
-            .findFirst()
-            .orElse(null);
+        // Classify the parameters, as they have different treatment. The primary parameter will be the request body and
+        // the secondary parameters will be query parameters.
+        Parameter primaryParameter = getPrimaryParameter(method);
+        List<Parameter> secondaryParameters = getSecondaryParameters(method);
 
-        // Begin method:
-        Name methodName = method.getName();
-        Name parameterName = parameter.getName();
-        Type parameterType = parameter.getType();
-        String arg = rubyNames.getMemberStyleName(parameterName);
-        String doc = method.getDoc();
-        if (doc == null) {
-            doc = "Updates the object managed by this service.";
+        // Document the method:
+        Type primaryParameterType = primaryParameter.getType();
+        Name primaryParameterName = primaryParameter.getName();
+        String arg = rubyNames.getMemberStyleName(primaryParameterName);
+        String methodDoc = method.getDoc();
+        if (methodDoc == null) {
+            methodDoc = String.format("Updates the `%1$s`.", arg);
         }
         buffer.addComment();
-        buffer.addComment(doc);
+        buffer.addComment(methodDoc);
         buffer.addComment();
+
+        // Document the primary parameter:
+        String primaryParameterDoc = primaryParameter.getDoc();
+        if (primaryParameterDoc == null) {
+            primaryParameterDoc = String.format("The `%1$s` to update.", arg);
+        }
+        buffer.addYardParam(primaryParameter, primaryParameterDoc);
+
+        // Document the secondary parameters:
+        buffer.addYardTag("param", "opts [Hash] Additional options.");
+        buffer.addComment();
+        secondaryParameters.forEach(parameter -> {
+            buffer.addYardOption(parameter);
+            buffer.addComment();
+        });
+
+        // Document the return value:
+        buffer.addYardReturn(primaryParameter);
+        buffer.addComment();
+
+        // Generate the method declaration:
+        Name methodName = method.getName();
         buffer.addLine("def %1$s(%2$s)", rubyNames.getMemberStyleName(methodName), arg);
 
-        // Body:
-        generateConvertLiteral(parameterType, arg);
-        buffer.addLine("request = Request.new(:method => :PUT, :path => @path)");
-        generateWriteRequestBody(parameter, arg);
+        // Generate the method body:
+        generateConvertLiteral(primaryParameterType, arg);
+        buffer.addLine("query = {}");
+        secondaryParameters.forEach(this::generateUrlParameter);
+        buffer.addLine("request = Request.new(:method => :PUT, :path => @path, :query => query)");
+        generateWriteRequestBody(primaryParameter, arg);
         buffer.addLine("response = @connection.send(request)");
         buffer.addLine("case response.code");
         buffer.addLine("when 200");
-        generateReturnResponseBody(parameter);
+        generateReturnResponseBody(primaryParameter);
         buffer.addLine(  "return result");
         buffer.addLine("else");
         buffer.addLine(  "check_fault(response)");
@@ -427,25 +475,27 @@ public class ServicesGenerator implements RubyGenerator {
             .sorted()
             .collect(toList());
 
-        // Begin method:
-        Name name = method.getName();
-        String doc = method.getDoc();
-        if (doc == null) {
-            doc = "Deletes the object managed by this service.";
+        // Document the method:
+        String methodDoc = method.getDoc();
+        if (methodDoc == null) {
+            methodDoc = "Deletes the object managed by this service.";
         }
         buffer.addComment();
-        buffer.addComment(doc);
+        buffer.addComment(methodDoc);
         buffer.addComment();
+
+        // Document the parameters:
         buffer.addYardTag("param", "opts [Hash] Additional options.");
         buffer.addComment();
         inParameters.forEach(buffer::addYardOption);
-        buffer.addLine("def %1$s(opts = {})", rubyNames.getMemberStyleName(name));
 
-        // Generate the input parameters:
+        // Generate the method declaration:
+        Name methodName = method.getName();
+        buffer.addLine("def %1$s(opts = {})", rubyNames.getMemberStyleName(methodName));
+
+        // Generate method body:
         buffer.addLine("query = {}");
         inParameters.forEach(this::generateUrlParameter);
-
-        // Generate the method:
         buffer.addLine(  "request = Request.new(:method => :DELETE, :path => @path, :query => query)");
         buffer.addLine(  "response = @connection.send(request)");
         buffer.addLine(  "unless response.code == 200");
@@ -607,5 +657,30 @@ public class ServicesGenerator implements RubyGenerator {
 
     private String getPath(Name name) {
         return name.words().map(String::toLowerCase).collect(joining());
+    }
+
+    /**
+     * Returns the primary parameter of the given method. The primary parameter is the one that is used in the request
+     * body for methods like {@code add} and {@code update}, it is usually the first parameter that is both used for
+     * input and output and whose type isn't primitive.
+     */
+    private Parameter getPrimaryParameter(Method method) {
+        return method.parameters()
+            .filter(parameter -> parameter.isIn() && parameter.isOut())
+            .filter(parameter -> !(parameter.getType() instanceof PrimitiveType))
+            .findFirst()
+            .orElse(null);
+    }
+
+    /**
+     * Returns the list of secondary parameters of the given methods. The secondary parameters are those that will be
+     * used as query or matrix parameters, they should be used for input only, and their type must be primitive.
+     */
+    private List<Parameter> getSecondaryParameters(Method method) {
+        return method.parameters()
+            .filter(parameter -> parameter.isIn() && !parameter.isOut())
+            .filter(parameter -> parameter.getType() instanceof PrimitiveType)
+            .sorted()
+            .collect(toList());
     }
 }
