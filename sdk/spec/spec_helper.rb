@@ -178,6 +178,12 @@ module Helpers # :nodoc:
       @last_request_method = request.request_method
       @last_request_body = request.body
 
+      # The query string can't be obtained directly from the request object, only a hash with the query
+      # parameter, and that is only available for GET and HEAD requests. We need it for POST and PUT
+      # requests, so we need to get them using the CGI variables.
+      vars = request.meta_vars
+      @last_request_query = vars['QUERY_STRING']
+
       # Check credentials, and if they are correct return the response:
       authorization = request['Authorization']
       if authorization != "Bearer #{TOKEN}"
@@ -197,12 +203,20 @@ module Helpers # :nodoc:
     @thread.join
   end
 
+  def last_request_path
+    @last_request_path
+  end
+
+  def last_request_query
+    @last_request_query
+  end
+
   def last_request_method
-    return @last_request_method
+    @last_request_method
   end
 
   def last_request_body
-    return @last_request_body
+    @last_request_body
   end
 
 end

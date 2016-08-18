@@ -27,7 +27,33 @@ describe SDK::VmsService do
     stop_server
   end
 
-  describe ".vms" do
+  describe "#add" do
+
+    context "when adding a VM with the `clone` parameter" do
+
+      it "send a POST request with a `clone` query parameter" do
+        set_xml_response('vms', 201, '<vm/>')
+        vm = SDK::Vm.new
+        @service.add(vm, :clone => true)
+        expect(last_request_query).to eql('clone=true')
+      end
+
+    end
+
+    context "when adding a VM with the `clone` and `clone_permissions` parameters" do
+
+      it "send a POST request with a `clone` and `clone_permissions` query parameters" do
+        set_xml_response('vms', 201, '<vm/>')
+        vm = SDK::Vm.new
+        @service.add(vm, :clone => true, :clone_permissions => true)
+        expect(last_request_query).to eql('clone=true&clone_permissions=true')
+      end
+
+    end
+
+  end
+
+  describe "#vms" do
 
     context "getting the reference to the service" do
 
@@ -39,7 +65,7 @@ describe SDK::VmsService do
 
   end
 
-  describe ".list" do
+  describe "#list" do
 
     context "without parameters" do
 
