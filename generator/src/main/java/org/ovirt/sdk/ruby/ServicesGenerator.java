@@ -246,19 +246,29 @@ public class ServicesGenerator implements RubyGenerator {
     }
 
     private void generateActionHttpPost(Method method) {
-        // Begin method:
+        // Document the method:
         Name methodName = method.getName();
         String actionName = rubyNames.getMemberStyleName(methodName);
-        String doc = method.getDoc();
-        if (doc == null) {
-            doc = String.format("Executes the `%1$s` method.", actionName);
+        String methodDoc = method.getDoc();
+        if (methodDoc == null) {
+            methodDoc = String.format("Executes the `%1$s` method.", actionName);
         }
         buffer.addComment();
-        buffer.addComment(doc);
+        buffer.addComment(methodDoc);
         buffer.addComment();
+
+        // Document the parameters:
+        buffer.addYardTag("param", "opts [Hash] Additional options.");
+        buffer.addComment();
+        method.parameters().sorted().forEach(parameter -> {
+            buffer.addYardOption(parameter);
+            buffer.addComment();
+        });
+
+        // Generate the method declaration:
         buffer.addLine("def %1$s(opts = {})", actionName);
 
-        // Generate the method:
+        // Generate the method body:
         buffer.addLine("action = Action.new(opts)");
         buffer.addLine("writer = XmlWriter.new(nil, true)");
         buffer.addLine("ActionWriter.write_one(action, writer)");
