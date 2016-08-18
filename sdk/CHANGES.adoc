@@ -3,6 +3,33 @@
 This document describes the relevant changes between releases of the
 API model.
 
+== 4.0.0.alpha20 / Aug 18 2016
+
+Update to model 4.0.32.
+
+New features:
+
+* Add `logical_name` attribute to the disk attachment type.
+
+* Add the `clone_permissions` parameter to the operations that add
+  virtual machines and templates.
+
+* Add the `clone` parameter to the operation that adds a new virtual
+  machine.
+
+* Add the `ad_partner_mac` attribute to the bonding type.
+
+* Add the `ad_aggregator_id` attribute to the host NIC type.
+
+* Add the `ExternalVmImportsService` and related types.
+
+Bug fixes:
+
+* Add support for secondary parameters https://bugzilla.redhat.com/1366548[#1366548].
+
+* Fix the name of the parameter to get virtual machine from affinity
+  label, should be `vm` instead of `host`.
+
 == 4.0.0.alpha19 / Jul 30 2016
 
 New features:
