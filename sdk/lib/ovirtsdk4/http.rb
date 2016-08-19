@@ -77,11 +77,6 @@ module OvirtSDK4
     #
     # Creates a new connection to the API server.
     #
-    # Note that all the parameters with names starting with `sso` are intended for use with external authentication
-    # services, using the http://oauth.net/2/[OAuth2] protocol. But the typical usage doesn't require them, as they
-    # are automatically calculated to use the authentication service that is part of the engine. A typical connection
-    # can be created specifying just the `url`, `username`, `password` and `ca_file` parameters:
-    #
     # [source,ruby]
     # ----
     # connection = OvirtSDK4::Connection.new(
@@ -129,90 +124,48 @@ module OvirtSDK4
     #   compressed responses. Note that this is a hint for the server, and that it may return uncompressed data even
     #   when this parameter is set to `true`.
     #
-    # @option opts [String] :sso_url A string containing the base URL of the authentication service. This needs to be
-    #   specified only when using an external authentication service. By default this URL is automatically calculated
-    #   from the value of the `url` parameter, so that authentication will be performed using the authentication
-    #   service that is part of the engine.
-    #
-    # @option opts [String] :sso_revoke_url A string containing the base URL of the SSO revoke service. This needs to be
-    #   specified only when using an external authentication service. By default this URL is automatically calculated
-    #   from the value of the `url` parameter, so that SSO token revoke will be performed using the SSO service that
-    #   is part of the engine.
-    #
-    # @option opts [Boolean] :sso_insecure A boolean flag that indicates if the SSO server TLS certificate and
-    #    host name should be checked. Default is value of `insecure`.
-    #
-    # @option opts [String] :sso_ca_file The name of a PEM file containing the trusted CA certificates. The
-    #   certificate presented by the SSO server will be verified using these CA certificates. Default is value of
-    #   `ca_file`.
-    #
-    # @option opts [Boolean] :sso_timeout The maximun total time to wait for the SSO response, in seconds. A value
-    #   of zero means wait for ever. If the timeout expires before the SSO response is received an exception will be
-    #   raised. Default is value of `timeout`.
-    #
-    # @option opts [String] :sso_token_name (access_token) The token name in the JSON SSO response returned from the SSO
-    #   server. Default value is `access_token`
-    #
-  def initialize(opts = {})
+    def initialize(opts = {})
       # Get the values of the parameters and assign default values:
-      url = opts[:url]
-      username = opts[:username]
-      password = opts[:password]
-      token = opts[:token]
-      insecure = opts[:insecure] || false
-      ca_file = opts[:ca_file]
+      @url = opts[:url]
+      @username = opts[:username]
+      @password = opts[:password]
+      @token = opts[:token]
+      @insecure = opts[:insecure] || false
+      @ca_file = opts[:ca_file]
       @debug = opts[:debug] || false
       @log = opts[:log]
-      kerberos = opts[:kerberos] || false
-      timeout = opts[:timeout] || 0
-      compress = opts[:compress] || false
-      sso_url = opts[:sso_url]
-      sso_revoke_url = opts[:sso_revoke_url]
-      sso_insecure = opts[:sso_insecure] || insecure
-      sso_ca_file = opts[:sso_ca_file] || ca_file
-      sso_timeout = opts[:sso_timeout] || timeout
-      sso_token_name = opts[:sso_token_name] || 'access_token'
+      @kerberos = opts[:kerberos] || false
+      @timeout = opts[:timeout] || 0
+      @compress = opts[:compress] || false
 
       # Check mandatory parameters:
       if url.nil?
-         raise ArgumentError.new("The \"url\" parameter is mandatory.")
+         raise ArgumentError.new("The 'url' parameter is mandatory.")
       end
 
       # Save the URL:
-      @url = URI(url)
-
-      # Save SSO parameters:
-      @sso_url = sso_url
-      @sso_revoke_url = sso_revoke_url
-      @username = username
-      @password = password
-      @token = token
-      @kerberos = kerberos
-      @sso_insecure = sso_insecure
-      @sso_ca_file = sso_ca_file
-      @sso_timeout = sso_timeout
-      @sso_token_name = sso_token_name
+      @url = URI(@url)
 
       # Create the cURL handle:
       @curl = Curl::Easy.new
 
       # Configure TLS parameters:
       if @url.scheme == 'https'
-        if insecure
+        if @insecure
           @curl.ssl_verify_peer = false
           @curl.ssl_verify_host = false
-        elsif !ca_file.nil?
-          raise ArgumentError.new("The CA file \"#{ca_file}\" doesn't exist.") unless ::File.file?(ca_file)
-          @curl.cacert = ca_file
+        elsif !@ca_file.nil?
+          raise ArgumentError.new("The CA file '#{@ca_file}' doesn't exist.") unless ::File.file?(@ca_file)
+          @curl.cacert = @ca_file
         end
       end
 
       # Configure the timeout:
-      @curl.timeout = timeout
+      @curl.timeout = @timeout
 
       # Configure compression of responses (setting the value to a zero length string means accepting all the
       # compression types that libcurl supports):
-      if compress
+      if @compress
         @curl.encoding = ''
       end
 
@@ -270,7 +223,6 @@ module OvirtSDK4
     # @api private
     #
     def send(request)
-
       # Check if we already have an SSO access token:
       @token ||= get_access_token
 
@@ -314,31 +266,28 @@ module OvirtSDK4
     end
 
     #
-    # Obtains the access token from SSO to be used for Bearer authentication.
+    # Obtains the access token from SSO to be used for bearer authentication.
     #
-    # @return [String] The URL.
+    # @return [String] The access token.
     #
     # @api private
     #
     def get_access_token
-      # If SSO url is not supplied build default one:
-      if @sso_url.nil?
-        @sso_url = URI(build_sso_auth_url)
-      else
-        @sso_url = URI(@sso_url)
+      # Build the URL and parameters required for the request:
+      url, parameters = build_sso_auth_request
+
+      # Send the response and wait for the request:
+      response = get_sso_response(url, parameters)
+
+      if response.is_a?(Array)
+        response = response[0]
       end
 
-      sso_response = get_sso_response(@sso_url)
-
-      if sso_response.is_a?(Array)
-        sso_response = sso_response[0]
+      unless response['error'].nil?
+        raise Error.new("Error during SSO authentication #{response['error_code']}: #{response['error']}")
       end
 
-      if !sso_response["error"].nil?
-        raise Error.new("Error during SSO authentication #{sso_response['error_code']} : #{sso_response['error']}")
-      end
-
-      return sso_response[@sso_token_name]
+      response['access_token']
     end
 
     #
@@ -347,37 +296,37 @@ module OvirtSDK4
     # @api private
     #
     def revoke_access_token
-      # If SSO revoke url is not supplied build default one:
-      if @sso_revoke_url.nil?
-        @sso_revoke_url = URI(build_sso_revoke_url)
-      else
-        @sso_revoke_url = URI(@sso_revoke_url)
+      # Build the URL and parameters required for the request:
+      url, parameters = build_sso_revoke_request
+
+      response = get_sso_response(url, parameters)
+
+      if response.is_a?(Array)
+        response = response[0]
       end
 
-      sso_response = get_sso_response(@sso_revoke_url)
-
-      if sso_response.is_a?(Array)
-        sso_response = sso_response[0]
-      end
-
-      if !sso_response["error"].nil?
-        raise Error.new("Error during SSO revoke #{sso_response['error_code']} : #{sso_response['error']}")
+      unless response['error'].nil?
+        raise Error.new("Error during SSO revoke #{response['error_code']}: #{response['error']}")
       end
     end
 
     #
     # Execute a get request to the SSO server and return the response.
     #
+    # @param url [String] The URL of the SSO server.
+    #
+    # @param parameters [Hash] The parameters to send to the SSO server.
+    #
     # @return [Hash] The JSON response.
     #
     # @api private
     #
-    def get_sso_response(sso_base_url)
+    def get_sso_response(url, parameters)
       # Create the cURL handle for SSO:
       sso_curl = Curl::Easy.new
 
       # Configure the timeout:
-      sso_curl.timeout = @sso_timeout
+      sso_curl.timeout = @timeout
 
       # Configure debug mode:
       if @debug && @log
@@ -392,100 +341,95 @@ module OvirtSDK4
 
       begin
         # Configure TLS parameters:
-        if sso_base_url.scheme == 'https'
-          if @sso_insecure
+        if url.scheme == 'https'
+          if @insecure
             sso_curl.ssl_verify_peer = false
             sso_curl.ssl_verify_host = false
-          elsif !@sso_ca_file.nil?
-            raise ArgumentError.new("The CA file \"#{@sso_ca_file}\" doesn't exist.") unless ::File.file?(@sso_ca_file)
-            sso_curl.cacert = @sso_ca_file
+          elsif !@ca_file.nil?
+            raise ArgumentError.new("The CA file \"#{@ca_file}\" doesn't exist.") unless ::File.file?(@ca_file)
+            sso_curl.cacert = @ca_file
           end
         end
-
-        # The username and password parameters:
-        params = {}
-
-        # The base SSO URL:
-        sso_url = sso_base_url.to_s
 
         # Configure authentication:
-        if @kerberos
-          sso_curl.http_auth_types = :gssnegotiate
-          sso_curl.username = ''
-          sso_curl.password = ''
-        else
-          sso_curl.http_auth_types = :basic
-          sso_curl.username = @username
-          sso_curl.password = @password
-          if sso_url.index('?').nil?
-            sso_url += '?'
-          end
-          params['username'] = @username
-          params['password'] = @password
-          sso_url = sso_url + '&' + URI.encode_www_form(params)
-        end
+        sso_curl.http_auth_types = @kerberos ? :gssnegotiate : 0
 
         # Build the SSO access_token request url:
-        sso_curl.url = sso_url
+        sso_curl.url = url.to_s
 
         # Add headers:
         sso_curl.headers['User-Agent'] = "RubySDK/#{VERSION}"
+        sso_curl.headers['Content-Type'] = 'application/x-www-form-urlencoded'
         sso_curl.headers['Accept'] = 'application/json'
 
         # Request access token:
-        sso_curl.http_get
+        body = URI.encode_www_form(parameters)
+        sso_curl.http_post(body)
 
         # Parse and return the JSON response:
-        return JSON.parse(sso_curl.body_str)
+        body = sso_curl.body_str
+        return JSON.parse(body)
       ensure
         sso_curl.close
       end
     end
 
     #
-    # Builds a request URL to acquire the access token from SSO. The URLS are different for basic auth and Kerberos,
-    # @return [String] The URL.
+    # Builds a the URL and parameters to acquire the access token from SSO.
+    #
+    # @return [Array] An array containing two elements, the first is the URL of the SSO service and the second is a hash
+    #   containing the parameters required to perform authentication.
     #
     # @api private
     #
-    def build_sso_auth_url
-      # The SSO access scope:
-      scope = 'ovirt-app-api'
-
-      # Set the grant type and entry point to request from SSO:
+    def build_sso_auth_request
+      # Compute the entry point and the parameters:
+      parameters = {
+        :scope => 'ovirt-app-api',
+      }
       if @kerberos
-        grant_type = 'urn:ovirt:params:oauth:grant-type:http'
         entry_point = 'token-http-auth'
+        parameters.merge!(
+          :grant_type => 'urn:ovirt:params:oauth:grant-type:http',
+        )
       else
-        grant_type = 'password'
         entry_point = 'token'
+        parameters.merge!(
+          :grant_type => 'password',
+          :username => @username,
+          :password => @password,
+        )
       end
 
-      # Copy the base URL and modify it to point to the SSO authentication service:
+      # Compute the URL:
       url = URI(@url.to_s)
       url.path = "/ovirt-engine/sso/oauth/#{entry_point}"
-      url.query = URI.encode_www_form(
-        :grant_type => grant_type,
-        :scope => scope,
-      )
-      url.to_s
+
+      # Return the pair containing the URL and the parameters:
+      [url, parameters]
     end
 
     #
-    # Builds a request URL to revoke the SSO access token.
-    # @return [String] The URL.
+    # Builds a the URL and parameters to revoke the SSO access token
+    #
+    # @return [Array] An array containing two elements, the first is the URL of the SSO service and the second is a hash
+    #   containing the parameters required to perform the revoke.
     #
     # @api private
     #
-    def build_sso_revoke_url
-      # Copy the base URL and modify it to point to the SSO logout service:
-      url = URI(@url.to_s)
-      url.path = '/ovirt-engine/services/sso-logout'
-      url.query = URI.encode_www_form(
+    def build_sso_revoke_request
+      # Compute the parameters:
+      parameters = {
         :scope => '',
         :token => @token,
-      )
-      url.to_s
+      }
+
+      # Compute the URL:
+      url = URI(@url.to_s)
+      url.path = '/ovirt-engine/services/sso-logout'
+
+      # Return the pair containing the URL and the parameters:
+      [url, parameters]
     end
 
     #
@@ -564,14 +508,8 @@ module OvirtSDK4
     # Releases the resources used by this connection.
     #
     def close
-      # Send the last request to indicate the server that the session should be closed:
-      request = Request.new({
-        :method => :HEAD,
-      })
-      send(request)
-
       # Revoke the SSO access token:
-      revoke_access_token
+      revoke_access_token unless @token.nil?
 
       # Release resources used by the cURL handle:
       @curl.close

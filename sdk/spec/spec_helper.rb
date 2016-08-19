@@ -40,6 +40,11 @@ module Helpers # :nodoc:
   HOST = 'localhost'
   PREFIX = '/ovirt-engine'
 
+  # Content types:
+  APPLICATION_FORM = 'application/x-www-form-urlencoded'
+  APPLICATION_JSON = 'application/json'
+  APPLICATION_XML = 'application/xml'
+
   def test_user
     return USER
   end
@@ -105,6 +110,50 @@ module Helpers # :nodoc:
     )
   end
 
+  def check_sso_request(request, response)
+    # Check the HTTP method:
+    expected_method = 'POST'
+    actual_method = request.request_method
+    unless actual_method == expected_method
+      response.status = 401
+      response.content_type = APPLICATION_JSON
+      response.body = JSON.generate(
+        :error_code => 0,
+        :error => "The HTTP method should be '#{expected_method}', but it is '#{actual_method}'"
+      )
+      return false
+    end
+
+    # Check the content type:
+    expected_content_type = APPLICATION_FORM
+    actual_content_type = request.content_type
+    unless actual_content_type == expected_content_type
+      response.status = 401
+      response.content_type = APPLICATION_JSON
+      response.body = JSON.generate(
+        :error_code => 0,
+        :error => "The 'Content-Type' header should be '#{expected_content_type}', but it is '#{actual_content_type}'"
+      )
+      return false
+    end
+
+    # Check that there is no query string, all the parameters should be part of the body:
+    expected_query = ''
+    actual_query = request.meta_vars['QUERY_STRING']
+    unless actual_query == expected_query
+      response.status = 401
+      response.content_type = APPLICATION_JSON
+      response.body = JSON.generate(
+        :error_code => 0,
+        :error => "The query string should be '#{expected_query}', but it is '#{actual_query}'"
+      )
+      return false
+    end
+
+    # Everything seems correct:
+    true
+  end
+
   def start_server(host = 'localhost')
     # Load the private key and the certificate corresponding to the given host name:
     key = OpenSSL::PKey::RSA.new(File.read("spec/pki/#{host}.key"))
@@ -141,29 +190,65 @@ module Helpers # :nodoc:
 
     # Create the handler for password authentication requests:
     @server.mount_proc "#{PREFIX}/sso/oauth/token" do |request, response|
-      response.status = 200
-      response['Content-Type'] = 'application/json'
-      response.body = JSON.generate(
-        :access_token => TOKEN,
-      )
-    end
+      # Check basic properties of the request:
+      next unless check_sso_request(request, response)
 
-    # Create the handler for SSO logout requests:
-    @server.mount_proc "#{PREFIX}/services/sso-logout" do |request, response|
+      # Check that the password is correct:
+      expected_password = test_password
+      actual_password = request.query['password']
+      unless actual_password == expected_password
+        response.status = 401
+        response.content_type = APPLICATION_JSON
+        response.body = JSON.generate(
+          :error_code => 0,
+          :error => "The password should be '#{expected_password}', but it is '#{actual_password}'"
+        )
+        next
+      end
+
+      # Everything seems correct:
       response.status = 200
-      response['Content-Type'] = 'application/json'
+      response.content_type = APPLICATION_JSON
       response.body = JSON.generate(
-          :access_token => TOKEN,
+        :access_token => test_token,
       )
     end
 
     # Create the handler for Kerberos authentication requests:
     @server.mount_proc "#{PREFIX}/sso/oauth/token-http-auth" do |request, response|
+      # Check basic properties of the request:
+      next unless check_sso_request(request, response)
+
+      # Everything seems correct:
       response.status = 200
-      response['Content-Type'] = 'application/json'
+      response.content_type = APPLICATION_JSON
       response.body = JSON.generate(
-        :access_token => TOKEN,
+        :access_token => test_token,
       )
+    end
+
+    # Create the handler for SSO logout requests:
+    @server.mount_proc "#{PREFIX}/services/sso-logout" do |request, response|
+      # Check basic properties of the request:
+      next unless check_sso_request(request, response)
+
+      # Check that the token is correct:
+      expected_token = test_token
+      actual_token = request.query['token']
+      unless actual_token == expected_token
+        response.status = 401
+        response.content_type = APPLICATION_JSON
+        response.body = JSON.generate(
+          :error_code => 0,
+          :error => "The token should be '#{expected_token}', but it is '#{actual_token}'"
+        )
+        next
+      end
+
+      # Everything seems correct:
+      response.status = 200
+      response.content_type = APPLICATION_JSON
+      response.body = JSON.generate({})
     end
 
     # Start the server in a different thread, as the call to the "start" method blocks the current thread:
@@ -186,12 +271,12 @@ module Helpers # :nodoc:
 
       # Check credentials, and if they are correct return the response:
       authorization = request['Authorization']
-      if authorization != "Bearer #{TOKEN}"
+      if authorization != "Bearer #{test_token}"
         response.status = 401
         response.body = ''
       else
         sleep(delay)
-        response['Content-Type'] = 'application/xml'
+        response.content_type = APPLICATION_XML
         response.body = body
         response.status = status
       end
@@ -201,10 +286,6 @@ module Helpers # :nodoc:
   def stop_server
     @server.shutdown
     @thread.join
-  end
-
-  def last_request_path
-    @last_request_path
   end
 
   def last_request_query
@@ -218,7 +299,6 @@ module Helpers # :nodoc:
   def last_request_body
     @last_request_body
   end
-
 end
 
 RSpec.configure do |c|
