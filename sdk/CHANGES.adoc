@@ -3,6 +3,12 @@
 This document describes the relevant changes between releases of the
 API model.
 
+== 4.0.0.alpha21 / Aug 22 2016
+
+Bug fixes:
+
+* Don't send SSO passwords using HTTP GET and query parameter.
+
 == 4.0.0.alpha20 / Aug 18 2016
 
 Update to model 4.0.32.
