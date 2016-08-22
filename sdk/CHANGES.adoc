@@ -1,7 +1,6 @@
 = Changes
 
-This document describes the relevant changes between releases of the
-API model.
+This document describes the relevant changes between releases of the SDK.
 
 == 4.0.0.alpha21 / Aug 22 2016
 
