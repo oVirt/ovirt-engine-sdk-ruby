@@ -83,6 +83,17 @@ public class WritersGenerator implements RubyGenerator {
             .sorted()
             .forEach(this::generateWriter);
 
+        // Generate code to register the writers:
+        model.types()
+            .filter(StructType.class::isInstance)
+            .map(StructType.class::cast)
+            .sorted()
+            .forEach(type -> {
+                String typeName = rubyNames.getTypeName(type).getClassName();
+                String writerName = rubyNames.getWriterName(type).getClassName();
+                buffer.addLine("Writer.register(%1$s, %2$s.method(:write_one))", typeName, writerName);
+            });
+
         // End module:
         buffer.endModule(moduleName);
     }

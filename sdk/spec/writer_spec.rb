@@ -286,4 +286,58 @@ describe SDK::Writer do
 
   end
 
+  describe ".write" do
+
+    it "doesn't require an XML writer as parameter" do
+      vm = SDK::Vm.new
+      result = SDK::Writer.write(vm)
+      expect(result).to eql('<vm/>')
+    end
+
+    it "uses the alternative root tag if provided" do
+      vm = SDK::Vm.new
+      result = SDK::Writer.write(vm, :root => 'list')
+      expect(result).to eql('<list/>')
+    end
+
+    it "accepts an XML writer as parameter" do
+      vm = SDK::Vm.new
+      writer = SDK::XmlWriter.new
+      result = SDK::Writer.write(vm, :target => writer)
+      text = writer.string
+      writer.close
+      expect(result).to be_nil
+      expect(text).to eql('<vm/>')
+    end
+
+    it "raises an exception if given an array and no root tag" do
+      expect { SDK::Writer.write([]) }.to raise_error(SDK::Error, /root.*mandatory/)
+    end
+
+    it "accepts empty arrays" do
+      result = SDK::Writer.write([], :root => 'list')
+      expect(result).to eql('<list/>')
+    end
+
+    it "accepts arrays with one element" do
+      vm = SDK::Vm.new
+      result = SDK::Writer.write([vm], :root => 'list')
+      expect(result).to eql('<list><vm/></list>')
+    end
+
+    it "accepts arrays with two elements" do
+      vm = SDK::Vm.new
+      result = SDK::Writer.write([vm, vm], :root => 'list')
+      expect(result).to eql('<list><vm/><vm/></list>')
+    end
+
+    it "accepts arrays with elements of different types" do
+      vm = SDK::Vm.new
+      disk = SDK::Disk.new
+      result = SDK::Writer.write([vm, disk], :root => 'list')
+      expect(result).to eql('<list><vm/><disk/></list>')
+    end
+
+  end
+
 end
