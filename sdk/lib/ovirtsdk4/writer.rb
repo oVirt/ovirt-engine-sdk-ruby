@@ -123,6 +123,90 @@ module OvirtSDK4
       writer.write_element(name, Writer.render_date(value))
     end
 
+    #
+    # This hash stores for each known type a reference to the method that writes the XML document corresponding for that
+    # type. For example, for the `Vm` type it will contain a reference to the `VmWriter.write_one` method.
+    #
+    @@writers = {}
+
+    #
+    # Registers a write method.
+    #
+    # @param type [Class] The type.
+    # @param writer [Method] The reference to the method that writes the XML document corresponding to the type.
+    #
+    def self.register(type, writer)
+      @@writers[type] = writer
+    end
+
+    #
+    # Writes one object, determining the writer method to use based on the type. For example if the type of the object
+    # is `Vm` then it will create write the `vm` tag, with its contents.
+    #
+    # @param object [Struct] The object to write.
+    #
+    # @param opts [Hash] Options to alter the behaviour of the method.
+    #
+    # @option opts [XmlWriter] :target The XML writer where the output will be written. If it this option
+    #   isn't given, or if the value is `nil` the method will return a string contain the XML document.
+    #
+    # @option opts [String] :root The name of the root tag of the generated XML document. This isn't needed
+    #   when writing single objects, as the tag is calculated from the type of the object, for example, if
+    #   the object is a virtual machine then the tag will be `vm`. But when writing arrays of objects the tag
+    #   is needed, because the list may be empty, or have different types of objects. In this case, for arrays,
+    #   if the name isn't provided an exception will be raised.
+    #
+    def self.write(object, opts = {})
+      # Get the options:
+      target = opts[:target]
+      root = opts[:root]
+
+      # If the target is `nil` then create a temporary XML writer to write the output:
+      cursor = nil
+      if target.nil?
+        cursor = XmlWriter.new
+      elsif target.is_a?(XmlWriter)
+        cursor = target
+      else
+        raise ArgumentError.new("Expected an 'XmlWriter', but got '#{target.class}'")
+      end
+
+      # Do the actual write, and make sure to always close the XML writer if we created it:
+      begin
+        if object.is_a?(Array)
+          # For arrays we can't decide which tag to use, so the 'root' parameter is mandatory in this case:
+          if root.nil?
+            raise Error.new("The 'root' option is mandatory when writing arrays")
+          end
+
+          # Write the root tag, and then recursively call the method to write each of the items of the array:
+          cursor.write_start(root)
+          object.each do |item|
+            write(item, :target => cursor)
+          end
+          cursor.write_end
+        else
+          # Select the specific writer according to the type:
+          type = object.class
+          writer = @@writers[type]
+          if writer.nil?
+            raise Error.new("Can't find a writer for type '#{type}'")
+          end
+
+          # Write the object using the specific method:
+          writer.call(object, cursor, root)
+        end
+
+        # If no XML cursor was explicitly given, and we created it, then we need to return the generated XML text:
+        if target.nil?
+          cursor.string
+        end
+      ensure
+        if !cursor.nil? && !cursor.equal?(target)
+          cursor.close
+        end
+      end
+    end
   end
 
 end
