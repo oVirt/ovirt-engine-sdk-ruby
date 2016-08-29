@@ -4,7 +4,7 @@
 Name: rubygem-ovirt-engine-sdk4
 Summary: oVirt Engine Ruby SDK
 Version: 4.0.0
-Release: 0.19%{?dist}
+Release: 1%{?dist}
 Group: Development/Languages
 License: ASL 2.0
 URL: http://ovirt.org
