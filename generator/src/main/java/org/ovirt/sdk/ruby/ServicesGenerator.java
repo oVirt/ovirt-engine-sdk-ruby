@@ -288,7 +288,7 @@ public class ServicesGenerator implements RubyGenerator {
             .findFirst()
             .ifPresent(this::generateActionResponse);
         buffer.addLine("else");
-        buffer.addLine(  "check_fault(response)");
+        buffer.addLine(  "check_action(response)");
         buffer.addLine("end");
 
         // End method:

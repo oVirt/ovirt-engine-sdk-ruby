@@ -55,7 +55,7 @@ module OvirtSDK4
     end
 
     #
-    # Reads the response body assuming that it contains a fault message, converts it to an Error and raises it.
+    # Reads the response body, checks if it is a fault and if so converts it to an Error and raises it.
     #
     # This method is intended for internal use by other components of the SDK. Refrain from using it directly, as
     # backwards compatibility isn't guaranteed.
@@ -63,21 +63,21 @@ module OvirtSDK4
     # @api private
     #
     def check_fault(response)
-      fault = nil
-      unless response.body.to_s.empty?
-        begin
-          reader = XmlReader.new(response.body)
-          fault = FaultReader.read_one(reader)
-        ensure
-          reader.close
-        end
+      body = response.body
+      if body.nil? || body.length == 0
+        raise_error(response, nil)
       end
-      raise_error(response, fault)
+      body = Reader.read(body)
+      if body.is_a?(Fault)
+        raise_error(response, body)
+      end
+      raise Error.new("Expected a fault, but got '#{body.class.name.split('::').last}'")
     end
 
     #
-    # Reads the response body assuming that it contains an action, checks if it contains a fault message, and if it
-    # does converts it to an Error and raises it. If it doesn't contain a fault then it just returns the action object.
+    # Reads the response body and checks if it is an action or a fault. If it is an action it checks if the action
+    # contains a nested fault. If there is a fault then converts it to an `Error` and raises it. If there is no fault
+    # then the action object is returned.
     #
     # This method is intended for internal use by other components of the SDK. Refrain from using it directly, as
     # backwards compatibility isn't guaranteed.
@@ -85,16 +85,19 @@ module OvirtSDK4
     # @api private
     #
     def check_action(response)
-      begin
-        reader = XmlReader.new(response.body)
-        action = ActionReader.read_one(reader)
-      ensure
-        reader.close
+      body = response.body
+      if body.nil? || body.length == 0
+        raise_error(response, nil)
       end
-      unless action.fault.nil?
-        raise_error(response, action.fault)
+      body = Reader.read(body)
+      if body.is_a?(Fault)
+        raise_error(response, body)
       end
-      return action
+      if body.is_a?(Action)
+        return body if body.fault.nil?
+        raise_error(response, body.fault)
+      end
+      raise Error.new("Expected an action or a fault, but got '#{body.class.name.split('::').last}'")
     end
 
   end
