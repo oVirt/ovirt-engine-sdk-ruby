@@ -93,6 +93,22 @@ describe SDK::Service do
 
   describe ".check_action" do
 
+    context 'given an empty response, with nil body' do
+      it 'raises an error containing the response code' do
+        service = SDK::Service.new
+        response = SDK::Response.new(:code => 209, :body => nil)
+        expect { service.check_action(response) }.to raise_error(SDK::Error, /209/)
+      end
+    end
+
+    context 'given an empty response, with blank body' do
+      it 'raises an error containing the response code' do
+        service = SDK::Service.new
+        response = SDK::Response.new(:code => 209, :body => '')
+        expect { service.check_action(response) }.to raise_error(SDK::Error, /209/)
+      end
+    end
+
     context "given no fault" do
 
       before(:all) do
@@ -121,6 +137,16 @@ describe SDK::Service do
         expect { @service.check_action(@response) }.to raise_error(SDK::Error, /myreason/)
       end
 
+    end
+
+    context 'given a fault instead of an action' do
+      it 'raises an error containing the fault reason' do
+        service = SDK::Service.new
+        response = SDK::Response.new(
+          :body => '<fault><reason>myreason</reason></fault>'
+        )
+        expect { service.check_action(response) }.to raise_error(SDK::Error, /myreason/)
+      end
     end
 
   end

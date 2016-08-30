@@ -44,6 +44,38 @@ describe SDK::VmService do
 
     end
 
+    context 'when the server returns an action containing a fault' do
+
+      it 'raises an error containing the information of the fault' do
+        set_xml_response(
+          'vms/123/start',
+           400,
+           '<action>' +
+             '<fault>' +
+               '<reason>myreason</reason>' +
+             '</fault>' +
+           '</action>'
+        )
+        expect { @service.start }.to raise_error(SDK::Error, /myreason/)
+      end
+
+    end
+
+    context 'when the server returns an fault instead of an action' do
+
+      it 'raises an error containing the information of the fault' do
+        set_xml_response(
+          'vms/123/start',
+           400,
+           '<fault>' +
+             '<reason>myreason</reason>' +
+           '</fault>'
+        )
+        expect { @service.start }.to raise_error(SDK::Error, /myreason/)
+      end
+
+    end
+
   end
 
 end
