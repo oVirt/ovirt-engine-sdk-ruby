@@ -76,7 +76,6 @@ describe SDK::XmlReader do
 
       it "returns nil" do
         reader = SDK::XmlReader.new('<list></list>')
-        reader.read
         expect(reader.read_elements).to eql([])
       end
 
@@ -86,7 +85,6 @@ describe SDK::XmlReader do
 
       it "returns a list containing nil" do
         reader = SDK::XmlReader.new('<list><item/></list>')
-        reader.read
         expect(reader.read_elements).to eql([nil])
       end
 
@@ -96,7 +94,6 @@ describe SDK::XmlReader do
 
       it "returns a list containing an empty string" do
         reader = SDK::XmlReader.new('<list><item></item></list>')
-        reader.read
         expect(reader.read_elements).to eql([''])
       end
 
@@ -106,7 +103,6 @@ describe SDK::XmlReader do
 
       it "returns a list containing it" do
         reader = SDK::XmlReader.new('<list><item>first</item></list>')
-        reader.read
         expect(reader.read_elements).to eql(['first'])
       end
 
@@ -116,7 +112,6 @@ describe SDK::XmlReader do
 
       it "returns a list containing them" do
         reader = SDK::XmlReader.new('<list><item>first</item><item>second</item></list>')
-        reader.read
         expect(reader.read_elements).to eql(['first', 'second'])
       end
 
