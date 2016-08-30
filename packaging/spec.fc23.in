@@ -65,6 +65,7 @@ mv .%{gem_extdir_mri}/*.so %{buildroot}%{gem_extdir_mri}
 %doc %{gem_instdir}/README.adoc
 %exclude %{gem_cache}
 %exclude %{gem_docdir}
+%exclude %{gem_instdir}/.yardopts
 %exclude %{gem_instdir}/Rakefile
 %exclude %{gem_instdir}/ext
 %license %{gem_instdir}/LICENSE.txt
