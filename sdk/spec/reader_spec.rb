@@ -74,7 +74,6 @@ describe SDK::Reader do
     context "given no values with close tag" do
       it "returns empty list" do
         reader = SDK::XmlReader.new('<list></list>')
-        reader.read
         expect(SDK::Reader.read_booleans(reader)).to eql([])
       end
     end
@@ -82,7 +81,6 @@ describe SDK::Reader do
     context "given no values without close tag" do
       it "returns empty list" do
         reader = SDK::XmlReader.new('<list/>')
-        reader.read
         expect(SDK::Reader.read_booleans(reader)).to eql([])
       end
     end
@@ -90,7 +88,6 @@ describe SDK::Reader do
     context "given one value" do
       it "returns a list containing the value" do
         reader = SDK::XmlReader.new('<list><value>false</value></list>')
-        reader.read
         expect(SDK::Reader.read_booleans(reader)).to eql([false])
       end
     end
@@ -98,7 +95,6 @@ describe SDK::Reader do
     context "given two values" do
       it "returns a list containing the two values" do
         reader = SDK::XmlReader.new('<list><value>false</value><value>true</value></list>')
-        reader.read
         expect(SDK::Reader.read_booleans(reader)).to eql([false, true])
       end
     end
@@ -132,7 +128,6 @@ describe SDK::Reader do
     context "given no values with close tag" do
       it "returns empty list" do
         reader = SDK::XmlReader.new('<list></list>')
-        reader.read
         expect(SDK::Reader.read_integers(reader)).to eql([])
       end
     end
@@ -140,7 +135,6 @@ describe SDK::Reader do
     context "given no values without close tag" do
       it "returns empty list" do
         reader = SDK::XmlReader.new('<list/>')
-        reader.read
         expect(SDK::Reader.read_integers(reader)).to eql([])
       end
     end
@@ -148,7 +142,6 @@ describe SDK::Reader do
     context "given one value" do
       it "returns a list containing the value" do
         reader = SDK::XmlReader.new('<list><value>0</value></list>')
-        reader.read
         expect(SDK::Reader.read_integers(reader)).to eql([0])
       end
     end
@@ -156,7 +149,6 @@ describe SDK::Reader do
     context "given two values" do
       it "returns a list containing the two values" do
         reader = SDK::XmlReader.new('<list><value>0</value><value>1</value></list>')
-        reader.read
         expect(SDK::Reader.read_integers(reader)).to eql([0, 1])
       end
     end
@@ -190,7 +182,6 @@ describe SDK::Reader do
     context "given no values with close tag" do
       it "returns empty list" do
         reader = SDK::XmlReader.new('<list></list>')
-        reader.read
         expect(SDK::Reader.read_decimals(reader)).to eql([])
       end
     end
@@ -198,7 +189,6 @@ describe SDK::Reader do
     context "given no values without close tag" do
       it "returns empty list" do
         reader = SDK::XmlReader.new('<list/>')
-        reader.read
         expect(SDK::Reader.read_decimals(reader)).to eql([])
       end
     end
@@ -206,7 +196,6 @@ describe SDK::Reader do
     context "given one value" do
       it "returns a list containing the value" do
         reader = SDK::XmlReader.new('<list><value>1.1</value></list>')
-        reader.read
         expect(SDK::Reader.read_decimals(reader)).to eql([1.1])
       end
     end
@@ -214,7 +203,6 @@ describe SDK::Reader do
     context "given two values" do
       it "returns a list containing the two values" do
         reader = SDK::XmlReader.new('<list><value>1.1</value><value>2.2</value></list>')
-        reader.read
         expect(SDK::Reader.read_decimals(reader)).to eql([1.1, 2.2])
       end
     end
@@ -249,7 +237,6 @@ describe SDK::Reader do
     context "given no values with close tag" do
       it "returns empty list" do
         reader = SDK::XmlReader.new('<list></list>')
-        reader.read
         expect(SDK::Reader.read_dates(reader)).to eql([])
       end
     end
@@ -257,7 +244,6 @@ describe SDK::Reader do
     context "given no values without close tag" do
       it "returns empty list" do
         reader = SDK::XmlReader.new('<list/>')
-        reader.read
         expect(SDK::Reader.read_dates(reader)).to eql([])
       end
     end
@@ -269,7 +255,6 @@ describe SDK::Reader do
             '<value>2015-12-10T22:00:30+01:00</value>' +
           '</list>'
         )
-        reader.read
         dates = [
           DateTime.new(2015, 12, 10, 22, 00, 30, '+1'),
         ]
@@ -285,7 +270,6 @@ describe SDK::Reader do
             '<value>2016-12-10T22:00:30+01:00</value>' +
           '</list>'
         )
-        reader.read
         dates = [
           DateTime.new(2015, 12, 10, 22, 00, 30, '+1'),
           DateTime.new(2016, 12, 10, 22, 00, 30, '+1'),

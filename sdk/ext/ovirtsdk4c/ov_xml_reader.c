@@ -300,8 +300,33 @@ static VALUE ov_xml_reader_read_elements(VALUE self) {
     int rc = 0;
     ov_xml_reader_object* object = NULL;
 
+    /* Get the pointer to the object and check that it isn't closed: */
     Data_Get_Struct(self, ov_xml_reader_object, object);
     ov_xml_reader_check_closed(object);
+
+    /* This method assumes that the reader is positioned at the element that contains the values to read. For example
+       if the XML document is the following:
+
+       <list>
+         <value>first</value>
+         <value>second</value>
+       </list>
+
+       The reader should be positioned at the <list> element. The first thing we need to do is to check that this is
+       true, and then discard it, as we are only interested in the nested <value>...</value> elements. */
+    c_type = xmlTextReaderNodeType(object->reader);
+    if (c_type == -1) {
+        rb_raise(ov_error_class, "Can't get current node type");
+    }
+    if (c_type != XML_READER_TYPE_ELEMENT) {
+        rb_raise(ov_error_class, "Current node isn't the start of an element");
+    }
+    rc = xmlTextReaderRead(object->reader);
+    if (rc == -1) {
+        rb_raise(ov_error_class, "Can't move to next node");
+    }
+
+    /* Process the nested elements: */
     list = rb_ary_new();
     for (;;) {
         c_type = xmlTextReaderNodeType(object->reader);
@@ -318,10 +343,20 @@ static VALUE ov_xml_reader_read_elements(VALUE self) {
         else {
             rc = xmlTextReaderNext(object->reader);
             if (rc == -1) {
-                rb_raise(ov_error_class, "Can't move to the next element");
+                rb_raise(ov_error_class, "Can't move to the next node");
             }
         }
     }
+
+    /* Once all the nested <value>...</value> elements are processed the reader will be positioned at the closing
+       </list> element, or at the end of the document. If it is the closing element then we need to discard it. */
+    if (c_type == XML_READER_TYPE_END_ELEMENT) {
+        rc = xmlTextReaderRead(object->reader);
+        if (rc == -1) {
+            rb_raise(ov_error_class, "Can't move to next node");
+        }
+    }
+
     return list;
 }
 
