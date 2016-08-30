@@ -74,4 +74,4 @@ You will find more usage examples in the `examples` directory.
 == Reference
 
 The reference documentation is available
-https://jhernand.fedorapeople.org/ovirt-engine-sdk-ruby[here].
+http://www.rubydoc.info/gems/ovirt-engine-sdk[here].

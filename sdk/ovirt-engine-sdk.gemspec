@@ -48,6 +48,7 @@ Gem::Specification.new do |spec|
 
   # Files:
   spec.files = Dir.glob([
+    '.yardopts',
     'CHANGES.adoc',
     'LICENSE.txt',
     'README.adoc',
