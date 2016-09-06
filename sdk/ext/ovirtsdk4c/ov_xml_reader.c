@@ -209,11 +209,16 @@ static VALUE ov_xml_reader_node_name(VALUE self) {
 }
 
 static VALUE ov_xml_reader_empty_element(VALUE self) {
+    int c_empty = 0;
     ov_xml_reader_object* object = NULL;
 
     Data_Get_Struct(self, ov_xml_reader_object, object);
     ov_xml_reader_check_closed(object);
-    return xmlTextReaderIsEmptyElement(object->reader)? Qtrue: Qfalse;
+    c_empty = xmlTextReaderIsEmptyElement(object->reader);
+    if (c_empty == -1) {
+        rb_raise(ov_error_class, "Can't check if current element is empty");
+    }
+    return c_empty? Qtrue: Qfalse;
 }
 
 static VALUE ov_xml_reader_get_attribute(VALUE self, VALUE name) {
@@ -296,6 +301,7 @@ static VALUE ov_xml_reader_read_element(VALUE self) {
 static VALUE ov_xml_reader_read_elements(VALUE self) {
     VALUE element;
     VALUE list;
+    int c_empty = 0;
     int c_type = 0;
     int rc = 0;
     ov_xml_reader_object* object = NULL;
@@ -312,8 +318,7 @@ static VALUE ov_xml_reader_read_elements(VALUE self) {
          <value>second</value>
        </list>
 
-       The reader should be positioned at the <list> element. The first thing we need to do is to check that this is
-       true, and then discard it, as we are only interested in the nested <value>...</value> elements. */
+       The reader should be positioned at the <list> element. The first thing we need to do is to check: */
     c_type = xmlTextReaderNodeType(object->reader);
     if (c_type == -1) {
         rb_raise(ov_error_class, "Can't get current node type");
@@ -321,13 +326,30 @@ static VALUE ov_xml_reader_read_elements(VALUE self) {
     if (c_type != XML_READER_TYPE_ELEMENT) {
         rb_raise(ov_error_class, "Current node isn't the start of an element");
     }
+
+    /* If we are indeed positioned at the first element, then we need to check if it is empty, <list/>, as we will
+       need this lter, after discarding the element: */
+    c_empty = xmlTextReaderIsEmptyElement(object->reader);
+    if (c_empty == -1) {
+        rb_raise(ov_error_class, "Can't check if current element is empty");
+    }
+
+    /* Now we need to discard the current element, as we are interested only in the nested <value>...</value>
+       elements: */
     rc = xmlTextReaderRead(object->reader);
     if (rc == -1) {
         rb_raise(ov_error_class, "Can't move to next node");
     }
 
-    /* Process the nested elements: */
+    /* Create the list that will contain the result: */
     list = rb_ary_new();
+
+    /* At this point, if the start element was empty, we don't need to do anything else: */
+    if (c_empty) {
+        return list;
+    }
+
+    /* Process the nested elements: */
     for (;;) {
         c_type = xmlTextReaderNodeType(object->reader);
         if (c_type == -1) {

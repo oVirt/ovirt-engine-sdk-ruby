@@ -117,6 +117,17 @@ describe SDK::XmlReader do
 
     end
 
+    context "given empty list followed by an element" do
+
+      it "the list is empty and the element can be read with the 'read_element' method " do
+        reader = SDK::XmlReader.new('<root><list/><value>next</value></root>')
+        reader.read
+        expect(reader.read_elements).to eql([])
+        expect(reader.read_element).to eql('next')
+      end
+
+    end
+
   end
 
   describe ".forward" do
