@@ -125,20 +125,38 @@ describe SDK::Connection do
 
     context "with user name and password" do
 
-      it "returns the expected token" do
-        connection = SDK::Connection.new(
-          :url => test_url,
-          :username => test_user,
-          :password => test_password,
-          :ca_file => test_ca_file,
-          :debug => test_debug,
-          :log => test_log,
-        )
-        token = connection.authenticate
-        expect(token).to eql(test_token)
-        connection.close
+      context 'with oauth' do
+        it "returns the expected token" do
+          connection = SDK::Connection.new(
+            :url => test_url,
+            :username => test_user,
+            :password => test_password,
+            :ca_file => test_ca_file,
+            :debug => test_debug,
+            :log => test_log,
+          )
+          token = connection.authenticate
+          expect(token).to eql(test_token)
+          connection.close
+        end
       end
 
+      context 'with http_basic_auth' do
+        it "creates a request with basic authentication set" do
+          req = SDK::Request.new(path: "s")
+          connection = SDK::Connection.new(
+            :url => test_url,
+            :username => test_user,
+            :password => test_password,
+            :ca_file => test_ca_file,
+            :debug => test_debug,
+            :log => test_log,
+            :auth => :basic
+          )
+          resp = connection.send(req)
+          expect(resp.code).to eq(200)
+        end
+      end
     end
 
     context "with Kerberos" do
