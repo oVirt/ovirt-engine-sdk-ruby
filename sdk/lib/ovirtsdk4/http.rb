@@ -124,6 +124,8 @@ module OvirtSDK4
     #   compressed responses. Note that this is a hint for the server, and that it may return uncompressed data even
     #   when this parameter is set to `true`.
     #
+    # @option opts [Symbol] :auth_type Switch between http_basic_auth and oauth
+    #
     def initialize(opts = {})
       # Get the values of the parameters and assign default values:
       @url = opts[:url]
@@ -137,6 +139,7 @@ module OvirtSDK4
       @kerberos = opts[:kerberos] || false
       @timeout = opts[:timeout] || 0
       @compress = opts[:compress] || false
+      @auth_type = opts[:auth_type] || :oauth
 
       # Check mandatory parameters:
       if url.nil?
@@ -214,6 +217,31 @@ module OvirtSDK4
       return system_service.service(path)
     end
 
+    def set_authentication!
+      case @auth_type
+      when :oauth
+        # Check if we already have an SSO access token:
+        @token ||= get_access_token
+        @curl.headers['Authorization'] = "Bearer #{@token}"
+      when :http_basic_auth
+        @curl.http_auth_types = :basic
+        @curl.username = @username
+        @curl.password = @password
+      end
+    end
+
+    def set_headers!(request)
+      # Add headers, avoiding those that have no value:
+      @curl.headers.clear
+      @curl.headers['user-agent'] = "RubySDK/#{VERSION}"
+      @curl.headers['content-type'] = 'application/xml'
+      @curl.headers['accept'] = 'application/xml'
+      @curl.headers['version'] = 4
+      request.headers.each do |k,v|
+        @curl.headers[k.to_s.downcase] = v
+      end
+    end
+
     #
     # Sends an HTTP request and waits for the response.
     #
@@ -223,27 +251,16 @@ module OvirtSDK4
     # @api private
     #
     def send(request)
-      # Check if we already have an SSO access token:
-      @token ||= get_access_token
-
       # Build the URL:
       @curl.url = build_url({
         :path => request.path,
         :query => request.query,
       })
 
-      # Add headers, avoiding those that have no value:
-      @curl.headers.clear
-      @curl.headers.merge!(request.headers)
-      @curl.headers['User-Agent'] = "RubySDK/#{VERSION}"
-      @curl.headers['Version'] = '4'
-      @curl.headers['Content-Type'] = 'application/xml'
-      @curl.headers['Accept'] = 'application/xml'
-      @curl.headers['Authorization'] = "Bearer #{@token}"
-
+      set_headers!(request)
+      set_authentication!
       # Clear any data that may be in the buffers:
       @curl.post_body = nil
-
       # Send the request and wait for the response:
       case request.method
       when :DELETE
