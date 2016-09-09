@@ -397,7 +397,7 @@ public class ServicesGenerator implements RubyGenerator {
 
         // Generate the method declaration:
         Name methodName = method.getName();
-        buffer.addLine("def %1$s(%2$s)", rubyNames.getMemberStyleName(methodName), arg);
+        buffer.addLine("def %1$s(%2$s, opts = {})", rubyNames.getMemberStyleName(methodName), arg);
 
         // Generate the method body:
         generateConvertLiteral(primaryParameterType, arg);

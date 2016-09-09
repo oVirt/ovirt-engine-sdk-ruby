@@ -78,4 +78,26 @@ describe SDK::VmService do
 
   end
 
+  describe '#update' do
+
+      context 'when update a VM with the `async` parameter' do
+
+        it 'puts an `vm` element with an `async` query parameter' do
+          set_xml_response('vms/123', 200, '<vm><name>newname</name></vm>')
+          @service.update(
+            SDK::Vm.new({:name => 'newname'}),
+            :async => true
+          )
+          expect(last_request_method).to eq('PUT')
+          expect(last_request_query).to eq('async=true')
+          expect(last_request_body).to eq(
+            "<vm>\n" +
+            "  <name>newname</name>\n" +
+            "</vm>\n"
+          )
+        end
+
+      end
+   end
+
 end

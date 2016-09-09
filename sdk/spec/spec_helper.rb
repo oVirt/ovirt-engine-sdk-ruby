@@ -27,6 +27,18 @@ require 'ovirtsdk4'
 # This is just to shorten the module prefix used in the tests:
 SDK = OvirtSDK4
 
+# This is needed, because WEBrick doesn't support HTTP PUT and
+# HTTP DELETE methods by default. So in order to support HTTP PUT
+# in our tests we need to create alias, so POST method is called
+# when PUT request is sent.
+module WEBrick
+  module HTTPServlet
+    class ProcHandler
+      alias do_PUT do_POST
+    end
+  end
+end
+
 # This module contains utility functions to be used in all the examples.
 module Helpers # :nodoc:
 
