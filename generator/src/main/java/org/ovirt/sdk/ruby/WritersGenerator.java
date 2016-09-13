@@ -108,10 +108,12 @@ public class WritersGenerator implements RubyGenerator {
         // Get the tags:
         Name singularName = type.getName();
         Name pluralName = names.getPlural(singularName);
+        String singularTag = schemaNames.getSchemaTagName(singularName);
+        String pluralTag = schemaNames.getSchemaTagName(pluralName);
 
         // Generate the method that writes one object:
         buffer.addLine("def self.write_one(object, writer, singular = nil)");
-        buffer.addLine(  "singular ||= '%1$s'", singularName);
+        buffer.addLine(  "singular ||= '%1$s'", singularTag);
         buffer.addLine(  "writer.write_start(singular)");
         buffer.addLine(  "href = object.href");
         buffer.addLine(  "writer.write_attribute('href', href) unless href.nil?");
@@ -122,9 +124,9 @@ public class WritersGenerator implements RubyGenerator {
 
         // Generate the method that writes one object:
         buffer.addLine("def self.write_many(list, writer, singular = nil, plural = nil)");
-        buffer.addLine(  "singular ||= '%1$s'", singularName);
-        buffer.addLine(  "plural ||= '%1$s'", pluralName);
-        buffer.addLine(  "writer.write_start(plural)", pluralName);
+        buffer.addLine(  "singular ||= '%1$s'", singularTag);
+        buffer.addLine(  "plural ||= '%1$s'", pluralTag);
+        buffer.addLine(  "writer.write_start(plural)");
         buffer.addLine(  "if list.is_a?(%1$s)", rubyNames.getBaseListName().getClassName());
         buffer.addLine(    "href = list.href");
         buffer.addLine(    "writer.write_attribute('href', href) unless href.nil?");
