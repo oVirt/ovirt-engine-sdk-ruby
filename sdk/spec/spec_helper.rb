@@ -187,7 +187,7 @@ module Helpers # :nodoc:
 
     # Prepare a loggers that write to files, so that the log output isn't mixed with the tests output:
     server_log = WEBrick::Log.new('spec/server.log', WEBrick::Log::DEBUG)
-    access_log = File.open('spec/access.log', 'w')
+    access_log = File.open('spec/access.log', 'a')
 
     # Create the web server:
     @server = WEBrick::HTTPServer.new(
