@@ -140,6 +140,38 @@ describe SDK::VmWriter do
 
     end
 
+    context 'when a list of boot devices is set' do
+
+      it 'writes the expected XML' do
+        vm = SDK::Vm.new(
+          :os => {
+            :boot => {
+              :devices => [
+                SDK::BootDevice::CDROM,
+                SDK::BootDevice::HD,
+              ],
+            },
+          }
+        )
+        writer = SDK::XmlWriter.new
+        SDK::VmWriter.write_one(vm, writer)
+        expect(writer.string).to eql(
+          '<vm>' +
+            '<os>' +
+              '<boot>' +
+                '<devices>' +
+                  '<device>cdrom</device>' +
+                  '<device>hd</device>' +
+                '</devices>' +
+              '</boot>' +
+            '</os>' +
+          '</vm>'
+        )
+        writer.close
+      end
+
+    end
+
   end
 
   describe ".write_many" do

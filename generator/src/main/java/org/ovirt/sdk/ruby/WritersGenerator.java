@@ -270,7 +270,7 @@ public class WritersGenerator implements RubyGenerator {
                 generateWriteEnumPropertyAsElement((EnumType) elementType, singularTag, "item");
             }
             buffer.addLine(  "end");
-            buffer.addLine(  "writer.end_element");
+            buffer.addLine(  "writer.write_end");
             buffer.addLine("end");
         }
         else if (elementType instanceof StructType) {
