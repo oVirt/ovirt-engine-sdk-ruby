@@ -260,7 +260,7 @@ public class WritersGenerator implements RubyGenerator {
         String pluralTag = schemaNames.getSchemaTagName(name);
         String singularTag = schemaNames.getSchemaTagName(names.getSingular(name));
         if (elementType instanceof PrimitiveType || elementType instanceof EnumType) {
-            buffer.addLine("if not object.%1$s.nil? and not object.%1$s.empty? then", property);
+            buffer.addLine("unless object.%1$s.nil?", property);
             buffer.addLine(  "writer.write_start('%1$s')", pluralTag);
             buffer.addLine(  "object.%1$s.each do |item|", property);
             if (elementType instanceof PrimitiveType) {
