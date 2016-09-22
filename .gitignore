@@ -22,3 +22,4 @@ sdk/spec/server.log
 sdk/tmp/
 settings.xml
 target/
+Gemfile.lock
