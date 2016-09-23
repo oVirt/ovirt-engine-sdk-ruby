@@ -61,6 +61,16 @@ module Helpers # :nodoc:
   APPLICATION_JSON = 'application/json'
   APPLICATION_XML = 'application/xml'
 
+  # The paths of the log files:
+  SERVER_LOG = 'spec/server.log'
+  CLIENT_LOG = 'spec/client.log'
+  ACCESS_LOG = 'spec/access.log'
+
+  # Truncate the log files before each run:
+  [SERVER_LOG, CLIENT_LOG, ACCESS_LOG].each do |log|
+    File.open(log, 'w') {}
+  end
+
   def test_user
     return USER
   end
@@ -112,7 +122,7 @@ module Helpers # :nodoc:
   end
 
   def test_log
-    @log ||= Logger.new('spec/client.log')
+    @log ||= Logger.new(CLIENT_LOG)
   end
 
   def test_connection
@@ -190,8 +200,8 @@ module Helpers # :nodoc:
     )
 
     # Prepare a loggers that write to files, so that the log output isn't mixed with the tests output:
-    server_log = WEBrick::Log.new('spec/server.log', WEBrick::Log::DEBUG)
-    access_log = File.open('spec/access.log', 'a')
+    server_log = WEBrick::Log.new(SERVER_LOG, WEBrick::Log::DEBUG)
+    access_log = File.open(ACCESS_LOG, 'a')
 
     # Create the web server:
     @server = WEBrick::HTTPServer.new(
