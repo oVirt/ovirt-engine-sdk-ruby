@@ -185,6 +185,10 @@ module Helpers # :nodoc:
     key = OpenSSL::PKey::RSA.new(File.read("spec/pki/#{host}.key"))
     crt = OpenSSL::X509::Certificate.new(File.read("spec/pki/#{host}.crt"))
 
+    # Prepare a loggers that write to files, so that the log output isn't mixed with the tests output:
+    server_log = WEBrick::Log.new(SERVER_LOG, WEBrick::Log::DEBUG)
+    access_log = File.open(ACCESS_LOG, 'a')
+
     # Prepare the authentication configuration:
     db_file = Tempfile.new('users')
     db_path = db_file.path
@@ -197,11 +201,8 @@ module Helpers # :nodoc:
     @authenticator = WEBrick::HTTPAuth::BasicAuth.new(
       :Realm => REALM,
       :UserDB => db,
+      :Logger => server_log,
     )
-
-    # Prepare a loggers that write to files, so that the log output isn't mixed with the tests output:
-    server_log = WEBrick::Log.new(SERVER_LOG, WEBrick::Log::DEBUG)
-    access_log = File.open(ACCESS_LOG, 'a')
 
     # Create the web server:
     @server = WEBrick::HTTPServer.new(
