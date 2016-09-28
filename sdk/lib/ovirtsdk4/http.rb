@@ -124,9 +124,6 @@ module OvirtSDK4
     #   compressed responses. Note that this is a hint for the server, and that it may return uncompressed data even
     #   when this parameter is set to `true`.
     #
-    # @option opts [Symbol] :auth (:oauth) Switch between basic authentication and OAuth,
-    #   valid values are `:basic` and `:oauth`. default value is `:oauth`.
-    #
     def initialize(opts = {})
       # Get the values of the parameters and assign default values:
       @url = opts[:url]

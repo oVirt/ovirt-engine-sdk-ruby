@@ -289,8 +289,10 @@ module Helpers # :nodoc:
     }
   end
 
-  def set_xml_response(path, status, body, delay = 0, conditional_body_lambda = nil)
-    @server.mount_proc "#{PREFIX}/api/#{path}" do |request, response|
+  def set_xml_response(path, status, body, delay = 0, prefix = PREFIX, conditional_body_lambda = nil)
+    path_to_set = "#{prefix}/api"
+    path_to_set = path_to_set + "/#{path}" unless path == ''
+    @server.mount_proc path_to_set do |request, response|
       # Save the request details:
       @last_request_method = request.request_method
       @last_request_body = request.body
@@ -302,7 +304,9 @@ module Helpers # :nodoc:
       body = conditional_body_lambda.call(request) if conditional_body_lambda
       # Check credentials, and if they are correct return the response:
       authorization = request['Authorization']
-      if authorization != "Bearer #{test_token}"
+      basic_auth = false
+      basic_auth = @authenticator.authenticate(request, response) if authorization.start_with?("Basic ")
+      if !basic_auth && authorization != "Bearer #{test_token}"
         response.status = 401
         response.body = ''
       else
