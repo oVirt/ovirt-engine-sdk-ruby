@@ -16,15 +16,15 @@ API_V3_RESPONSE = '<api><version major=\"4\" minor=\"1\" build=\"0\" revision=\"
 API_V4_RESPONSE = '<api><version>  <major>4</major>\n <minor>1</minor>\n </version>  </api>'
 
 def set_support_only_api_v3
-  set_xml_response('', 200, API_V3_RESPONSE)
+  set_xml_response('', 200, API_V3_RESPONSE, 0, '')
 end
 
 def set_support_only_api_v4
-  set_xml_response('', 200, API_V4_RESPONSE)
+  set_xml_response('', 200, API_V4_RESPONSE, 0, '')
 end
 
 def set_support_for_api_v3_and_v4
-  set_xml_response('', 200,'',0, conditional_api_response_lambda)
+  set_xml_response('', 200,'',0, '',conditional_api_response_lambda)
 end
 
 def conditional_api_response_lambda
@@ -40,17 +40,19 @@ end
 
 describe SDK::Probe do
   context '#probe' do
-    before(:each) { @connection = SDK::Connection.new(connection_params)  }
-    after(:each)  { @connection.close }
-    let(:connection_params) do
+    let(:probe_params) do
       {
-        :url => test_url,
-        :token => test_token,
-        :ca_file => test_ca_file,
-        :debug => test_debug,
+        :host => test_host,
+        :port => test_port,
+        :username => test_user,
+        :password => test_password,
         :log => test_log,
+        :debug => true
       }
     end
+
+    let(:ver_3) { SDK::ProbeResult.new(version: '3') }
+    let(:ver_4) { SDK::ProbeResult.new(version: '4') }
 
     context 'when api v3' do
       before(:all) do
@@ -63,8 +65,8 @@ describe SDK::Probe do
       end
 
       it 'detects v3 api' do
-        res = described_class.probe(@connection)
-        expect(res).to match_array(["3"])
+        res = described_class.probe(probe_params)
+        expect(res).to match_array([ver_3])
       end
     end
 
@@ -79,8 +81,8 @@ describe SDK::Probe do
       end
 
       it 'detects v3 and v4 api' do
-        res = described_class.probe(@connection)
-        expect(res).to match_array(["3", "4"])
+        res = described_class.probe(probe_params)
+        expect(res).to match_array([ver_3, ver_4])
       end
     end
 
@@ -95,8 +97,8 @@ describe SDK::Probe do
       end
 
       it 'detects v4 api' do
-        res = described_class.probe(@connection)
-        expect(res).to match_array(["4"])
+        res = described_class.probe(probe_params)
+        expect(res).to match_array([ver_4])
       end
     end
   end
