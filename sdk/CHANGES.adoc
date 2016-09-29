@@ -2,6 +2,27 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.0.2 / Sep 29 2016
+
+New features:
+
+* Add generic `Writer.write` method to support generating XML from
+  objects of unknown types.
+
+* Add new `Probe.probe` method to detect the versions of the API
+  supported by the server.
+
+Bug fixes:
+
+* Add support for optional parameters to update methods.
+
+* Use XML schema naming exceptions to correctly generate tag names like
+  `openstack_image_provider`.
+
+* Write correctly lists of enum values  https://bugzilla.redhat.com/1378066[#1378066].
+
+* Write correctly empty lists of enum values.
+
 == 4.0.1 / Sep 6 2016
 
 Update to model 4.0.33.
