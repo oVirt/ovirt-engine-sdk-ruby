@@ -44,7 +44,7 @@ describe SDK::ClustersService do
     context "without parameters" do
 
       it "returns a list, maybe empty" do
-        set_xml_response('clusters', 200, '<clusters/>')
+        mount_xml(path: 'clusters', body: '<clusters/>')
         clusters = @service.list
         expect(clusters).not_to be_nil
         expect(clusters).to be_an(Array)
@@ -55,7 +55,7 @@ describe SDK::ClustersService do
     context "with an unfeasible query" do
 
       it "returns an empty array" do
-        set_xml_response('clusters', 200, '<clusters/>')
+        mount_xml(path: 'clusters', body: '<clusters/>')
         clusters = @service.list(:search => 'name=ugly')
         expect(clusters).to eql([])
       end

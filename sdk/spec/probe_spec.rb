@@ -12,28 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-API_V3_RESPONSE = '<api><version major=\"4\" minor=\"1\" build=\"0\" revision=\"0\"/></api>'
-API_V4_RESPONSE = '<api><version>  <major>4</major>\n <minor>1</minor>\n </version>  </api>'
+API_V3_RESPONSE = '<api><version major="4" minor="1" build="0" revision="0"/></api>'
+API_V4_RESPONSE = '<api><version><major>4</major><minor>1</minor></version></api>'
 
 def set_support_only_api_v3
-  set_xml_response('', 200, API_V3_RESPONSE, 0, '')
+  mount_raw(path: '/api') do |request, response|
+    response.status = 200
+    response.body = API_V3_RESPONSE
+  end
 end
 
 def set_support_only_api_v4
-  set_xml_response('', 200, API_V4_RESPONSE, 0, '')
+  mount_raw(path: '/ovirt-engine/api') do |request, response|
+    response.status = 200
+    response.body = API_V4_RESPONSE
+  end
 end
 
 def set_support_for_api_v3_and_v4
-  set_xml_response('', 200,'',0, '',conditional_api_response_lambda)
-end
-
-def conditional_api_response_lambda
-  -> (req) do
-    case req["version"]
-    when "3"
-      return API_V3_RESPONSE
-    when "4"
-      return API_V4_RESPONSE
+  mount_raw(path: '/ovirt-engine/api') do |request, response|
+    version = request['Version']
+    response.status = 200
+    case version
+    when '3'
+      response.body = API_V3_RESPONSE
+    else
+      response.body = API_V4_RESPONSE
     end
   end
 end
@@ -44,6 +48,7 @@ describe SDK::Probe do
       {
         :host => test_host,
         :port => test_port,
+        :insecure => true,
         :username => test_user,
         :password => test_password,
         :log => test_log,

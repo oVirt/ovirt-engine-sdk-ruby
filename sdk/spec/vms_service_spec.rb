@@ -32,7 +32,7 @@ describe SDK::VmsService do
     context "when adding a VM with the `clone` parameter" do
 
       it "send a POST request with a `clone` query parameter" do
-        set_xml_response('vms', 201, '<vm/>')
+        mount_xml(path: 'vms', status: 201, body: '<vm/>')
         vm = SDK::Vm.new
         @service.add(vm, :clone => true)
         expect(last_request_query).to eql('clone=true')
@@ -43,7 +43,7 @@ describe SDK::VmsService do
     context "when adding a VM with the `clone` and `clone_permissions` parameters" do
 
       it "send a POST request with a `clone` and `clone_permissions` query parameters" do
-        set_xml_response('vms', 201, '<vm/>')
+        mount_xml(path: 'vms', status: 201, body: '<vm/>')
         vm = SDK::Vm.new
         @service.add(vm, :clone => true, :clone_permissions => true)
         expect(last_request_query).to eql('clone=true&clone_permissions=true')
@@ -70,7 +70,7 @@ describe SDK::VmsService do
     context "without parameters" do
 
       it "returns a list, maybe empty" do
-        set_xml_response('vms', 200, '<vms/>')
+        mount_xml(path: 'vms', body: '<vms/>')
         vms = @service.list
         expect(vms).not_to be_nil
         expect(vms).to be_an(Array)
@@ -81,7 +81,7 @@ describe SDK::VmsService do
     context "with an unfeasible query" do
 
       it "returns an empty array" do
-        set_xml_response('vms', 200, '<vms/>')
+        mount_xml(path: 'vms', body: '<vms/>')
         vms = @service.list(:search => 'name=ugly')
         expect(vms).to eql([])
       end

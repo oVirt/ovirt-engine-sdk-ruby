@@ -44,7 +44,7 @@ describe SDK::StorageDomainsService do
     context "without parameters" do
 
       it "returns a list, maybe empty" do
-        set_xml_response('storagedomains', 200, '<storage_domains/>')
+        mount_xml(path: 'storagedomains', body: '<storage_domains/>')
         sds = @service.list
         expect(sds).not_to be_nil
         expect(sds).to be_an(Array)
@@ -55,7 +55,7 @@ describe SDK::StorageDomainsService do
     context "with an unfeasible query" do
 
       it "returns an empty array" do
-        set_xml_response('storagedomains', 200, '<storage_domains/>')
+        mount_xml(path: 'storagedomains', body: '<storage_domains/>')
         sds = @service.list(:search => 'name=ugly')
         expect(sds).to eql([])
       end

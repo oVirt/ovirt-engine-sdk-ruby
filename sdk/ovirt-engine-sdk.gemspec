@@ -33,9 +33,6 @@ Gem::Specification.new do |spec|
   # Ruby version:
   spec.required_ruby_version = '>= 1.9'
 
-  # Runtime dependencies:
-  spec.add_runtime_dependency('curb', '~> 0.8')
-
   # Build time dependencies:
   spec.add_development_dependency('rake-compiler', '~> 0.9')
   spec.add_development_dependency('rspec', '~> 3.3')

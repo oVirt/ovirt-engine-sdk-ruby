@@ -11,6 +11,7 @@ URL: http://ovirt.org
 Source: https://rubygems.org/downloads/%{gem_name}-%{gem_version}.gem
 
 BuildRequires: gcc
+BuildRequires: libcurl-devel
 BuildRequires: libxml2-devel
 BuildRequires: ruby-devel
 BuildRequires: rubygems-devel

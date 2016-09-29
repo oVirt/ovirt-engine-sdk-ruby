@@ -22,7 +22,7 @@ describe SDK::Service do
 
       before(:all) do
         @service = SDK::Service.new
-        @response = SDK::Response.new({
+        @response = SDK::HttpResponse.new({
           :code => 209,
           :message => 'mymessage',
           :body => '<fault><reason>myreason</reason><detail>mydetail</detail></fault>'
@@ -51,7 +51,7 @@ describe SDK::Service do
 
       before(:all) do
         @service = SDK::Service.new
-        @response = SDK::Response.new(
+        @response = SDK::HttpResponse.new(
           :code => 209,
           :message => 'mymessage',
           :body => '',
@@ -72,7 +72,7 @@ describe SDK::Service do
 
       before(:all) do
         @service = SDK::Service.new
-        @response = SDK::Response.new(
+        @response = SDK::HttpResponse.new(
           :code => 209,
           :message => 'mymessage',
           :body => nil,
@@ -96,7 +96,7 @@ describe SDK::Service do
     context 'given an empty response, with nil body' do
       it 'raises an error containing the response code' do
         service = SDK::Service.new
-        response = SDK::Response.new(:code => 209, :body => nil)
+        response = SDK::HttpResponse.new(:code => 209, :body => nil)
         expect { service.check_action(response) }.to raise_error(SDK::Error, /209/)
       end
     end
@@ -104,7 +104,7 @@ describe SDK::Service do
     context 'given an empty response, with blank body' do
       it 'raises an error containing the response code' do
         service = SDK::Service.new
-        response = SDK::Response.new(:code => 209, :body => '')
+        response = SDK::HttpResponse.new(:code => 209, :body => '')
         expect { service.check_action(response) }.to raise_error(SDK::Error, /209/)
       end
     end
@@ -113,7 +113,7 @@ describe SDK::Service do
 
       before(:all) do
         @service = SDK::Service.new
-        @response = SDK::Response.new({
+        @response = SDK::HttpResponse.new({
           :body => '<action><status><state>mystate</state></status></action>'
         })
       end
@@ -128,7 +128,7 @@ describe SDK::Service do
 
       before(:all) do
         @service = SDK::Service.new
-        @response = SDK::Response.new({
+        @response = SDK::HttpResponse.new({
           :body => '<action><fault><reason>myreason</reason></fault></action>'
         })
       end
@@ -142,7 +142,7 @@ describe SDK::Service do
     context 'given a fault instead of an action' do
       it 'raises an error containing the fault reason' do
         service = SDK::Service.new
-        response = SDK::Response.new(
+        response = SDK::HttpResponse.new(
           :body => '<fault><reason>myreason</reason></fault>'
         )
         expect { service.check_action(response) }.to raise_error(SDK::Error, /myreason/)

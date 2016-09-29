@@ -40,7 +40,7 @@ describe SDK::Connection do
     context "when timeout is set" do
 
       it "the request fails when the timeout expires" do
-        set_xml_response('vms', 200, '<vms/>', delay = 2)
+        mount_xml(path: 'vms', body: '<vms/>', delay: 2)
         expect { @service.list }.to raise_error(/timeout/i)
       end
 

@@ -14,58 +14,10 @@
 # limitations under the License.
 #
 
-require 'curb'
 require 'json'
 require 'uri'
 
 module OvirtSDK4
-
-  #
-  # This class represents an HTTP request.
-  #
-  # @api private
-  #
-  class Request
-    attr_accessor :method
-    attr_accessor :path
-    attr_accessor :query
-    attr_accessor :headers
-    attr_accessor :body
-
-    #
-    # Creates a new HTTP request.
-    #
-    def initialize(opts = {})
-      self.method = opts[:method] || :GET
-      self.path = opts[:path] || ''
-      self.headers = opts[:headers] || {}
-      self.query = opts[:query] || {}
-      self.body = opts[:body]
-    end
-
-  end
-
-  #
-  # This class represents an HTTP response.
-  #
-  # @api private
-  #
-  class Response
-    attr_accessor :body
-    attr_accessor :code
-    attr_accessor :headers
-    attr_accessor :message
-
-    #
-    # Creates a new HTTP response.
-    #
-    def initialize(opts = {})
-      self.body = opts[:body]
-      self.code = opts[:code]
-      self.headers = opts[:headers]
-      self.message = opts[:message]
-    end
-  end
 
   #
   # This class is responsible for managing an HTTP connection to the engine server. It is intended as the entry
@@ -73,17 +25,16 @@ module OvirtSDK4
   # provided by the API.
   #
   class Connection
-
     #
     # Creates a new connection to the API server.
     #
     # [source,ruby]
     # ----
     # connection = OvirtSDK4::Connection.new(
-    #   :url => 'https://engine.example.com/ovirt-engine/api',
+    #   :url      => 'https://engine.example.com/ovirt-engine/api',
     #   :username => 'admin@internal',
     #   :password => '...',
-    #   :ca_file => '/etc/pki/ovirt-engine/ca.pem',
+    #   :ca_file  => '/etc/pki/ovirt-engine/ca.pem',
     # )
     # ----
     #
@@ -92,11 +43,11 @@ module OvirtSDK4
     # @option opts [String] :url A string containing the base URL of the server, usually something like
     #   `\https://server.example.com/ovirt-engine/api`.
     #
-    # @option opts [String] :user The name of the user, something like `admin@internal`.
+    # @option opts [String] :username The name of the user, something like `admin@internal`.
     #
     # @option opts [String] :password The password of the user.
     #
-    # @options opts [String] :token The token used to authenticate. Optionally the caller can explicitly provide
+    # @option opts [String] :token The token used to authenticate. Optionally the caller can explicitly provide
     #   the token, instead of the user name and password. If the token isn't provided then it will be automatically
     #   created.
     #
@@ -113,8 +64,8 @@ module OvirtSDK4
     #
     # @option opts [Logger] :log The logger where the log messages will be written.
     #
-    # @option opts [Boolean] :kerberos (false) A boolean flag indicating if Kerberos uthentication should be used
-    #   instead of the default basic authentication.
+    # @option opts [Boolean] :kerberos (false) A boolean flag indicating if Kerberos authentication should be used
+    #   instead of user name and password to obtain the OAuth token.
     #
     # @option opts [Integer] :timeout (0) The maximun total time to wait for the response, in seconds. A value of zero
     #   (the default) means wait for ever. If the timeout expires before the response is received an exception will be
@@ -137,58 +88,16 @@ module OvirtSDK4
       @kerberos = opts[:kerberos] || false
       @timeout = opts[:timeout] || 0
       @compress = opts[:compress] || false
-      @auth = opts[:auth] || :oauth
 
-      # Check mandatory parameters:
-      if url.nil?
-         raise ArgumentError.new("The 'url' parameter is mandatory.")
-      end
-
-      # Save the URL:
-      @url = URI(@url)
-
-      # Create the cURL handle:
-      @curl = Curl::Easy.new
-
-      # Configure TLS parameters:
-      if @url.scheme == 'https'
-        if @insecure
-          @curl.ssl_verify_peer = false
-          @curl.ssl_verify_host = false
-        elsif !@ca_file.nil?
-          raise ArgumentError.new("The CA file '#{@ca_file}' doesn't exist.") unless ::File.file?(@ca_file)
-          @curl.cacert = @ca_file
-        end
-      end
-
-      # Configure the timeout:
-      @curl.timeout = @timeout
-
-      # Configure compression of responses (setting the value to a zero length string means accepting all the
-      # compression types that libcurl supports):
-      if @compress
-        @curl.encoding = ''
-      end
-
-      # Configure debug mode:
-      if @debug && @log
-        @curl.verbose = true
-        @curl.on_debug do |_, data|
-          lines = data.gsub("\r\n", "\n").strip.split("\n")
-          lines.each do |line|
-            @log.debug(line)
-          end
-        end
-      end
-    end
-
-    #
-    # Returns the base URL of this connection.
-    #
-    # @return [String]
-    #
-    def url
-      return @url
+      # Create the HTTP client:
+      @client = HttpClient.new(
+        :insecure => @insecure,
+        :ca_file => @ca_file,
+        :debug => @debug,
+        :log => @log,
+        :timeout => @timeout,
+        :compress => @compress,
+      )
     end
 
     #
@@ -198,7 +107,6 @@ module OvirtSDK4
     #
     def system_service
       @system_service ||= SystemService.new(self, "")
-      return @system_service
     end
 
     #
@@ -217,40 +125,38 @@ module OvirtSDK4
     #
     # Sends an HTTP request and waits for the response.
     #
-    # @param request [Request] The Request object containing the details of the HTTP request to send.
+    # @param request [HttpRequest] The request object containing the details of the HTTP request to send.
     # @return [Response] A request object containing the details of the HTTP response received.
     #
     # @api private
     #
     def send(request)
-      # Build the URL:
-      @curl.url = build_url({
-        :path => request.path,
-        :query => request.query,
-      })
-
-      set_headers!(request)
-      set_authentication!
-      # Clear any data that may be in the buffers:
-      @curl.post_body = nil
-      # Send the request and wait for the response:
-      case request.method
-      when :DELETE
-        @curl.http_delete
-      when :GET
-        @curl.http_get
-      when :PUT
-        @curl.http_put(request.body)
-      when :HEAD
-        @curl.http_head
-      when :POST
-        @curl.http_post(request.body)
+      # Add the base URL to the request:
+      if request.url.nil?
+        request.url = @url
+      else
+        request.url = "#{@url}#{request.url}"
       end
 
+      # Set the headers:
+      request.headers.merge!(
+        'User-Agent'   => "RubySDK/#{VERSION}",
+        'Version'      => '4',
+        'Content-Type' => 'application/xml',
+        'Accept'       => 'application/xml',
+      )
+
+      # Set the authentication token:
+      @token ||= get_access_token
+      request.token = @token
+
+      # Create an empty response:
+      response = HttpResponse.new
+
+      # Send the request and wait for the response:
+      @client.send(request, response)
+
       # Return the response:
-      response = Response.new
-      response.body = @curl.body_str
-      response.code = @curl.response_code
       return response
     end
 
@@ -273,7 +179,7 @@ module OvirtSDK4
       end
 
       unless response['error'].nil?
-        raise Error.new("Error during SSO authentication #{response['error_code']}: #{response['error']}")
+        raise Error.new("Error during SSO authentication: #{response['error_code']}: #{response['error']}")
       end
 
       response['access_token']
@@ -295,7 +201,7 @@ module OvirtSDK4
       end
 
       unless response['error'].nil?
-        raise Error.new("Error during SSO revoke #{response['error_code']}: #{response['error']}")
+        raise Error.new("Error during SSO revoke: #{response['error_code']}: #{response['error']}")
       end
     end
 
@@ -311,56 +217,26 @@ module OvirtSDK4
     # @api private
     #
     def get_sso_response(url, parameters)
-      # Create the cURL handle for SSO:
-      sso_curl = Curl::Easy.new
+      # Create the request:
+      request = HttpRequest.new(
+        :method => :POST,
+        :url => url,
+        :headers => {
+          'User-Agent' => "RubySDK/#{VERSION}",
+          'Content-Type' => 'application/x-www-form-urlencoded',
+          'Accept' => 'application/json',
+        },
+        :body => URI.encode_www_form(parameters),
+      )
 
-      # Configure the timeout:
-      sso_curl.timeout = @timeout
+      # Create an empty response:
+      response = HttpResponse.new
 
-      # Configure debug mode:
-      if @debug && @log
-        sso_curl.verbose = true
-        sso_curl.on_debug do |_, data|
-          lines = data.gsub("\r\n", "\n").strip.split("\n")
-          lines.each do |line|
-            @log.debug(line)
-          end
-        end
-      end
+      # Send the request and wait for the response:
+      @client.send(request, response)
 
-      begin
-        # Configure TLS parameters:
-        if url.scheme == 'https'
-          if @insecure
-            sso_curl.ssl_verify_peer = false
-            sso_curl.ssl_verify_host = false
-          elsif !@ca_file.nil?
-            raise ArgumentError.new("The CA file \"#{@ca_file}\" doesn't exist.") unless ::File.file?(@ca_file)
-            sso_curl.cacert = @ca_file
-          end
-        end
-
-        # Configure authentication:
-        sso_curl.http_auth_types = @kerberos ? :gssnegotiate : 0
-
-        # Build the SSO access_token request url:
-        sso_curl.url = url.to_s
-
-        # Add headers:
-        sso_curl.headers['User-Agent'] = "RubySDK/#{VERSION}"
-        sso_curl.headers['Content-Type'] = 'application/x-www-form-urlencoded'
-        sso_curl.headers['Accept'] = 'application/json'
-
-        # Request access token:
-        body = URI.encode_www_form(parameters)
-        sso_curl.http_post(body)
-
-        # Parse and return the JSON response:
-        body = sso_curl.body_str
-        return JSON.parse(body)
-      ensure
-        sso_curl.close
-      end
+      # Parse and return the JSON response:
+      JSON.parse(response.body)
     end
 
     #
@@ -393,6 +269,7 @@ module OvirtSDK4
       # Compute the URL:
       url = URI(@url.to_s)
       url.path = "/ovirt-engine/sso/oauth/#{entry_point}"
+      url = url.to_s
 
       # Return the pair containing the URL and the parameters:
       [url, parameters]
@@ -416,6 +293,7 @@ module OvirtSDK4
       # Compute the URL:
       url = URI(@url.to_s)
       url.path = '/ovirt-engine/services/sso-logout'
+      url = url.to_s
 
       # Return the pair containing the URL and the parameters:
       [url, parameters]
@@ -432,10 +310,10 @@ module OvirtSDK4
     def test(raise_exception = false)
       begin
         system_service.get
-        return true
+        true
       rescue Exception
         raise if raise_exception
-        return false
+        false
       end
     end
 
@@ -457,7 +335,7 @@ module OvirtSDK4
     # @return [Boolean]
     #
     def is_link?(object)
-      return !object.href.nil?
+      !object.href.nil?
     end
 
     #
@@ -474,7 +352,7 @@ module OvirtSDK4
       end
 
       # Check that the value of the "href" attribute is compatible with the base URL of the connection:
-      prefix = @url.path
+      prefix = URI(@url).path
       if !prefix.end_with?('/')
         prefix += '/'
       end
@@ -498,68 +376,11 @@ module OvirtSDK4
     #
     def close
       # Revoke the SSO access token:
-      revoke_access_token unless @token.nil?
+      revoke_access_token if @token
 
-      # Release resources used by the cURL handle:
-      @curl.close
+      # Close the HTTP client:
+      @client.close if @client
     end
 
-    #
-    # Builds a request URL from a path, and the set of query parameters.
-    #
-    # @params opts [Hash] The options used to build the URL.
-    #
-    # @option opts [String] :path The path that will be added to the base URL. The default is an empty string.
-    #
-    # @option opts [Hash<String, String>] :query ({}) A hash containing the query parameters to add to the URL. The
-    #   keys of the hash should be strings containing the names of the parameters, and the values should be strings
-    #   containing the values.
-    #
-    # @return [String] The URL.
-    #
-    # @api private
-    #
-    def build_url(opts = {})
-      # Get the values of the parameters and assign default values:
-      path = opts[:path] || ''
-      query = opts[:query] || {}
-
-      # Add the path and the parameters:
-      url = @url.to_s + path
-      if not query.empty?
-        url = url + '?' + URI.encode_www_form(query)
-      end
-      return url
-    end
-
-    private
-
-    # @api private
-    def set_authentication!
-      case @auth
-      when :oauth
-        # Check if we already have an SSO access token:
-        @token ||= get_access_token
-        @curl.headers['Authorization'] = "Bearer #{@token}"
-      when :basic
-        @curl.http_auth_types = :basic
-        @curl.username = @username
-        @curl.password = @password
-      end
-    end
-
-    # @api private
-    def set_headers!(request)
-      # Add headers, avoiding those that have no value:
-      @curl.headers.clear
-      @curl.headers['user-agent'] = "RubySDK/#{VERSION}"
-      @curl.headers['content-type'] = 'application/xml'
-      @curl.headers['accept'] = 'application/xml'
-      @curl.headers['version'] = 4
-      request.headers.each do |k,v|
-        @curl.headers[k.to_s.downcase] = v
-      end
-    end
   end
-
 end

@@ -44,7 +44,7 @@ describe SDK::DataCentersService do
     context "without parameters" do
 
       it "returns a list, maybe empty" do
-        set_xml_response('datacenters', 200, '<data_centers/>')
+        mount_xml(path: 'datacenters', body: '<data_centers/>')
         dcs = @service.list
         expect(dcs).not_to be_nil
         expect(dcs).to be_an(Array)
@@ -55,7 +55,7 @@ describe SDK::DataCentersService do
     context "with an unfeasible query" do
 
       it "returns an empty array" do
-        set_xml_response('datacenters', 200, '<data_centers/>')
+        mount_xml(path: 'datacenters', body: '<data_centers/>')
         dcs = @service.list(:search => 'name=ugly')
         expect(dcs).to eql([])
       end
