@@ -25,4 +25,10 @@ end
 $CPPFLAGS = "#{`xml2-config --cflags`.strip} #{$CPPFLAGS}"
 $LDFLAGS = "#{`xml2-config --libs`.strip} #{$LDFLAGS}"
 
+# Check that "libcurl" is available:
+unless pkg_config('libcurl')
+  raise 'The "libcurl" package isn\'t available.'
+end
+
+# Create the Makefile:
 create_makefile 'ovirtsdk4c'

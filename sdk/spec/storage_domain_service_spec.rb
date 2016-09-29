@@ -32,7 +32,10 @@ describe SDK::StorageDomainService do
     context "when invoking the method" do
 
       it "returns the value of the `is_attached` output parameter" do
-        set_xml_response('storagedomains/123/isattached', 200, '<action><is_attached>true</is_attached></action>')
+        mount_xml(
+          path: 'storagedomains/123/isattached',
+          body: '<action><is_attached>true</is_attached></action>',
+        )
         expect(@service.is_attached).to be(true)
       end
 

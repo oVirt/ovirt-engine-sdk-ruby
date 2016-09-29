@@ -26,107 +26,13 @@ describe SDK::Connection do
     stop_server
   end
 
-  describe ".build_url" do
-
-    context "when given only the base" do
-
-      it "builds the expected URL" do
-        url = @connection.build_url
-        expect(url).to eql(test_url)
-      end
-
-    end
-
-    context "when given base and path" do
-
-      it "builds the expected url" do
-        url = @connection.build_url(:path => "/vms")
-        expect(url).to eql(test_url + "/vms")
-      end
-
-    end
-
-    context "when given base, path and query parameter" do
-
-      it "builds the expected URL" do
-        url = @connection.build_url(
-          :path => "/vms",
-          :query => {'max' => '10'},
-        )
-        expect(url).to eql(test_url + "/vms?max=10")
-      end
-
-    end
-
-    context "when given base, path and multiple query parameters" do
-
-      it "builds the expected URL" do
-        url = @connection.build_url(
-          :path => "/vms",
-          :query => {'max' => '10', 'current' => 'true'},
-        )
-        expect(url).to eql(test_url + "/vms?max=10&current=true")
-      end
-
-    end
-
-    context "when given a query parameter with white space in the value" do
-
-      it "the white space is encoded correctly" do
-        url = @connection.build_url(
-          :path => "/vms",
-          :query => {'search' => 'My VM'},
-        )
-        expect(url).to eql(test_url + "/vms?search=My+VM")
-      end
-
-    end
-
-    context "when given a query parameter with an equals sign inside the value" do
-
-      it "the equals sign is encoded correctly" do
-        url = @connection.build_url(
-          :path => "/vms",
-          :query => {'search' => 'name=myvm'},
-        )
-        expect(url).to eql(test_url + "/vms?search=name%3Dmyvm")
-      end
-
-    end
-
-    context "when given an empty set of query parameters" do
-
-      it "the set is ignored and not added to the URL" do
-        url = @connection.build_url(
-          :path => "/vms",
-          :query => {},
-        )
-        expect(url).to eql(test_url + "/vms")
-      end
-
-    end
-
-  end
-
-  describe ".url" do
-
-    context "when the connection is created" do
-
-      it "the URL can be obtained" do
-        expect(@connection.url.to_s).to eql(test_url)
-      end
-
-    end
-
-  end
-
   describe ".send" do
 
     context "GET of root" do
 
       it "just works" do
-        set_xml_response('', 200, '<api/>')
-        request = SDK::Request.new
+        mount_xml(path: '', body: '<api/>')
+        request = SDK::HttpRequest.new
         response = @connection.send(request)
         expect(response.code).to eql(200)
       end

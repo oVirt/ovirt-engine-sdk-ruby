@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+require 'base64'
 require 'json'
 require 'logger'
 require 'openssl'
@@ -54,7 +55,7 @@ module Helpers # :nodoc:
 
   # The host and port and path used by the embedded tests web server:
   HOST = 'localhost'
-  PREFIX = '/ovirt-engine'
+  PREFIX = '/ovirt-engine/api'
 
   # Content types:
   APPLICATION_FORM = 'application/x-www-form-urlencoded'
@@ -110,7 +111,7 @@ module Helpers # :nodoc:
   end
 
   def test_url
-    return "https://#{test_host}:#{test_port}#{test_prefix}/api"
+    return "https://#{test_host}:#{test_port}#{test_prefix}"
   end
 
   def test_ca_file
@@ -189,21 +190,6 @@ module Helpers # :nodoc:
     server_log = WEBrick::Log.new(SERVER_LOG, WEBrick::Log::DEBUG)
     access_log = File.open(ACCESS_LOG, 'a')
 
-    # Prepare the authentication configuration:
-    db_file = Tempfile.new('users')
-    db_path = db_file.path
-    db_file.close
-    db_file.unlink
-    db = WEBrick::HTTPAuth::Htpasswd.new(db_path)
-    db.auth_type = WEBrick::HTTPAuth::BasicAuth
-    db.set_passwd(REALM, USER, PASSWORD)
-    db.flush
-    @authenticator = WEBrick::HTTPAuth::BasicAuth.new(
-      :Realm => REALM,
-      :UserDB => db,
-      :Logger => server_log,
-    )
-
     # Create the web server:
     @server = WEBrick::HTTPServer.new(
       :BindAddress => test_host,
@@ -216,7 +202,7 @@ module Helpers # :nodoc:
     )
 
     # Create the handler for password authentication requests:
-    @server.mount_proc "#{PREFIX}/sso/oauth/token" do |request, response|
+    @server.mount_proc "/ovirt-engine/sso/oauth/token" do |request, response|
       # Check basic properties of the request:
       next unless check_sso_request(request, response)
 
@@ -242,7 +228,7 @@ module Helpers # :nodoc:
     end
 
     # Create the handler for Kerberos authentication requests:
-    @server.mount_proc "#{PREFIX}/sso/oauth/token-http-auth" do |request, response|
+    @server.mount_proc "/ovirt-engine/sso/oauth/token-http-auth" do |request, response|
       # Check basic properties of the request:
       next unless check_sso_request(request, response)
 
@@ -255,7 +241,7 @@ module Helpers # :nodoc:
     end
 
     # Create the handler for SSO logout requests:
-    @server.mount_proc "#{PREFIX}/services/sso-logout" do |request, response|
+    @server.mount_proc "/ovirt-engine/services/sso-logout" do |request, response|
       # Check basic properties of the request:
       next unless check_sso_request(request, response)
 
@@ -278,43 +264,132 @@ module Helpers # :nodoc:
       response.body = JSON.generate({})
     end
 
-    @server.mount_proc "#{PREFIX}/apis" do |request, response|
-      @authenticator.authenticate(request, response)
-    end
-
-
     # Start the server in a different thread, as the call to the "start" method blocks the current thread:
     @thread = Thread.new {
       @server.start
     }
   end
 
-  def set_xml_response(path, status, body, delay = 0, prefix = PREFIX, conditional_body_lambda = nil)
-    path_to_set = "#{prefix}/api"
-    path_to_set = path_to_set + "/#{path}" unless path == ''
-    @server.mount_proc path_to_set do |request, response|
+  def check_basic_token(request, response, token)
+    # Decode the token using Base64:
+    decoded = Base64.decode64(token)
+
+    # Extract the user name and password:
+    match = /^(?<user>[^:]+):(?<password>.*)$/i.match(decoded)
+    user = match[:user]
+    password = match[:password]
+    unless user == test_user && password == test_password
+      response.status = 401
+      response.body = "The token '#{token}' is not valid for basic authentication"
+      return false
+    end
+
+    # If we are here then authentication was sucessful:
+    true
+  end
+
+  def check_bearer_token(request, response, token)
+    # Check that the token is exactly equal to what we expect:
+    unless token == test_token
+      response.status = 401
+      response.body = "The token '#{token}' is not valid for bearer authentication"
+      return false
+    end
+
+    # If we are here then authentication was sucessful:
+    true
+  end
+
+  #
+  # Checks authentication. If authentication is successful then it returns `true`, to indicate to the caller that it can
+  # continue with the processing of the request. If authentication fails, it sends to the client the required error
+  # response and returns `false`, to indicate to the caller that it shoudn't continue processing the request, as the
+  # response is already sent.
+  #
+  # @param request [WEBrick::HttpRequest] The HTTP request object.
+  # @param response [WEBrick::HttpResponse] The HTTP response object.
+  # @return [Boolean] `true` if successful and the caller can continue processing the request, `false` otherwise.
+  #
+  def check_auth(request, response)
+    # Get the value of the authorization header, and reject the request if it isn't present:
+    authorization = request['Authorization']
+    if authorization.nil?
+      response.status = 401
+      response.body = "The 'Authorization' header is required"
+      return false
+    end
+
+    # Extract the authorization scheme and token from the authorization header:
+    match = /^(?<scheme>Basic|Bearer)\s+(?<token>.*)$/i.match(authorization)
+    unless match
+      response.status = 401
+      response.body = "The 'Authorization' doesn't match the expected regular expression"
+      return false
+    end
+    scheme = match[:scheme]
+    token = match[:token]
+
+    # Check the token:
+    case scheme.downcase
+    when 'basic'
+      return false unless check_basic_token(request, response, token)
+    when 'bearer'
+      return false unless check_bearer_token(request, response, token)
+    else
+      response.status = 401
+      response.body = "The authentication scheme '#{scheme} isn't supported"
+      return false
+    end
+
+    # If we are here then authentication was successful:
+    true
+  end
+
+  def mount_raw(opts, &block)
+    # Get options and set default values:
+    path = opts[:path]
+
+    # Mount the block:
+    @server.mount_proc path do |request, response|
       # Save the request details:
       @last_request_method = request.request_method
       @last_request_body = request.body
+
       # The query string can't be obtained directly from the request object, only a hash with the query
       # parameter, and that is only available for GET and HEAD requests. We need it for POST and PUT
       # requests, so we need to get them using the CGI variables.
       vars = request.meta_vars
       @last_request_query = vars['QUERY_STRING']
-      body = conditional_body_lambda.call(request) if conditional_body_lambda
-      # Check credentials, and if they are correct return the response:
-      authorization = request['Authorization']
-      basic_auth = false
-      basic_auth = @authenticator.authenticate(request, response) if authorization.start_with?("Basic ")
-      if !basic_auth && authorization != "Bearer #{test_token}"
-        response.status = 401
-        response.body = ''
-      else
-        sleep(delay)
-        response.content_type = APPLICATION_XML
-        response.body = body
-        response.status = status
-      end
+
+      # Call the block provided by the calller to complete the processing:
+      block.call(request, response)
+    end
+  end
+
+  def mount_xml(opts)
+    # Get the options and set default values:
+    path    = opts[:path]
+    status  = opts[:status] || 200
+    body    = opts[:body]
+    delay   = opts[:delay] || 0
+    prefix  = opts[:prefix] || test_prefix
+    version = opts[:version] || 4
+
+    # If the path doesn't start with a forward slash, then we assume that it is relative to the prefix:
+    unless path.start_with?('/')
+      path = "#{prefix}/#{path}"
+    end
+
+    # Mount the request handler:
+    mount_raw(path: path) do |request, response|
+      # Check authentication:
+      next unless check_auth(request, response)
+
+      # Return the response:
+      sleep(delay)
+      response.content_type = APPLICATION_XML
+      response.body = body
+      response.status = status
     end
   end
 

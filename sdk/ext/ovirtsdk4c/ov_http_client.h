@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015-2016 Red Hat, Inc.
+Copyright (c) 2016 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,25 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <ruby.h>
+#ifndef __OV_HTTP_CLIENT_H__
+#define __OV_HTTP_CLIENT_H__
 
-#include "ov_module.h"
-#include "ov_error.h"
-#include "ov_http_client.h"
-#include "ov_http_request.h"
-#include "ov_http_response.h"
-#include "ov_xml_reader.h"
-#include "ov_xml_writer.h"
+/* Classes: */
+VALUE ov_http_client_class;
 
-void Init_ovirtsdk4c(void) {
-    /* Define the module: */
-    ov_module_define();
+/* Initialization function: */
+extern void ov_http_client_define(void);
 
-    /* Define the classes: */
-    ov_error_define();
-    ov_http_client_define();
-    ov_http_request_define();
-    ov_http_response_define();
-    ov_xml_reader_define();
-    ov_xml_writer_define();
-}
+#endif

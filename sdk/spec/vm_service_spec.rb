@@ -32,7 +32,7 @@ describe SDK::VmService do
     context "when starting a VM with the `pause` parameter" do
 
       it "posts an `action` element with an inner `pause` element" do
-        set_xml_response('vms/123/start', 200, '<action/>')
+        mount_xml(path: 'vms/123/start', body: '<action/>')
         @service.start(:pause => true)
         expect(last_request_method).to eq('POST')
         expect(last_request_body).to eq(
@@ -47,9 +47,9 @@ describe SDK::VmService do
     context 'when the server returns an action containing a fault' do
 
       it 'raises an error containing the information of the fault' do
-        set_xml_response(
-          'vms/123/start',
-           400,
+        mount_xml(
+          path: 'vms/123/start',
+          body:
            '<action>' +
              '<fault>' +
                '<reason>myreason</reason>' +
@@ -64,12 +64,13 @@ describe SDK::VmService do
     context 'when the server returns an fault instead of an action' do
 
       it 'raises an error containing the information of the fault' do
-        set_xml_response(
-          'vms/123/start',
-           400,
-           '<fault>' +
-             '<reason>myreason</reason>' +
-           '</fault>'
+        mount_xml(
+          path: 'vms/123/start',
+          status: 400,
+          body:
+            '<fault>' +
+              '<reason>myreason</reason>' +
+            '</fault>'
         )
         expect { @service.start }.to raise_error(SDK::Error, /myreason/)
       end
@@ -83,7 +84,7 @@ describe SDK::VmService do
       context 'when update a VM with the `async` parameter' do
 
         it 'puts an `vm` element with an `async` query parameter' do
-          set_xml_response('vms/123', 200, '<vm><name>newname</name></vm>')
+          mount_xml(path: 'vms/123', body: '<vm><name>newname</name></vm>')
           @service.update(
             SDK::Vm.new({:name => 'newname'}),
             :async => true

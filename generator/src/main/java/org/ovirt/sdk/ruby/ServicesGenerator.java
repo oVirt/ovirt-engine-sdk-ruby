@@ -230,7 +230,7 @@ public class ServicesGenerator implements RubyGenerator {
         generateConvertLiteral(primaryParameterType, arg);
         buffer.addLine("query = {}");
         secondaryParameters.forEach(this::generateUrlParameter);
-        buffer.addLine("request = Request.new(:method => :POST, :path => @path, :query => query)");
+        buffer.addLine("request = HttpRequest.new(:method => :POST, :url => @path, :query => query)");
         generateWriteRequestBody(primaryParameter, arg);
         buffer.addLine("response = @connection.send(request)");
         buffer.addLine("case response.code");
@@ -274,11 +274,11 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addLine("ActionWriter.write_one(action, writer)");
         buffer.addLine("body = writer.string");
         buffer.addLine("writer.close");
-        buffer.addLine("request = Request.new({");
+        buffer.addLine("request = HttpRequest.new(");
         buffer.addLine(  ":method => :POST,");
-        buffer.addLine(  ":path => \"#{@path}/%1$s\",", getPath(methodName));
+        buffer.addLine(  ":url => \"#{@path}/%1$s\",", getPath(methodName));
         buffer.addLine(  ":body => body,");
-        buffer.addLine("})");
+        buffer.addLine(")");
         buffer.addLine("response = @connection.send(request)");
         buffer.addLine("case response.code");
         buffer.addLine("when 200");
@@ -344,7 +344,7 @@ public class ServicesGenerator implements RubyGenerator {
         // Generate the method body:
         buffer.addLine("query = {}");
         inParameters.forEach(this::generateUrlParameter);
-        buffer.addLine("request = Request.new(:method => :GET, :path => @path, :query => query)");
+        buffer.addLine("request = HttpRequest.new(:method => :GET, :url => @path, :query => query)");
         buffer.addLine("response = @connection.send(request)");
         buffer.addLine("case response.code");
         buffer.addLine("when 200");
@@ -403,7 +403,7 @@ public class ServicesGenerator implements RubyGenerator {
         generateConvertLiteral(primaryParameterType, arg);
         buffer.addLine("query = {}");
         secondaryParameters.forEach(this::generateUrlParameter);
-        buffer.addLine("request = Request.new(:method => :PUT, :path => @path, :query => query)");
+        buffer.addLine("request = HttpRequest.new(:method => :PUT, :url => @path, :query => query)");
         generateWriteRequestBody(primaryParameter, arg);
         buffer.addLine("response = @connection.send(request)");
         buffer.addLine("case response.code");
@@ -506,7 +506,7 @@ public class ServicesGenerator implements RubyGenerator {
         // Generate method body:
         buffer.addLine("query = {}");
         inParameters.forEach(this::generateUrlParameter);
-        buffer.addLine(  "request = Request.new(:method => :DELETE, :path => @path, :query => query)");
+        buffer.addLine(  "request = HttpRequest.new(:method => :DELETE, :url => @path, :query => query)");
         buffer.addLine(  "response = @connection.send(request)");
         buffer.addLine(  "unless response.code == 200");
         buffer.addLine(    "check_fault(response)");

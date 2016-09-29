@@ -1,6 +1,7 @@
 gcc
 git
 java-1.8.0-openjdk-devel
+libcurl-devel
 libxml2-devel
 maven
 python
@@ -9,7 +10,6 @@ rpm-build
 rpmdevtools
 ruby
 ruby-devel
-rubygem-curb
 rubygem-rake-compiler
 rubygem-rspec
 rubygems-devel
