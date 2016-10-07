@@ -2,7 +2,7 @@
 
 This document describes the relevant changes between releases of the SDK.
 
-== 4.0.4 / Oct 7 2016
+== 4.0.5 / Oct 7 2016
 
 Bug Fixes:
 
