@@ -2,6 +2,12 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.0.4 / Oct 7 2016
+
+Bug Fixes:
+
+* Fix bug failure in Mac OS.
+
 == 4.0.3 / Oct 7 2016
 
 New features:
