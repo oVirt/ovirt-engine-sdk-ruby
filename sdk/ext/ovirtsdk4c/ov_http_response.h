@@ -18,7 +18,7 @@ limitations under the License.
 #define __OV_HTTP_RESPONSE_H__
 
 /* Classes: */
-VALUE ov_http_response_class;
+extern VALUE ov_http_response_class;
 
 /* Content: */
 typedef struct {

@@ -29,6 +29,9 @@ limitations under the License.
 #include "ov_http_request.h"
 #include "ov_http_response.h"
 
+/* Class: */
+VALUE ov_http_client_class;
+
 /* Symbols: */
 static VALUE CA_FILE_SYMBOL;
 static VALUE COMPRESS_SYMBOL;

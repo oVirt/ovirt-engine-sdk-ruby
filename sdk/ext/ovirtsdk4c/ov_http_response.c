@@ -20,6 +20,9 @@ limitations under the License.
 #include "ov_error.h"
 #include "ov_http_response.h"
 
+/* The class: */
+VALUE ov_http_response_class;
+
 static VALUE BODY_SYMBOL;
 static VALUE CODE_SYMBOL;
 static VALUE HEADERS_SYMBOL;

@@ -17,8 +17,8 @@ limitations under the License.
 #ifndef __OV_HTTP_CLIENT_H__
 #define __OV_HTTP_CLIENT_H__
 
-/* Classes: */
-VALUE ov_http_client_class;
+/* Class: */
+extern VALUE ov_http_client_class;
 
 /* Initialization function: */
 extern void ov_http_client_define(void);

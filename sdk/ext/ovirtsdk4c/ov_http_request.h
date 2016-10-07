@@ -18,13 +18,13 @@ limitations under the License.
 #define __OV_HTTP_REQUEST_H__
 
 /* Class: */
-VALUE ov_http_request_class;
+extern VALUE ov_http_request_class;
 
 /* Symbols for HTTP methods: */
-VALUE GET_SYMBOL;
-VALUE POST_SYMBOL;
-VALUE PUT_SYMBOL;
-VALUE DELETE_SYMBOL;
+extern VALUE GET_SYMBOL;
+extern VALUE POST_SYMBOL;
+extern VALUE PUT_SYMBOL;
+extern VALUE DELETE_SYMBOL;
 
 /* Content: */
 typedef struct {
