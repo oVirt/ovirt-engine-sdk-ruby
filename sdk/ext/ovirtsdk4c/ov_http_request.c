@@ -20,6 +20,15 @@ limitations under the License.
 #include "ov_error.h"
 #include "ov_http_request.h"
 
+/* Class: */
+VALUE ov_http_request_class;
+
+/* Symbols for HTTP methods: */
+VALUE GET_SYMBOL;
+VALUE POST_SYMBOL;
+VALUE PUT_SYMBOL;
+VALUE DELETE_SYMBOL;
+
 /* Symbols for the attributes: */
 static VALUE METHOD_SYMBOL;
 static VALUE URL_SYMBOL;
