@@ -2,6 +2,12 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.0.3 / Oct 7 2016
+
+New features:
+
+* Removed dependency on the `curb` gem.
+
 == 4.0.2 / Sep 29 2016
 
 New features:
