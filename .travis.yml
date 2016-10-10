@@ -1,4 +1,8 @@
 language: java
 
+before_install:
+  - gem install rake-compiler
+  - gem install rspec
+
 os:
-- osx
+  - osx
