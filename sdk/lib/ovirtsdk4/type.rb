@@ -108,6 +108,25 @@ module OvirtSDK4
       self.href = opts[:href]
     end
 
+    #
+    # Returns `true` if `self` and `other` have the same attributes and values.
+    #
+    def ==(other)
+      !other.nil? && self.class == other.class
+    end
+
+    #
+    # Use the same logic for `eql?` and `==`.
+    #
+    alias_method :eql?, :==
+
+    #
+    # Generates a hash value for this object.
+    #
+    def hash
+      0
+    end
+
   end
 
   #
