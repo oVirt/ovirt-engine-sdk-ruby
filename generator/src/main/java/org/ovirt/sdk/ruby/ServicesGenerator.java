@@ -234,7 +234,7 @@ public class ServicesGenerator implements RubyGenerator {
         generateWriteRequestBody(primaryParameter, arg);
         buffer.addLine("response = @connection.send(request)");
         buffer.addLine("case response.code");
-        buffer.addLine("when 201, 202");
+        buffer.addLine("when 200, 201, 202");
         generateReturnResponseBody(primaryParameter);
         buffer.addLine("else");
         buffer.addLine(  "check_fault(response)");
