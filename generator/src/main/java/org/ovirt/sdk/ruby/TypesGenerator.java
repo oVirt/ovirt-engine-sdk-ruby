@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 import javax.enterprise.inject.spi.CDI;
@@ -124,13 +125,24 @@ public class TypesGenerator implements RubyGenerator {
         generateClassDeclaration(type);
         buffer.addLine();
 
-        // Attributes and links:
-        List<StructMember> members = new ArrayList<>();
-        members.addAll(type.getAttributes());
-        members.addAll(type.getLinks());
-        members.stream().sorted().forEach(this::generateMember);
+        // Get the list of members, including those declared in the base types:
+        List<StructMember> allMembers = new ArrayList<>();
+        allMembers.addAll(type.getAttributes());
+        allMembers.addAll(type.getLinks());
+        Collections.sort(allMembers);
 
-        // Constructor with a named parameter for each attribute:
+        // Get the list of members declared directly in this type:
+        List<StructMember> declaredMembers = new ArrayList<>();
+        declaredMembers.addAll(type.getDeclaredAttributes());
+        declaredMembers.addAll(type.getDeclaredLinks());
+        Collections.sort(declaredMembers);
+
+        // Generate getters and setters, only for members declared directly in this class:
+        allMembers.forEach(this::generateMember);
+
+        // The constructor should have documentation for all the parameters, including those of the base types, but the
+        // code only needs to handle the members declared in this type, as the others are handled by the constructor of
+        // the base class:
         RubyName typeName = rubyNames.getTypeName(type);
         buffer.addComment();
         buffer.addComment("Creates a new instance of the {%1$s} class.", typeName.getClassName());
@@ -142,7 +154,7 @@ public class TypesGenerator implements RubyGenerator {
             "should be the values of the attributes."
         );
         buffer.addComment();
-        members.stream().sorted().forEach(member -> {
+        allMembers.forEach(member -> {
             Type memberType = member.getType();
             Name memberName = member.getName();
             String docType = yardDoc.getType(memberType);
@@ -163,7 +175,7 @@ public class TypesGenerator implements RubyGenerator {
         buffer.addComment();
         buffer.addLine("def initialize(opts = {})");
         buffer.addLine(  "super(opts)");
-        members.stream().sorted().forEach(member -> {
+        declaredMembers.forEach(member -> {
             String memberName = rubyNames.getMemberStyleName(member.getName());
             buffer.addLine("self.%1$s = opts[:%1$s]", memberName);
         });
