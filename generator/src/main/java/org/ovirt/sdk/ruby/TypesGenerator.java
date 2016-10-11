@@ -182,6 +182,44 @@ public class TypesGenerator implements RubyGenerator {
         buffer.addLine("end");
         buffer.addLine();
 
+        // Operator to compare two objects:
+        if (!declaredMembers.isEmpty()) {
+            buffer.addComment();
+            buffer.addComment("Returns `true` if `self` and `other` have the same attributes and values.");
+            buffer.addComment();
+            buffer.addLine("def ==(other)");
+            buffer.addLine(  "super &&");
+            for (int i = 0; i < declaredMembers.size(); i++) {
+                String memberName = rubyNames.getMemberStyleName(declaredMembers.get(i).getName());
+                String line = String.format("@%1$s == other.%1$s", memberName);
+                if (i < declaredMembers.size() - 1) {
+                    line += " &&";
+                }
+                buffer.addLine(line);
+            }
+            buffer.addLine("end");
+            buffer.addLine();
+        }
+
+        // Method to calculate the hash code:
+        if (!declaredMembers.isEmpty()) {
+            buffer.addComment();
+            buffer.addComment("Generates a hash value for this object.");
+            buffer.addComment();
+            buffer.addLine("def hash");
+            buffer.addLine(  "super +");
+            for (int i = 0; i < declaredMembers.size(); i++) {
+                String memberName = rubyNames.getMemberStyleName(declaredMembers.get(i).getName());
+                String line = String.format("@%1$s.hash", memberName);
+                if (i < declaredMembers.size() - 1) {
+                    line += " +";
+                }
+                buffer.addLine(line);
+            }
+            buffer.addLine("end");
+            buffer.addLine();
+        }
+
         // End class:
         buffer.addLine("end");
         buffer.addLine();
@@ -238,6 +276,7 @@ public class TypesGenerator implements RubyGenerator {
         }
         else if (type instanceof ListType) {
             buffer.addYardTag("param", "list [%1$s]", yardDoc.getType(type));
+            buffer.addComment();
             ListType listType = (ListType) type;
             Type elementType = listType.getElementType();
             if (elementType instanceof PrimitiveType || elementType instanceof EnumType) {
