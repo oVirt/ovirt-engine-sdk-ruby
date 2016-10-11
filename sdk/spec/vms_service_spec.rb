@@ -51,6 +51,36 @@ describe SDK::VmsService do
 
     end
 
+    context 'when the server returns a 200 code' do
+
+      it 'raises no exception' do
+        mount_xml(path: 'vms', status: 200, body: '<vm/>')
+        vm = SDK::Vm.new
+        @service.add(vm)
+      end
+
+    end
+
+    context 'when the server returns a 201 code' do
+
+      it 'raises no exception' do
+        mount_xml(path: 'vms', status: 201, body: '<vm/>')
+        vm = SDK::Vm.new
+        @service.add(vm)
+      end
+
+    end
+
+    context 'when the server returns a 202 code' do
+
+      it 'raises no exception' do
+        mount_xml(path: 'vms', status: 202, body: '<vm/>')
+        vm = SDK::Vm.new
+        @service.add(vm)
+      end
+
+    end
+
   end
 
   describe "#vms" do
