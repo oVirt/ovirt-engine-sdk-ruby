@@ -138,13 +138,23 @@ module OvirtSDK4
         request.url = "#{@url}#{request.url}"
       end
 
-      # Set the headers:
+      # Set the headers common to all requests:
       request.headers.merge!(
         'User-Agent'   => "RubySDK/#{VERSION}",
         'Version'      => '4',
         'Content-Type' => 'application/xml',
         'Accept'       => 'application/xml',
       )
+
+      # Older versions of the engine (before 4.1) required the 'all_content' as an HTTP header instead of a query
+      # parameter. In order to better support those older versions of the engine we need to check if this parameter is
+      # included in the request, and add the corresponding header.
+      unless request.query.nil?
+        all_content = request.query['all_content']
+        unless all_content.nil?
+          request.headers['All-Content'] = all_content
+        end
+      end
 
       # Set the authentication token:
       @token ||= get_access_token
