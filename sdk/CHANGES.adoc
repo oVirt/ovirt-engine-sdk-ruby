@@ -2,6 +2,49 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.0.6 / Oct 18 2016
+
+Update to model 4.0.37.
+
+New features:
+
+* Add services to support disk attachments of virtual machines available
+  for import from storage domains.
+
+* Add `gluster` value to the `NetworkUsage` enum.
+
+* Add `force` parameter to the operation that updates a storage server
+  connection.
+
+Bug fixes:
+
+* Fix the type of the `ticket` parameter of the `VmService.ticket`
+  method.
+
+* Fix the type of the `authentication_method` attribute of the `Ssh`
+  type.
+
+* Rename the `AuthenticationMethod` enum type to `SshAuthenticationMethod`.
+
+* Fix the name of the `exclusive` parameter o the `TemplateService.export`
+  method.
+
+* Add the missing `cluster` parameter to the `OpenstackImageService.import`
+  method.
+
+* Move the `quota` link from the `Vm` type to the `VmBase` type.
+
+* Add missing `template` and `storage_domain` parameters to the
+  operation that imports an image.
+
+* Add the `next_run` parameter to the operation that updates a virtual
+  machine.
+
+* Add the `all_content` parameters to the operations that list and
+  retrieve virtual machines.
+
+* Implement `==` and `eql?` for types https://bugzilla.redhat.com/1383613[#1383613].
+
 == 4.0.5 / Oct 7 2016
 
 Bug Fixes:
