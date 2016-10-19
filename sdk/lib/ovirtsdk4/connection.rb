@@ -18,7 +18,6 @@ require 'json'
 require 'uri'
 
 module OvirtSDK4
-
   #
   # This class is responsible for managing an HTTP connection to the engine server. It is intended as the entry
   # point for the SDK, and it provides access to the `system` service and, from there, to the rest of the services
@@ -31,10 +30,10 @@ module OvirtSDK4
     # [source,ruby]
     # ----
     # connection = OvirtSDK4::Connection.new(
-    #   :url      => 'https://engine.example.com/ovirt-engine/api',
-    #   :username => 'admin@internal',
-    #   :password => '...',
-    #   :ca_file  => '/etc/pki/ovirt-engine/ca.pem',
+    #   url: 'https://engine.example.com/ovirt-engine/api',
+    #   username: 'admin@internal',
+    #   password: '...',
+    #   ca_file:'/etc/pki/ovirt-engine/ca.pem'
     # )
     # ----
     #
@@ -103,15 +102,15 @@ module OvirtSDK4
 
       # Create the HTTP client:
       @client = HttpClient.new(
-        :insecure => @insecure,
-        :ca_file => @ca_file,
-        :debug => @debug,
-        :log => @log,
-        :timeout => @timeout,
-        :compress => @compress,
-        :proxy_url => @proxy_url,
-        :proxy_username => @proxy_username,
-        :proxy_password => @proxy_password,
+        insecure: @insecure,
+        ca_file: @ca_file,
+        debug: @debug,
+        log: @log,
+        timeout: @timeout,
+        compress: @compress,
+        proxy_url: @proxy_url,
+        proxy_username: @proxy_username,
+        proxy_password: @proxy_password
       )
     end
 
@@ -121,7 +120,7 @@ module OvirtSDK4
     # @return [SystemService]
     #
     def system_service
-      @system_service ||= SystemService.new(self, "")
+      @system_service ||= SystemService.new(self, '')
     end
 
     #
@@ -134,7 +133,7 @@ module OvirtSDK4
     # @raise [Error] If there is no service corresponding to the given path.
     #
     def service(path)
-      return system_service.service(path)
+      system_service.service(path)
     end
 
     #
@@ -147,18 +146,14 @@ module OvirtSDK4
     #
     def send(request)
       # Add the base URL to the request:
-      if request.url.nil?
-        request.url = @url
-      else
-        request.url = "#{@url}#{request.url}"
-      end
+      request.url = request.url.nil? ? request.url = @url : "#{@url}#{request.url}"
 
       # Set the headers common to all requests:
       request.headers.merge!(
         'User-Agent'   => "RubySDK/#{VERSION}",
         'Version'      => '4',
         'Content-Type' => 'application/xml',
-        'Accept'       => 'application/xml',
+        'Accept'       => 'application/xml'
       )
 
       # Older versions of the engine (before 4.1) required the 'all_content' as an HTTP header instead of a query
@@ -166,13 +161,11 @@ module OvirtSDK4
       # included in the request, and add the corresponding header.
       unless request.query.nil?
         all_content = request.query['all_content']
-        unless all_content.nil?
-          request.headers['All-Content'] = all_content
-        end
+        request.headers['All-Content'] = all_content unless all_content.nil?
       end
 
       # Set the authentication token:
-      @token ||= get_access_token
+      @token ||= create_access_token
       request.token = @token
 
       # Create an empty response:
@@ -182,7 +175,7 @@ module OvirtSDK4
       @client.send(request, response)
 
       # Return the response:
-      return response
+      response
     end
 
     #
@@ -192,20 +185,18 @@ module OvirtSDK4
     #
     # @api private
     #
-    def get_access_token
+    def create_access_token
       # Build the URL and parameters required for the request:
       url, parameters = build_sso_auth_request
 
-      # Send the response and wait for the request:
+      # Send the request and wait for the request:
       response = get_sso_response(url, parameters)
+      response = response[0] if response.is_a?(Array)
 
-      if response.is_a?(Array)
-        response = response[0]
-      end
-
-      unless response['error'].nil?
-        raise Error.new("Error during SSO authentication: #{response['error_code']}: #{response['error']}")
-      end
+      # Check the response and raise an error if it contains an error code:
+      code = response['error_code']
+      error = response['error']
+      raise Error, "Error during SSO authentication: #{code}: #{error}" if error
 
       response['access_token']
     end
@@ -219,15 +210,14 @@ module OvirtSDK4
       # Build the URL and parameters required for the request:
       url, parameters = build_sso_revoke_request
 
+      # Send the request and wait for the response:
       response = get_sso_response(url, parameters)
+      response = response[0] if response.is_a?(Array)
 
-      if response.is_a?(Array)
-        response = response[0]
-      end
-
-      unless response['error'].nil?
-        raise Error.new("Error during SSO revoke: #{response['error_code']}: #{response['error']}")
-      end
+      # Check the response and raise an error if it contains an error code:
+      code = response['error_code']
+      error = response['error']
+      raise Error, "Error during SSO revoke: #{code}: #{error}" if error
     end
 
     #
@@ -244,14 +234,14 @@ module OvirtSDK4
     def get_sso_response(url, parameters)
       # Create the request:
       request = HttpRequest.new(
-        :method => :POST,
-        :url => url,
-        :headers => {
+        method: :POST,
+        url: url,
+        headers: {
           'User-Agent' => "RubySDK/#{VERSION}",
           'Content-Type' => 'application/x-www-form-urlencoded',
-          'Accept' => 'application/json',
+          'Accept' => 'application/json'
         },
-        :body => URI.encode_www_form(parameters),
+        body: URI.encode_www_form(parameters)
       )
 
       # Create an empty response:
@@ -275,19 +265,17 @@ module OvirtSDK4
     def build_sso_auth_request
       # Compute the entry point and the parameters:
       parameters = {
-        :scope => 'ovirt-app-api',
+        scope: 'ovirt-app-api'
       }
       if @kerberos
         entry_point = 'token-http-auth'
-        parameters.merge!(
-          :grant_type => 'urn:ovirt:params:oauth:grant-type:http',
-        )
+        parameters[:grant_type] = 'urn:ovirt:params:oauth:grant-type:http'
       else
         entry_point = 'token'
         parameters.merge!(
-          :grant_type => 'password',
-          :username => @username,
-          :password => @password,
+          grant_type: 'password',
+          username: @username,
+          password: @password
         )
       end
 
@@ -311,8 +299,8 @@ module OvirtSDK4
     def build_sso_revoke_request
       # Compute the parameters:
       parameters = {
-        :scope => '',
-        :token => @token,
+        scope: '',
+        token: @token
       }
 
       # Compute the URL:
@@ -333,13 +321,11 @@ module OvirtSDK4
     # @return [Boolean]
     #
     def test(raise_exception = false)
-      begin
-        system_service.get
-        true
-      rescue Exception
-        raise if raise_exception
-        false
-      end
+      system_service.get
+      true
+    rescue StandardError
+      raise if raise_exception
+      false
     end
 
     #
@@ -351,7 +337,7 @@ module OvirtSDK4
     # @return [String]
     #
     def authenticate
-      @token ||= get_access_token
+      @token ||= create_access_token
     end
 
     #
@@ -359,9 +345,19 @@ module OvirtSDK4
     #
     # @return [Boolean]
     #
-    def is_link?(object)
+    def link?(object)
       !object.href.nil?
     end
+
+    #
+    # The `link?` method used to be named `is_link?`, and we need to preserve it for backwards compatibility, but try to
+    # avoid using it.
+    #
+    # @return [Boolean]
+    #
+    # @deprecated Please use `link?` instead.
+    #
+    alias is_link? link?
 
     #
     # Follows the `href` attribute of the given object, retrieves the target object and returns it.
@@ -373,16 +369,14 @@ module OvirtSDK4
       # Check that the "href" has a value, as it is needed in order to retrieve the representation of the object:
       href = object.href
       if href.nil?
-        raise Error.new("Can't follow link because the 'href' attribute does't have a value")
+        raise Error, "Can't follow link because the 'href' attribute does't have a value"
       end
 
       # Check that the value of the "href" attribute is compatible with the base URL of the connection:
       prefix = URI(@url).path
-      if !prefix.end_with?('/')
-        prefix += '/'
-      end
-      if !href.start_with?(prefix)
-        raise Error.new("The URL '#{href}' isn't compatible with the base URL of the connection")
+      prefix += '/' unless prefix.end_with?('/')
+      unless href.start_with?(prefix)
+        raise Error, "The URL '#{href}' isn't compatible with the base URL of the connection"
       end
 
       # Remove the prefix from the URL, follow the path to the relevant service and invoke the "get" or "list" method
@@ -406,6 +400,5 @@ module OvirtSDK4
       # Close the HTTP client:
       @client.close if @client
     end
-
   end
 end

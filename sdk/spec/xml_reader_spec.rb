@@ -15,156 +15,118 @@
 #
 
 describe SDK::XmlReader do
-
-  describe ".read_attribute" do
-
-    context "given attribute with value" do
-
-      it "returns the value" do
+  describe '#read_attribute' do
+    context 'given attribute with value' do
+      it 'returns the value' do
         reader = SDK::XmlReader.new('<root id="123"/>')
         expect(reader.node_name).to eql('root')
         expect(reader.get_attribute('id')).to eql('123')
       end
-
     end
 
-    context "given empty attribute" do
-
-      it "returns empty string" do
+    context 'given empty attribute' do
+      it 'returns empty string' do
         reader = SDK::XmlReader.new('<root id=""/>')
         expect(reader.get_attribute('id')).to eql('')
       end
-
     end
 
-    context "given non existent attribute" do
-
-      it "returns nil" do
+    context 'given non existent attribute' do
+      it 'returns nil' do
         reader = SDK::XmlReader.new('<root/>')
         expect(reader.get_attribute('id')).to be(nil)
       end
-
     end
-
   end
 
-  describe ".read_element" do
-
-    context "given an empty element" do
-
-      it "returns nil" do
+  describe '#read_element' do
+    context 'given an empty element' do
+      it 'returns nil' do
         reader = SDK::XmlReader.new('<root/>')
         expect(reader.read_element).to be(nil)
       end
-
     end
 
-    context "given blank element" do
-
-      it "returns empty string" do
+    context 'given blank element' do
+      it 'returns empty string' do
         reader = SDK::XmlReader.new('<root></root>')
         expect(reader.read_element).to eql('')
       end
-
     end
-
   end
 
-  describe ".read_elements" do
-
-    context "given an empty element" do
-
-      it "returns nil" do
+  describe '#read_elements' do
+    context 'given an empty element' do
+      it 'returns nil' do
         reader = SDK::XmlReader.new('<list></list>')
         expect(reader.read_elements).to eql([])
       end
-
     end
 
-    context "given an a list with an empty element" do
-
-      it "returns a list containing nil" do
+    context 'given an a list with an empty element' do
+      it 'returns a list containing nil' do
         reader = SDK::XmlReader.new('<list><item/></list>')
         expect(reader.read_elements).to eql([nil])
       end
-
     end
 
-    context "given an a list with a blank element" do
-
-      it "returns a list containing an empty string" do
+    context 'given an a list with a blank element' do
+      it 'returns a list containing an empty string' do
         reader = SDK::XmlReader.new('<list><item></item></list>')
         expect(reader.read_elements).to eql([''])
       end
-
     end
 
-    context "given an a list with one element" do
-
-      it "returns a list containing it" do
+    context 'given an a list with one element' do
+      it 'returns a list containing it' do
         reader = SDK::XmlReader.new('<list><item>first</item></list>')
         expect(reader.read_elements).to eql(['first'])
       end
-
     end
 
-    context "given an a list with two elements" do
-
-      it "returns a list containing them" do
+    context 'given an a list with two elements' do
+      it 'returns a list containing them' do
         reader = SDK::XmlReader.new('<list><item>first</item><item>second</item></list>')
-        expect(reader.read_elements).to eql(['first', 'second'])
+        expect(reader.read_elements).to eql(%w(first second))
       end
-
     end
 
-    context "given empty list followed by an element" do
-
-      it "the list is empty and the element can be read with the 'read_element' method " do
+    context 'given empty list followed by an element' do
+      it 'the list is empty and the element can be read with the `read_element` method' do
         reader = SDK::XmlReader.new('<root><list/><value>next</value></root>')
         reader.read
         expect(reader.read_elements).to eql([])
         expect(reader.read_element).to eql('next')
       end
-
     end
-
   end
 
-  describe ".forward" do
-
-    context "given preceding text" do
-
-      it "skips it and returns true" do
+  describe '#forward' do
+    context 'given preceding text' do
+      it 'skips it and returns true' do
         reader = SDK::XmlReader.new('<root>text<target/></root>')
         reader.read
         expect(reader.forward).to be true
         expect(reader.node_name).to eql('target')
       end
-
     end
 
-    context "given end of document" do
-
-      it "returns false" do
+    context 'given end of document' do
+      it 'returns false' do
         reader = SDK::XmlReader.new('<root/>')
         reader.read
         expect(reader.forward).to be false
       end
-
     end
 
-    context "given an empty element" do
-
-      it "returns true and stays in the empty element" do
+    context 'given an empty element' do
+      it 'returns true and stays in the empty element' do
         reader = SDK::XmlReader.new('<root><target/></root>')
         reader.read
         expect(reader.forward).to be true
         expect(reader.node_name).to eql('target')
         expect(reader.empty_element?).to be true
       end
-
     end
-
   end
-
 end

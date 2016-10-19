@@ -24,20 +24,20 @@ require 'ovirtsdk4'
 # of the virtual machine:
 
 # Create the connection to the server:
-connection = OvirtSDK4::Connection.new({
-  :url => 'https://engine40.example.com/ovirt-engine/api',
-  :username => 'admin@internal',
-  :password => 'redhat123',
-  :ca_file => 'ca.pem',
-  :debug => true,
-  :log => Logger.new('example.log'),
-})
+connection = OvirtSDK4::Connection.new(
+  url: 'https://engine40.example.com/ovirt-engine/api',
+  username: 'admin@internal',
+  password: 'redhat123',
+  ca_file: 'ca.pem',
+  debug: true,
+  log: Logger.new('example.log')
+)
 
 # Get the reference to the service that manages virtual machines:
 vms_service = connection.system_service.vms_service
 
 # Find the virtual machine:
-vm = vms_service.list({:search => 'name=myvm'})[0]
+vm = vms_service.list(search: 'name=myvm')[0]
 
 # When the server returns a virtual machine it will return links to
 # related objects, like the cluster, the templatea and the permissions,

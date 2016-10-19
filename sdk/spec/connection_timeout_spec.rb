@@ -15,17 +15,16 @@
 #
 
 describe SDK::Connection do
-
   before(:all) do
     start_server
     @connection = SDK::Connection.new(
-      :url => test_url,
-      :username => test_user,
-      :password => test_password,
-      :ca_file => test_ca_file,
-      :timeout => 1,
-      :debug => test_debug,
-      :log => test_log,
+      url:      test_url,
+      username: test_user,
+      password: test_password,
+      ca_file:  test_ca_file,
+      timeout:  1,
+      debug:    test_debug,
+      log:      test_log
     )
     @service = @connection.system_service.vms_service
   end
@@ -35,16 +34,12 @@ describe SDK::Connection do
     stop_server
   end
 
-  describe ".send" do
-
-    context "when timeout is set" do
-
-      it "the request fails when the timeout expires" do
+  describe '#send' do
+    context 'when timeout is set' do
+      it 'the request fails when the timeout expires' do
         mount_xml(path: 'vms', body: '<vms/>', delay: 2)
         expect { @service.list }.to raise_error(/timeout/i)
       end
-
     end
-
   end
 end

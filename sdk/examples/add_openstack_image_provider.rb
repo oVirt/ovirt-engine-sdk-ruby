@@ -23,14 +23,14 @@ require 'ovirtsdk4'
 # image provider:
 
 # Create the connection to the server:
-connection = OvirtSDK4::Connection.new({
-  :url => 'https://engine40.example.com/ovirt-engine/api',
-  :username => 'admin@internal',
-  :password => 'redhat123',
-  :ca_file => 'ca.pem',
-  :debug => true,
-  :log => Logger.new('example.log'),
-})
+connection = OvirtSDK4::Connection.new(
+  url: 'https://engine40.example.com/ovirt-engine/api',
+  username: 'admin@internal',
+  password: 'redhat123',
+  ca_file: 'ca.pem',
+  debug: true,
+  log: Logger.new('example.log')
+)
 
 # Get the reference to service that manages OpenStack image providers:
 providers_service = connection.system_service.openstack_image_providers_service
@@ -38,9 +38,9 @@ providers_service = connection.system_service.openstack_image_providers_service
 # Add the new provider:
 provider = providers_service.add(
   OvirtSDK4::OpenStackImageProvider.new(
-    :name => 'myprovider',
-    :description => 'My provider',
-    :url => 'http://glance.ovirt.org:9292',
+    name: 'myprovider',
+    description: 'My provider',
+    url: 'http://glance.ovirt.org:9292'
   )
 )
 

@@ -102,7 +102,7 @@ public class WritersGenerator implements RubyGenerator {
         // Begin class:
         RubyName writerName = rubyNames.getWriterName(type);
         RubyName baseName = rubyNames.getBaseWriterName();
-        buffer.addLine("class %1$s < %2$s # :nodoc:", writerName.getClassName(), baseName.getClassName());
+        buffer.addLine("class %1$s < %2$s", writerName.getClassName(), baseName.getClassName());
         buffer.addLine();
 
         // Get the tags:

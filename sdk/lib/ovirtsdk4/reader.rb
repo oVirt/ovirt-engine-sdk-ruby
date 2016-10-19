@@ -15,7 +15,6 @@
 #
 
 module OvirtSDK4
-
   #
   # This is the base class for all the XML readers used by the SDK. It contains the utility methods used by all
   # of them.
@@ -23,7 +22,6 @@ module OvirtSDK4
   # @api private
   #
   class Reader
-
     #
     # Reads a string value, assuming that the cursor is positioned at the start element that contains the value.
     #
@@ -31,7 +29,7 @@ module OvirtSDK4
     # @return [String]
     #
     def self.read_string(reader)
-      return reader.read_element
+      reader.read_element
     end
 
     #
@@ -42,7 +40,7 @@ module OvirtSDK4
     # @return [Array<String>]
     #
     def self.read_strings(reader)
-      return reader.read_elements
+      reader.read_elements
     end
 
     #
@@ -59,7 +57,7 @@ module OvirtSDK4
       when 'true', '1'
         return true
       else
-        raise Error.new("The text '#{text}' isn't a valid boolean value.")
+        raise Error, "The text '#{text}' isn't a valid boolean value."
       end
     end
 
@@ -70,7 +68,7 @@ module OvirtSDK4
     # @return [Boolean]
     #
     def self.read_boolean(reader)
-      return Reader.parse_boolean(reader.read_element)
+      Reader.parse_boolean(reader.read_element)
     end
 
     #
@@ -81,7 +79,7 @@ module OvirtSDK4
     # @return [Array<Boolean>]
     #
     def self.read_booleans(reader)
-      return reader.read_elements.map { |text| Reader.parse_boolean(text) }
+      reader.read_elements.map { |text| Reader.parse_boolean(text) }
     end
 
     #
@@ -95,7 +93,7 @@ module OvirtSDK4
       begin
         return Integer(text, 10)
       rescue
-        raise Error.new("The text '#{text}' isn't a valid integer value.")
+        raise Error, "The text '#{text}' isn't a valid integer value."
       end
     end
 
@@ -106,7 +104,7 @@ module OvirtSDK4
     # @return [Integer]
     #
     def self.read_integer(reader)
-      return Reader.parse_integer(reader.read_element)
+      Reader.parse_integer(reader.read_element)
     end
 
     #
@@ -117,7 +115,7 @@ module OvirtSDK4
     # @return [Array<Integer>]
     #
     def self.read_integers(reader)
-      return reader.read_elements.map { |text| Reader.parse_integer(text) }
+      reader.read_elements.map { |text| Reader.parse_integer(text) }
     end
 
     #
@@ -130,7 +128,7 @@ module OvirtSDK4
       begin
         return Float(text)
       rescue
-        raise Error.new("The text '#{text}' isn't a valid decimal value.")
+        raise Error, "The text '#{text}' isn't a valid decimal value."
       end
     end
 
@@ -141,7 +139,7 @@ module OvirtSDK4
     # @return [Fixnum]
     #
     def self.read_decimal(reader)
-      return Reader.parse_decimal(reader.read_element)
+      Reader.parse_decimal(reader.read_element)
     end
 
     #
@@ -152,7 +150,7 @@ module OvirtSDK4
     # @return [Array<Fixnum>]
     #
     def self.read_decimals(reader)
-      return reader.read_elements.map { |text| Reader.parse_decimal(text) }
+      reader.read_elements.map { |text| Reader.parse_decimal(text) }
     end
 
     #
@@ -166,7 +164,7 @@ module OvirtSDK4
       begin
         return DateTime.xmlschema(text)
       rescue
-        raise Error.new("The text '#{text}' isn't a valid date.")
+        raise Error, "The text '#{text}' isn't a valid date."
       end
     end
 
@@ -177,7 +175,7 @@ module OvirtSDK4
     # @return [DateTime]
     #
     def self.read_date(reader)
-      return Reader.parse_date(reader.read_element)
+      Reader.parse_date(reader.read_element)
     end
 
     #
@@ -188,7 +186,7 @@ module OvirtSDK4
     # @return [Array<DateTime>]
     #
     def self.read_dates(reader)
-      return reader.read_elements.map { |text| Reader.parse_date(text) }
+      reader.read_elements.map { |text| Reader.parse_date(text) }
     end
 
     #
@@ -196,7 +194,7 @@ module OvirtSDK4
     # example, for the `vm` tag it will contain a reference to the `VmReader.read_one` method, and for the `vms` tag
     # it will contain a reference to the `VmReader.read_many` method.
     #
-    @@readers = {}
+    @readers = {}
 
     #
     # Registers a read method.
@@ -205,7 +203,7 @@ module OvirtSDK4
     # @param reader [Method] The reference to the method that reads the object corresponding to the `tag`.
     #
     def self.register(tag, reader)
-      @@readers[tag] = reader
+      @readers[tag] = reader
     end
 
     #
@@ -223,7 +221,7 @@ module OvirtSDK4
       elsif source.is_a?(XmlReader)
         cursor = source
       else
-        raise ArgumentError.new("Expected a 'String' or 'XmlReader', but got '#{source.class}'")
+        raise ArgumentError, "Expected a 'String' or 'XmlReader', but got '#{source.class}'"
       end
 
       # Do the actual read, and make sure to always close the XML reader if we created it:
@@ -233,20 +231,14 @@ module OvirtSDK4
 
         # Select the specific reader according to the tag:
         tag = cursor.node_name
-        reader = @@readers[tag]
-        if reader.nil?
-          raise Error.new("Can't find a reader for tag '#{tag}'")
-        end
+        reader = @readers[tag]
+        raise Error, "Can't find a reader for tag '#{tag}'" if reader.nil?
 
         # Read the object using the specific reader:
-        return reader.call(cursor)
+        reader.call(cursor)
       ensure
-        if !cursor.nil? && !cursor.equal?(source)
-          cursor.close
-        end
+        cursor.close if !cursor.nil? && !cursor.equal?(source)
       end
     end
-
   end
-
 end

@@ -41,31 +41,30 @@ module WEBrick
 end
 
 # This module contains utility functions to be used in all the examples.
-module Helpers # :nodoc:
-
-  attr_reader :last_request_query,
-              :last_request_method,
-              :last_request_body
+module Helpers
+  attr_reader :last_request_query
+  attr_reader :last_request_method
+  attr_reader :last_request_body
 
   # The authentication details used by the embedded tests web server:
-  REALM = 'API'
-  USER = 'admin@internal'
-  PASSWORD = 'vzhJgfyaDPHRhg'
-  TOKEN = 'bvY7txV9ltmmRQ'
+  REALM = 'API'.freeze
+  USER = 'admin@internal'.freeze
+  PASSWORD = 'vzhJgfyaDPHRhg'.freeze
+  TOKEN = 'bvY7txV9ltmmRQ'.freeze
 
   # The host and port and path used by the embedded tests web server:
-  HOST = 'localhost'
-  PREFIX = '/ovirt-engine/api'
+  HOST = 'localhost'.freeze
+  PREFIX = '/ovirt-engine/api'.freeze
 
   # Content types:
-  APPLICATION_FORM = 'application/x-www-form-urlencoded'
-  APPLICATION_JSON = 'application/json'
-  APPLICATION_XML = 'application/xml'
+  APPLICATION_FORM = 'application/x-www-form-urlencoded'.freeze
+  APPLICATION_JSON = 'application/json'.freeze
+  APPLICATION_XML = 'application/xml'.freeze
 
   # The paths of the log files:
-  SERVER_LOG = 'spec/server.log'
-  CLIENT_LOG = 'spec/client.log'
-  ACCESS_LOG = 'spec/access.log'
+  SERVER_LOG = 'spec/server.log'.freeze
+  CLIENT_LOG = 'spec/client.log'.freeze
+  ACCESS_LOG = 'spec/access.log'.freeze
 
   # Truncate the log files before each run:
   [SERVER_LOG, CLIENT_LOG, ACCESS_LOG].each do |log|
@@ -73,11 +72,11 @@ module Helpers # :nodoc:
   end
 
   def test_user
-    return USER
+    USER
   end
 
   def test_password
-    return PASSWORD
+    PASSWORD
   end
 
   def test_token
@@ -85,12 +84,12 @@ module Helpers # :nodoc:
   end
 
   def test_host
-    return HOST
+    HOST
   end
 
   def test_port
     if @port.nil?
-      range = 60000..61000
+      range = 60_000..61_000
       port = range.first
       begin
         server = TCPServer.new(test_host, port)
@@ -103,19 +102,19 @@ module Helpers # :nodoc:
       end
       @port = port
     end
-    return @port
+    @port
   end
 
   def test_prefix
-    return PREFIX
+    PREFIX
   end
 
   def test_url
-    return "https://#{test_host}:#{test_port}#{test_prefix}"
+    "https://#{test_host}:#{test_port}#{test_prefix}"
   end
 
   def test_ca_file
-    return 'spec/pki/ca.crt'
+    'spec/pki/ca.crt'
   end
 
   def test_debug
@@ -127,13 +126,13 @@ module Helpers # :nodoc:
   end
 
   def test_connection
-    return SDK::Connection.new(
-      :url => test_url,
-      :username => test_user,
-      :password => test_password,
-      :ca_file => test_ca_file,
-      :debug => test_debug,
-      :log => test_log,
+    SDK::Connection.new(
+      url:      test_url,
+      username: test_user,
+      password: test_password,
+      ca_file:  test_ca_file,
+      debug:    test_debug,
+      log:      test_log
     )
   end
 
@@ -145,8 +144,8 @@ module Helpers # :nodoc:
       response.status = 401
       response.content_type = APPLICATION_JSON
       response.body = JSON.generate(
-        :error_code => 0,
-        :error => "The HTTP method should be '#{expected_method}', but it is '#{actual_method}'"
+        error_code: 0,
+        error: "The HTTP method should be '#{expected_method}', but it is '#{actual_method}'"
       )
       return false
     end
@@ -158,8 +157,8 @@ module Helpers # :nodoc:
       response.status = 401
       response.content_type = APPLICATION_JSON
       response.body = JSON.generate(
-        :error_code => 0,
-        :error => "The 'Content-Type' header should be '#{expected_content_type}', but it is '#{actual_content_type}'"
+        error_code: 0,
+        error: "The 'Content-Type' header should be '#{expected_content_type}', but it is '#{actual_content_type}'"
       )
       return false
     end
@@ -171,8 +170,8 @@ module Helpers # :nodoc:
       response.status = 401
       response.content_type = APPLICATION_JSON
       response.body = JSON.generate(
-        :error_code => 0,
-        :error => "The query string should be '#{expected_query}', but it is '#{actual_query}'"
+        error_code: 0,
+        error: "The query string should be '#{expected_query}', but it is '#{actual_query}'"
       )
       return false
     end
@@ -192,17 +191,17 @@ module Helpers # :nodoc:
 
     # Create the web server:
     @server = WEBrick::HTTPServer.new(
-      :BindAddress => test_host,
-      :Port => test_port,
-      :SSLEnable => true,
-      :SSLPrivateKey => key,
-      :SSLCertificate => crt,
-      :Logger => server_log,
-      :AccessLog => [[access_log, WEBrick::AccessLog::COMBINED_LOG_FORMAT]],
+      BindAddress: test_host,
+      Port: test_port,
+      SSLEnable: true,
+      SSLPrivateKey: key,
+      SSLCertificate: crt,
+      Logger: server_log,
+      AccessLog: [[access_log, WEBrick::AccessLog::COMBINED_LOG_FORMAT]]
     )
 
     # Create the handler for password authentication requests:
-    @server.mount_proc "/ovirt-engine/sso/oauth/token" do |request, response|
+    @server.mount_proc '/ovirt-engine/sso/oauth/token' do |request, response|
       # Check basic properties of the request:
       next unless check_sso_request(request, response)
 
@@ -213,8 +212,8 @@ module Helpers # :nodoc:
         response.status = 401
         response.content_type = APPLICATION_JSON
         response.body = JSON.generate(
-          :error_code => 0,
-          :error => "The password should be '#{expected_password}', but it is '#{actual_password}'"
+          error_code: 0,
+          error: "The password should be '#{expected_password}', but it is '#{actual_password}'"
         )
         next
       end
@@ -223,12 +222,12 @@ module Helpers # :nodoc:
       response.status = 200
       response.content_type = APPLICATION_JSON
       response.body = JSON.generate(
-        :access_token => test_token,
+        access_token: test_token
       )
     end
 
     # Create the handler for Kerberos authentication requests:
-    @server.mount_proc "/ovirt-engine/sso/oauth/token-http-auth" do |request, response|
+    @server.mount_proc '/ovirt-engine/sso/oauth/token-http-auth' do |request, response|
       # Check basic properties of the request:
       next unless check_sso_request(request, response)
 
@@ -236,12 +235,12 @@ module Helpers # :nodoc:
       response.status = 200
       response.content_type = APPLICATION_JSON
       response.body = JSON.generate(
-        :access_token => test_token,
+        access_token: test_token
       )
     end
 
     # Create the handler for SSO logout requests:
-    @server.mount_proc "/ovirt-engine/services/sso-logout" do |request, response|
+    @server.mount_proc '/ovirt-engine/services/sso-logout' do |request, response|
       # Check basic properties of the request:
       next unless check_sso_request(request, response)
 
@@ -252,8 +251,8 @@ module Helpers # :nodoc:
         response.status = 401
         response.content_type = APPLICATION_JSON
         response.body = JSON.generate(
-          :error_code => 0,
-          :error => "The token should be '#{expected_token}', but it is '#{actual_token}'"
+          error_code: 0,
+          error: "The token should be '#{expected_token}', but it is '#{actual_token}'"
         )
         next
       end
@@ -265,12 +264,12 @@ module Helpers # :nodoc:
     end
 
     # Start the server in a different thread, as the call to the "start" method blocks the current thread:
-    @thread = Thread.new {
+    @thread = Thread.new do
       @server.start
-    }
+    end
   end
 
-  def check_basic_token(request, response, token)
+  def check_basic_token(response, token)
     # Decode the token using Base64:
     decoded = Base64.decode64(token)
 
@@ -288,7 +287,7 @@ module Helpers # :nodoc:
     true
   end
 
-  def check_bearer_token(request, response, token)
+  def check_bearer_token(response, token)
     # Check that the token is exactly equal to what we expect:
     unless token == test_token
       response.status = 401
@@ -332,9 +331,9 @@ module Helpers # :nodoc:
     # Check the token:
     case scheme.downcase
     when 'basic'
-      return false unless check_basic_token(request, response, token)
+      return false unless check_basic_token(response, token)
     when 'bearer'
-      return false unless check_bearer_token(request, response, token)
+      return false unless check_bearer_token(response, token)
     else
       response.status = 401
       response.body = "The authentication scheme '#{scheme} isn't supported"
@@ -345,7 +344,7 @@ module Helpers # :nodoc:
     true
   end
 
-  def mount_raw(opts, &block)
+  def mount_raw(opts)
     # Get options and set default values:
     path = opts[:path]
 
@@ -362,7 +361,7 @@ module Helpers # :nodoc:
       @last_request_query = vars['QUERY_STRING']
 
       # Call the block provided by the calller to complete the processing:
-      block.call(request, response)
+      yield request, response
     end
   end
 
@@ -373,12 +372,9 @@ module Helpers # :nodoc:
     body    = opts[:body]
     delay   = opts[:delay] || 0
     prefix  = opts[:prefix] || test_prefix
-    version = opts[:version] || 4
 
     # If the path doesn't start with a forward slash, then we assume that it is relative to the prefix:
-    unless path.start_with?('/')
-      path = "#{prefix}/#{path}"
-    end
+    path = "#{prefix}/#{path}" unless path.start_with?('/')
 
     # Mount the request handler:
     mount_raw(path: path) do |request, response|
@@ -397,7 +393,6 @@ module Helpers # :nodoc:
     @server.shutdown
     @thread.join
   end
-
 end
 
 RSpec.configure do |c|

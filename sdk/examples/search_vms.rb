@@ -24,24 +24,24 @@ require 'ovirtsdk4'
 # criteria:
 
 # Create the connection to the server:
-connection = OvirtSDK4::Connection.new({
-  :url => 'https://engine40.example.com/ovirt-engine/api',
-  :username => 'admin@internal',
-  :password => 'redhat123',
-  :ca_file => 'ca.pem',
-  :debug => true,
-  :log => Logger.new('example.log'),
-})
+connection = OvirtSDK4::Connection.new(
+  url: 'https://engine40.example.com/ovirt-engine/api',
+  username: 'admin@internal',
+  password: 'redhat123',
+  ca_file: 'ca.pem',
+  debug: true,
+  log: Logger.new('example.log')
+)
 
 # Get the reference to the "vms" service:
 vms_service = connection.system_service.vms_service
 
 # Use the "list" method of the "vms" service to search the virtual
 # machines that match a search query:
-vms = vms_service.list({
-  :search => 'name=MYVM',
-  :case_sensitive => false,
-})
+vms = vms_service.list(
+  search: 'name=MYVM',
+  case_sensitive: false
+)
 
 # Note that the format of the search query is the same that is supported
 # by the GUI search bar.

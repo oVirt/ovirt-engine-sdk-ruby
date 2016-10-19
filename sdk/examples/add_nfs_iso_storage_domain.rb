@@ -23,41 +23,42 @@ require 'ovirtsdk4'
 # storage domain, that won't be initially attached to any data center.
 
 # Create the connection to the server:
-connection = OvirtSDK4::Connection.new({
-  :url => 'https://engine40.example.com/ovirt-engine/api',
-  :username => 'admin@internal',
-  :password => 'redhat123',
-  :ca_file => 'ca.pem',
-  :debug => true,
-  :log => Logger.new('example.log'),
-})
+connection = OvirtSDK4::Connection.new(
+  url: 'https://engine40.example.com/ovirt-engine/api',
+  username: 'admin@internal',
+  password: 'redhat123',
+  ca_file: 'ca.pem',
+  debug: true,
+  log: Logger.new('example.log')
+)
 
 # Get the reference to the storage domains service:
 sds_service = connection.system_service.storage_domains_service
 
 # Use the "add" method to create a new NFS storage domain:
 sd = sds_service.add(
-  OvirtSDK4::StorageDomain.new({
-    :name => 'myiso',
-    :description => 'My ISO',
-    :type => OvirtSDK4::StorageDomainType::ISO,
-    :host => {
-      :name => 'myhost',
+  OvirtSDK4::StorageDomain.new(
+    name: 'myiso',
+    description: 'My ISO',
+    type: OvirtSDK4::StorageDomainType::ISO,
+    host: {
+      name: 'myhost'
     },
-    :storage => {
-      :type => OvirtSDK4::StorageType::NFS,
-      :address => 'server0.example.com',
-      :path => '/nfs/ovirt/40/myiso',
-    },
-  })
+    storage: {
+      type: OvirtSDK4::StorageType::NFS,
+      address: 'server0.example.com',
+      path: '/nfs/ovirt/40/myiso'
+    }
+  )
 )
 
 # Wait till the storage domain is unattached:
 sd_service = sds_service.storage_domain_service(sd.id)
-begin
+loop do
   sleep(5)
   sd = sd_service.get
-end while sd.status != OvirtSDK4::StorageDomainStatus::UNATTACHED
+  break if sd.status == OvirtSDK4::StorageDomainStatus::UNATTACHED
+end
 
 # Close the connection to the server:
 connection.close

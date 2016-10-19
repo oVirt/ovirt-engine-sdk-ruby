@@ -12,18 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-API_V3_RESPONSE = '<api><version major="4" minor="1" build="0" revision="0"/></api>'
-API_V4_RESPONSE = '<api><version><major>4</major><minor>1</minor></version></api>'
+API_V3_RESPONSE = '<api><version major="4" minor="1" build="0" revision="0"/></api>'.freeze
+API_V4_RESPONSE = '<api><version><major>4</major><minor>1</minor></version></api>'.freeze
 
 def set_support_only_api_v3
-  mount_raw(path: '/api') do |request, response|
+  mount_raw(path: '/api') do |_, response|
     response.status = 200
     response.body = API_V3_RESPONSE
   end
 end
 
 def set_support_only_api_v4
-  mount_raw(path: '/ovirt-engine/api') do |request, response|
+  mount_raw(path: '/ovirt-engine/api') do |_, response|
     response.status = 200
     response.body = API_V4_RESPONSE
   end
@@ -33,12 +33,13 @@ def set_support_for_api_v3_and_v4
   mount_raw(path: '/ovirt-engine/api') do |request, response|
     version = request['Version']
     response.status = 200
-    case version
-    when '3'
-      response.body = API_V3_RESPONSE
-    else
-      response.body = API_V4_RESPONSE
-    end
+    response.body =
+      case version
+      when '3'
+        API_V3_RESPONSE
+      else
+        API_V4_RESPONSE
+      end
   end
 end
 
@@ -46,13 +47,13 @@ describe SDK::Probe do
   context '#probe' do
     let(:probe_params) do
       {
-        :host => test_host,
-        :port => test_port,
-        :insecure => true,
-        :username => test_user,
-        :password => test_password,
-        :log => test_log,
-        :debug => true
+        host:     test_host,
+        port:     test_port,
+        insecure: true,
+        username: test_user,
+        password: test_password,
+        log:      test_log,
+        debug:    true
       }
     end
 

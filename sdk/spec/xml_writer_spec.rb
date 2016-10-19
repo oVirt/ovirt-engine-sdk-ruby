@@ -15,20 +15,14 @@
 #
 
 describe SDK::XmlWriter do
-
-  describe ".write_element" do
-
-    context "given name and value" do
-
-      it "writes the expected XML" do
+  describe '.write_element' do
+    context 'given name and value' do
+      it 'writes the expected XML' do
         writer = SDK::XmlWriter.new
         writer.write_element('value', 'myvalue')
         expect(writer.string).to eql('<value>myvalue</value>')
         writer.close
       end
-
     end
-
   end
-
 end

@@ -23,19 +23,19 @@ require 'ovirtsdk4'
 # card to an existing virtual machine.
 
 # Create the connection to the server:
-connection = OvirtSDK4::Connection.new({
-  :url => 'https://engine40.example.com/ovirt-engine/api',
-  :username => 'admin@internal',
-  :password => 'redhat123',
-  :ca_file => 'ca.pem',
-  :debug => true,
-  :log => Logger.new('example.log'),
-})
+connection = OvirtSDK4::Connection.new(
+  url: 'https://engine40.example.com/ovirt-engine/api',
+  username: 'admin@internal',
+  password: 'redhat123',
+  ca_file: 'ca.pem',
+  debug: true,
+  log: Logger.new('example.log')
+)
 
 # Locate the virtual machines service and use it to find the virtual
 # machine:
 vms_service = connection.system_service.vms_service
-vm = vms_service.list({:search => 'name=myvm'})[0]
+vm = vms_service.list(search: 'name=myvm')[0]
 
 # In order to specify the network that the new interface will be
 # connected to we need to specify the identifier of the virtual network
@@ -56,13 +56,13 @@ nics_service = vms_service.vm_service(vm.id).nics_service
 # Use the "add" method of the network interface cards service to add the
 # new network interface card:
 nics_service.add(
-  OvirtSDK4::Nic.new({
-    :name => 'mynic',
-    :description => 'My network interface card',
-    :vnic_profile => {
-      :id => profile_id
-    },
-  })
+  OvirtSDK4::Nic.new(
+    name: 'mynic',
+    description: 'My network interface card',
+    vnic_profile: {
+      id: profile_id
+    }
+  )
 )
 
 # Close the connection to the server:

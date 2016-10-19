@@ -23,19 +23,19 @@ require 'ovirtsdk4'
 # virtual machine.
 
 # Create the connection to the server:
-connection = OvirtSDK4::Connection.new({
-  :url => 'https://engine40.example.com/ovirt-engine/api',
-  :username => 'admin@internal',
-  :password => 'redhat123',
-  :ca_file => 'ca.pem',
-  :debug => true,
-  :log => Logger.new('example.log'),
-})
+connection = OvirtSDK4::Connection.new(
+  url: 'https://engine40.example.com/ovirt-engine/api',
+  username: 'admin@internal',
+  password: 'redhat123',
+  ca_file: 'ca.pem',
+  debug: true,
+  log: Logger.new('example.log')
+)
 
 # Locate the virtual machines service and use it to find the virtual
 # machine:
 vms_service = connection.system_service.vms_service
-vm = vms_service.list({:search => 'name=myvm'})[0]
+vm = vms_service.list(search: 'name=myvm')[0]
 
 # Locate the service that manages the disk attachments of the virtual
 # machine:
@@ -44,27 +44,28 @@ disk_attachments_service = vms_service.vm_service(vm.id).disk_attachments_servic
 # Use the "add" method of the disk attachments service to add the disk:
 disk_attachment = disk_attachments_service.add(
   OvirtSDK4::DiskAttachment.new(
-    :disk => {
-      :name => 'mydisk',
-      :description => 'My disk',
-      :format => OvirtSDK4::DiskFormat::COW,
-      :provisioned_size => 1 * 2**20,
-      :storage_domains => [{
-        :name => 'mydata',
-      }],
+    disk: {
+      name: 'mydisk',
+      description: 'My disk',
+      format: OvirtSDK4::DiskFormat::COW,
+      provisioned_size: 1 * 2**20,
+      storage_domains: [{
+        name: 'mydata'
+      }]
     },
-    :interface => OvirtSDK4::DiskInterface::VIRTIO,
-    :bootable => false,
+    interface: OvirtSDK4::DiskInterface::VIRTIO,
+    bootable: false
   )
 )
 
 # Wait till the disk is OK:
 disks_service = connection.system_service.disks_service
 disk_service = disks_service.disk_service(disk_attachment.disk.id)
-begin
+loop do
   sleep(5)
   disk = disk_service.get
-end while disk.status != OvirtSDK4::DiskStatus::OK
+  break if disk.status == OvirtSDK4::DiskStatus::OK
+end
 
 # Close the connection to the server:
 connection.close

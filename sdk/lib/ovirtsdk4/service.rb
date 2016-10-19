@@ -15,12 +15,10 @@
 #
 
 module OvirtSDK4
-
   #
   # This is the base class for all the services of the SDK. It contains the utility methods used by all of them.
   #
   class Service
-
     #
     # Creates and raises an error containing the details of the given HTTP response and fault.
     #
@@ -51,7 +49,7 @@ module OvirtSDK4
           message << "HTTP response message is \"#{response.message}\"."
         end
       end
-      raise Error.new(message)
+      raise Error, message
     end
 
     #
@@ -64,14 +62,10 @@ module OvirtSDK4
     #
     def check_fault(response)
       body = response.body
-      if body.nil? || body.length == 0
-        raise_error(response, nil)
-      end
+      raise_error(response, nil) if body.nil? || body.length.zero?
       body = Reader.read(body)
-      if body.is_a?(Fault)
-        raise_error(response, body)
-      end
-      raise Error.new("Expected a fault, but got '#{body.class.name.split('::').last}'")
+      raise_error(response, body) if body.is_a?(Fault)
+      raise Error, "Expected a fault, but got '#{body.class.name.split('::').last}'"
     end
 
     #
@@ -86,20 +80,14 @@ module OvirtSDK4
     #
     def check_action(response)
       body = response.body
-      if body.nil? || body.length == 0
-        raise_error(response, nil)
-      end
+      raise_error(response, nil) if body.nil? || body.length.zero?
       body = Reader.read(body)
-      if body.is_a?(Fault)
-        raise_error(response, body)
-      end
+      raise_error(response, body) if body.is_a?(Fault)
       if body.is_a?(Action)
         return body if body.fault.nil?
         raise_error(response, body.fault)
       end
-      raise Error.new("Expected an action or a fault, but got '#{body.class.name.split('::').last}'")
+      raise Error, "Expected an action or a fault, but got '#{body.class.name.split('::').last}'"
     end
-
   end
-
 end

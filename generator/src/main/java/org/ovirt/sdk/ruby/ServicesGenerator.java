@@ -230,7 +230,7 @@ public class ServicesGenerator implements RubyGenerator {
         generateConvertLiteral(primaryParameterType, arg);
         buffer.addLine("query = {}");
         secondaryParameters.forEach(this::generateUrlParameter);
-        buffer.addLine("request = HttpRequest.new(:method => :POST, :url => @path, :query => query)");
+        buffer.addLine("request = HttpRequest.new(method: :POST, url: @path, query: query)");
         generateWriteRequestBody(primaryParameter, arg);
         buffer.addLine("response = @connection.send(request)");
         buffer.addLine("case response.code");
@@ -275,9 +275,9 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addLine("body = writer.string");
         buffer.addLine("writer.close");
         buffer.addLine("request = HttpRequest.new(");
-        buffer.addLine(  ":method => :POST,");
-        buffer.addLine(  ":url => \"#{@path}/%1$s\",", getPath(methodName));
-        buffer.addLine(  ":body => body,");
+        buffer.addLine(  "method: :POST,");
+        buffer.addLine(  "url: \"#{@path}/%1$s\",", getPath(methodName));
+        buffer.addLine(  "body: body");
         buffer.addLine(")");
         buffer.addLine("response = @connection.send(request)");
         buffer.addLine("case response.code");
@@ -344,7 +344,7 @@ public class ServicesGenerator implements RubyGenerator {
         // Generate the method body:
         buffer.addLine("query = {}");
         inParameters.forEach(this::generateUrlParameter);
-        buffer.addLine("request = HttpRequest.new(:method => :GET, :url => @path, :query => query)");
+        buffer.addLine("request = HttpRequest.new(method: :GET, url: @path, query: query)");
         buffer.addLine("response = @connection.send(request)");
         buffer.addLine("case response.code");
         buffer.addLine("when 200");
@@ -403,7 +403,7 @@ public class ServicesGenerator implements RubyGenerator {
         generateConvertLiteral(primaryParameterType, arg);
         buffer.addLine("query = {}");
         secondaryParameters.forEach(this::generateUrlParameter);
-        buffer.addLine("request = HttpRequest.new(:method => :PUT, :url => @path, :query => query)");
+        buffer.addLine("request = HttpRequest.new(method: :PUT, url: @path, query: query)");
         generateWriteRequestBody(primaryParameter, arg);
         buffer.addLine("response = @connection.send(request)");
         buffer.addLine("case response.code");
@@ -506,7 +506,7 @@ public class ServicesGenerator implements RubyGenerator {
         // Generate method body:
         buffer.addLine("query = {}");
         inParameters.forEach(this::generateUrlParameter);
-        buffer.addLine(  "request = HttpRequest.new(:method => :DELETE, :url => @path, :query => query)");
+        buffer.addLine(  "request = HttpRequest.new(method: :DELETE, url: @path, query: query)");
         buffer.addLine(  "response = @connection.send(request)");
         buffer.addLine(  "unless response.code == 200");
         buffer.addLine(    "check_fault(response)");
@@ -549,7 +549,7 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addYardTag("return", "[String]");
         buffer.addComment();
         buffer.addLine("def to_s");
-        buffer.addLine(  "return \"#<#{%1$s}:#{@path}>\"", serviceName.getClassName());
+        buffer.addLine(  "\"#<#{%1$s}:#{@path}>\"", serviceName.getClassName());
         buffer.addLine("end");
         buffer.addLine();
     }
@@ -581,7 +581,7 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addYardTag("return", "[%1$s] A reference to the `%2$s` service.", serviceName.getClassName(), methodName);
         buffer.addComment();
         buffer.addLine("def %1$s_service(%2$s)", methodName, argName);
-        buffer.addLine(  "return %1$s.new(@connection, \"#{@path}/#{%2$s}\")", serviceName.getClassName(), argName);
+        buffer.addLine(  "%1$s.new(@connection, \"#{@path}/#{%2$s}\")", serviceName.getClassName(), argName);
         buffer.addLine("end");
         buffer.addLine();
     }
@@ -598,8 +598,9 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addComment(doc);
         buffer.addComment();
         buffer.addYardTag("return", "[%1$s] A reference to `%2$s` service.", serviceName.getClassName(), methodName);
+        buffer.addComment();
         buffer.addLine("def %1$s_service", methodName);
-        buffer.addLine(  "return %1$s.new(@connection, \"#{@path}/%2$s\")", serviceName.getClassName(), urlSegment);
+        buffer.addLine(  "%1$s.new(@connection, \"#{@path}/%2$s\")", serviceName.getClassName(), urlSegment);
         buffer.addLine("end");
         buffer.addLine();
     }

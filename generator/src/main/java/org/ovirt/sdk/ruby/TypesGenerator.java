@@ -240,7 +240,7 @@ public class TypesGenerator implements RubyGenerator {
         buffer.addYardTag("return", "[%1$s]", yardDoc.getType(type));
         buffer.addComment();
         buffer.addLine("def %1$s", property);
-        buffer.addLine(  "return @%1$s", property);
+        buffer.addLine(  "@%1$s", property);
         buffer.addLine("end");
         buffer.addLine();
     }

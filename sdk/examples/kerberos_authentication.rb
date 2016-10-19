@@ -21,15 +21,16 @@ require 'ovirtsdk4'
 
 # This example will connect to the server using Kerberos:
 
-# Create the connection to the server, if sso_url is not provided the default for the engine is constructed from url:
-connection = OvirtSDK4::Connection.new({
-  :url => 'https://engine40.example.com/ovirt-engine/api',
-  :kerberos => true,
-  :sso_log => './sso.log',
-  :ca_file => 'ca.pem',
-  :debug => true,
-  :log => Logger.new('example.log'),
-})
+# Create the connection to the server, if sso_url is not provided the
+# default for the engine is constructed from url:
+connection = OvirtSDK4::Connection.new(
+  url: 'https://engine40.example.com/ovirt-engine/api',
+  kerberos: true,
+  sso_log: './sso.log',
+  ca_file: 'ca.pem',
+  debug: true,
+  log: Logger.new('example.log')
+)
 
 # Get the reference to the system service:
 api = connection.system_service.get

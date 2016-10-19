@@ -23,30 +23,30 @@ require 'ovirtsdk4'
 # machine:
 
 # Create the connection to the server:
-connection = OvirtSDK4::Connection.new({
-  :url => 'https://engine40.example.com/ovirt-engine/api',
-  :username => 'admin@internal',
-  :password => 'redhat123',
-  :ca_file => 'ca.pem',
-  :debug => true,
-  :log => Logger.new('example.log'),
-})
+connection = OvirtSDK4::Connection.new(
+  url: 'https://engine40.example.com/ovirt-engine/api',
+  username: 'admin@internal',
+  password: 'redhat123',
+  ca_file: 'ca.pem',
+  debug: true,
+  log: Logger.new('example.log')
+)
 
 # Locate the virtual machines service and use it to find the virtual
 # machine:
 vms_service = connection.system_service.vms_service
-vm = vms_service.list({:search => 'name=myvm'})[0]
+vm = vms_service.list(search: 'name=myvm')[0]
 
 # Locate the service that manages that specific virtual machine:
 vm_service = vms_service.vm_service(vm.id)
 
 # Use the "update" method to set a serial number policy and value:
-vm_service.update({
-  :serial_number => {
-    :policy => OvirtSDK4::SerialNumberPolicy::CUSTOM,
-    :value => 'myserial',
-  },
-})
+vm_service.update(
+  serial_number: {
+    policy: OvirtSDK4::SerialNumberPolicy::CUSTOM,
+    value: 'myserial'
+  }
+)
 
 # Close the connection to the server:
 connection.close

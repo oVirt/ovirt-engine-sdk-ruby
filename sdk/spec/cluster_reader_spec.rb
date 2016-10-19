@@ -15,16 +15,13 @@
 #
 
 describe SDK::ClusterReader do
-
   describe '#read_one' do
-
     context 'given switch type after empty RNG sources' do
-
       it 'both are read correctly' do
         reader = SDK::XmlReader.new(
-          '<cluster>' +
-            '<required_rng_sources/>' +
-            '<switch_type>legacy</switch_type>' +
+          '<cluster>' \
+            '<required_rng_sources/>' \
+            '<switch_type>legacy</switch_type>' \
           '</cluster>'
         )
         result = SDK::ClusterReader.read_one(reader)
@@ -34,9 +31,6 @@ describe SDK::ClusterReader do
         expect(result.required_rng_sources).to eql([])
         expect(result.switch_type).to eql(SDK::SwitchType::LEGACY)
       end
-
     end
-
   end
-
 end

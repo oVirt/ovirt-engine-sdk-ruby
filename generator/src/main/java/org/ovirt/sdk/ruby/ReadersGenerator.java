@@ -111,7 +111,7 @@ public class ReadersGenerator implements RubyGenerator {
         RubyName typeName = rubyNames.getTypeName(type);
         RubyName readerName = rubyNames.getReaderName(type);
         RubyName baseName = rubyNames.getBaseReaderName();
-        buffer.addLine("class %1$s < %2$s # :nodoc:", readerName.getClassName(), baseName.getClassName());
+        buffer.addLine("class %1$s < %2$s", readerName.getClassName(), baseName.getClassName());
         buffer.addLine();
 
         // Generate the method that reads one instance:

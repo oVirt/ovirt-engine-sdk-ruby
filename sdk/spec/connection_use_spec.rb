@@ -15,7 +15,6 @@
 #
 
 describe SDK::Connection do
-
   before(:all) do
     start_server
     @connection = test_connection
@@ -26,68 +25,51 @@ describe SDK::Connection do
     stop_server
   end
 
-  describe ".send" do
-
-    context "GET of root" do
-
-      it "just works" do
+  describe '#send' do
+    context 'GET of root' do
+      it 'just works' do
         mount_xml(path: '', body: '<api/>')
         request = SDK::HttpRequest.new
         response = @connection.send(request)
         expect(response.code).to eql(200)
       end
-
     end
-
   end
 
-  describe ".service" do
-
-    context "given nil" do
-
-      it "returns a reference to the system service" do
+  describe '#service' do
+    context 'given nil' do
+      it 'returns a reference to the system service' do
         result = @connection.service(nil)
         expect(result).to be_a(SDK::SystemService)
       end
-
     end
 
-    context "given empty string" do
-
-      it "returns a reference to the system service" do
+    context 'given empty string' do
+      it 'returns a reference to the system service' do
         result = @connection.service(nil)
         expect(result).to be_a(SDK::SystemService)
       end
-
     end
 
-    context "given 'vms'" do
-
-      it "returns a reference to the virtual machines service" do
+    context 'given "vms"' do
+      it 'returns a reference to the virtual machines service' do
         result = @connection.service('vms')
         expect(result).to be_a(SDK::VmsService)
       end
-
     end
 
-    context "given 'vms/123'" do
-
-      it "returns a reference to the virtual machine service" do
+    context 'given "vms/123"' do
+      it 'returns a reference to the virtual machine service' do
         result = @connection.service('vms/123')
         expect(result).to be_a(SDK::VmService)
       end
-
     end
 
-    context "given 'vms/123/diskattachments'" => true do
-
-      it "returns a reference to the virtual machine disk attachments service" do
+    context 'given "vms/123/diskattachments"' do
+      it 'returns a reference to the virtual machine disk attachments service' do
         result = @connection.service('vms/123/diskattachments')
         expect(result).to be_a(SDK::DiskAttachmentsService)
       end
-
     end
-
   end
-
 end

@@ -22,29 +22,29 @@ require 'ovirtsdk4'
 # This example will connect to the server and create a new virtual machine:
 
 # Create the connection to the server:
-connection = OvirtSDK4::Connection.new({
-  :url => 'https://engine40.example.com/ovirt-engine/api',
-  :username => 'admin@internal',
-  :password => 'redhat123',
-  :ca_file => 'ca.pem',
-  :debug => true,
-  :log => Logger.new('example.log'),
-})
+connection = OvirtSDK4::Connection.new(
+  url: 'https://engine40.example.com/ovirt-engine/api',
+  username: 'admin@internal',
+  password: 'redhat123',
+  ca_file: 'ca.pem',
+  debug: true,
+  log: Logger.new('example.log')
+)
 
 # Get the reference to the "vms" service:
 vms_service = connection.system_service.vms_service
 
 # Use the "add" method to create a new virtual machine:
 vms_service.add(
-  OvirtSDK4::Vm.new({
-    :name => 'myvm',
-    :cluster => {
-      :name => 'mycluster'
+  OvirtSDK4::Vm.new(
+    name: 'myvm',
+    cluster: {
+      name: 'mycluster'
     },
-    :template => {
-      :name => 'Blank'
+    template: {
+      name: 'Blank'
     }
-  })
+  )
 )
 
 # Note that when construction an object you can use the above notation,
@@ -53,15 +53,15 @@ vms_service.add(
 # objects, it is equivalent, but more verbose. For example:
 #
 # vms_service.add(
-#   OvirtSDK4::Vm.new({
-#     :name => 'myvm',
-#     :cluster => OvirtSDK4::Cluster.new({
-#       :name => 'mycluster'
-#     }),
-#     :template => OvirtSDK4::Template.new({
-#       :name => 'mytemplate'
-#     })
-#   })
+#   OvirtSDK4::Vm.new(
+#     name: 'myvm',
+#     cluster: OvirtSDK4::Cluster.new(
+#       name: 'mycluster'
+#     ),
+#     template: OvirtSDK4::Template.new(
+#       name: 'mytemplate'
+#     )
+#   )
 # )
 
 # Close the connection to the server:
