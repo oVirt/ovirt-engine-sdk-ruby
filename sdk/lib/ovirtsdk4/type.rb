@@ -15,19 +15,17 @@
 #
 
 module OvirtSDK4
-
   #
   # This module is a mixin that contains the methods common to struct and list types.
   #
   module Type
-
     #
     # Returns the value of the `href` attribute.
     #
     # @return [String]
     #
     def href
-      return @href
+      @href
     end
 
     #
@@ -86,13 +84,12 @@ module OvirtSDK4
         elsif key.is_a?(Integer)
           current = current[key]
         else
-          raise TypeError.new("The key '#{key}' isn't a symbol or integer")
+          raise TypeError, "The key '#{key}' isn't a symbol or integer"
         end
         break if current.nil?
       end
       current
     end
-
   end
 
   #
@@ -118,7 +115,7 @@ module OvirtSDK4
     #
     # Use the same logic for `eql?` and `==`.
     #
-    alias_method :eql?, :==
+    alias eql? ==
 
     #
     # Generates a hash value for this object.
@@ -126,7 +123,6 @@ module OvirtSDK4
     def hash
       0
     end
-
   end
 
   #
@@ -135,5 +131,4 @@ module OvirtSDK4
   class List < Array
     include Type
   end
-
 end

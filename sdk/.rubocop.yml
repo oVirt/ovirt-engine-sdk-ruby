@@ -1,0 +1,52 @@
+#
+# We like long lines, 120 characters:
+#
+Metrics/LineLength:
+  Max: 120
+
+#
+# Disable most metrics, as we don't want to change the code to satisfy
+# them, at least not now.
+#
+Metrics/MethodLength:
+  Enabled: false
+Metrics/ModuleLength:
+  Enabled: false
+Metrics/ClassLength:
+  Enabled: false
+Metrics/BlockLength:
+  Enabled: false
+Metrics/AbcSize:
+  Enabled: false
+Metrics/CyclomaticComplexity:
+  Enabled: false
+Metrics/PerceivedComplexity:
+  Enabled: false
+
+#
+# The spec for types includes some apparently stupid tests, like
+# checking that the result of `==` is `true` when an object is compared
+# to itself. Rubocop doesn't like these tests, but we want them anyhow,
+# so we exclude that spec.
+#
+Lint/UselessComparison:
+  Exclude:
+    - 'spec/type_spec.rb'
+Style/NilComparison:
+  Exclude:
+    - 'spec/type_spec.rb'
+
+#
+# Exclude the generated source code and temporary files, as it isn't
+# practical to enforce style there (too many long lines, etc).
+#
+AllCops:
+  Exclude:
+    - 'ext/ovirtsdk4c/extconf.rb'
+    - 'lib/ovirtsdk4/readers.rb'
+    - 'lib/ovirtsdk4/services.rb'
+    - 'lib/ovirtsdk4/types.rb'
+    - 'lib/ovirtsdk4/writers.rb'
+    - 'lib/ovirtsdk4/version.rb'
+    - 'pkg/**/*'
+    - 'tmp/**/*'

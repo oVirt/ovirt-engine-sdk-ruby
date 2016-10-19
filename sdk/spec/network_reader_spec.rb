@@ -15,9 +15,7 @@
 #
 
 describe SDK::NetworkReader do
-
   describe '#read_one' do
-
     context 'when given a network with no usages' do
       it 'the value of the usages attribute is nil' do
         reader = SDK::XmlReader.new(
@@ -32,8 +30,8 @@ describe SDK::NetworkReader do
     context 'when given a network with an empty usages' do
       it 'creates an empty array of usages' do
         reader = SDK::XmlReader.new(
-          '<network>' +
-            '<usages/>' +
+          '<network>' \
+            '<usages/>' \
           '</network>'
         )
         result = SDK::NetworkReader.read_one(reader)
@@ -46,10 +44,10 @@ describe SDK::NetworkReader do
     context 'when given a network with one usage' do
       it 'creates an array containing one usage' do
         reader = SDK::XmlReader.new(
-          '<network>' +
-            '<usages>' +
-              '<usage>vm</usage>' +
-            '</usages>' +
+          '<network>' \
+            '<usages>' \
+              '<usage>vm</usage>' \
+            '</usages>' \
           '</network>'
         )
         result = SDK::NetworkReader.read_one(reader)
@@ -63,11 +61,11 @@ describe SDK::NetworkReader do
     context 'when given network with two usages' do
       it 'creates an array containing two usage' do
         reader = SDK::XmlReader.new(
-          '<network>' +
-            '<usages>' +
-              '<usage>vm</usage>' +
-              '<usage>display</usage>' +
-            '</usages>' +
+          '<network>' \
+            '<usages>' \
+              '<usage>vm</usage>' \
+              '<usage>display</usage>' \
+            '</usages>' \
           '</network>'
         )
         result = SDK::NetworkReader.read_one(reader)
@@ -79,7 +77,5 @@ describe SDK::NetworkReader do
         expect(result.usages[1]).to eql(SDK::NetworkUsage::DISPLAY)
       end
     end
-
   end
-
 end

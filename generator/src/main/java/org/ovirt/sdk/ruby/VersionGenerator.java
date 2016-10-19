@@ -57,7 +57,7 @@ public class VersionGenerator implements RubyGenerator {
         String moduleName = rubyNames.getModuleName();
         String version = rubyNames.getVersion();
         buffer.beginModule(moduleName);
-        buffer.addLine("VERSION = '%1$s'", version.toLowerCase());
+        buffer.addLine("VERSION = '%1$s'.freeze", version.toLowerCase());
         buffer.endModule(moduleName);
     }
 }

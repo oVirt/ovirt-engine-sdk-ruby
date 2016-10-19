@@ -23,15 +23,15 @@ require 'ovirtsdk4'
 # the server:
 
 # Create the connection to the server:
-connection = OvirtSDK4::Connection.new({
-  :url => 'https://engine40.example.com/ovirt-engine/api',
-  :username => 'admin@internal',
-  :password => 'redhat123',
-  :ca_file => 'ca.pem',
-  :compress => true,
-  :debug => false,
-  :log => Logger.new('example.log'),
-})
+connection = OvirtSDK4::Connection.new(
+  url: 'https://engine40.example.com/ovirt-engine/api',
+  username: 'admin@internal',
+  password: 'redhat123',
+  ca_file: 'ca.pem',
+  compress: true,
+  debug: false,
+  log: Logger.new('example.log')
+)
 
 # Note that when compression and debug are enabled the raw compressed
 # responses will be written to the log output, so it isn't good idea to

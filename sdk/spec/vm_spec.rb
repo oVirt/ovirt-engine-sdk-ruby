@@ -15,29 +15,21 @@
 #
 
 describe SDK::Vm do
-
-  describe ".disk_attachments=" do
-
-    context "when given nil" do
-
-      it "it is converted to nil" do
+  describe '#disk_attachments=' do
+    context 'when given nil' do
+      it 'it is converted to nil' do
         vm = SDK::Vm.new
         vm.disk_attachments = nil
         expect(vm.disk_attachments).to be(nil)
       end
-
     end
 
-    context "when given an array" do
-
-      it "it is converted to a list" do
+    context 'when given an array' do
+      it 'it is converted to a list' do
         vm = SDK::Vm.new
         vm.disk_attachments = []
         expect(vm.disk_attachments).to be_a(SDK::List)
       end
-
     end
-
   end
-
 end

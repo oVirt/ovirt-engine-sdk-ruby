@@ -23,20 +23,20 @@ require 'ovirtsdk4'
 # remove it:
 
 # Create the connection to the server:
-connection = OvirtSDK4::Connection.new({
-  :url => 'https://engine40.example.com/ovirt-engine/api',
-  :username => 'admin@internal',
-  :password => 'redhat123',
-  :ca_file => 'ca.pem',
-  :debug => true,
-  :log => Logger.new('example.log'),
-})
+connection = OvirtSDK4::Connection.new(
+  url: 'https://engine40.example.com/ovirt-engine/api',
+  username: 'admin@internal',
+  password: 'redhat123',
+  ca_file: 'ca.pem',
+  debug: true,
+  log: Logger.new('example.log')
+)
 
 # Find the service that manages VMs:
 vms_service = connection.system_service.vms_service
 
 # Find the VM:
-vm = vms_service.list({:search => 'name=myvm'})[0]
+vm = vms_service.list(search: 'name=myvm')[0]
 
 # Note that the "vm" variable that we assigned above contains only the
 # data of the VM, it doesn't have any method like "remove". Methods are

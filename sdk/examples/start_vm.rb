@@ -22,20 +22,20 @@ require 'ovirtsdk4'
 # This example will connect to the server and start a virtual machine.
 
 # Create the connection to the server:
-connection = OvirtSDK4::Connection.new({
-  :url => 'https://engine40.example.com/ovirt-engine/api',
-  :username => 'admin@internal',
-  :password => 'redhat123',
-  :ca_file => 'ca.pem',
-  :debug => true,
-  :log => Logger.new('example.log'),
-})
+connection = OvirtSDK4::Connection.new(
+  url: 'https://engine40.example.com/ovirt-engine/api',
+  username: 'admin@internal',
+  password: 'redhat123',
+  ca_file: 'ca.pem',
+  debug: true,
+  log: Logger.new('example.log')
+)
 
 # Get the reference to the "vms" service:
 vms_service = connection.system_service.vms_service
 
 # Find the virtual machine:
-vm = vms_service.list({:search => 'name=myvm'})[0]
+vm = vms_service.list(search: 'name=myvm')[0]
 
 # Locate the service that manages the virtual machine, as that is where
 # the action methods are defined:
@@ -45,10 +45,11 @@ vm_service = vms_service.vm_service(vm.id)
 vm_service.start
 
 # Wait till the virtual machine is up:
-begin
+loop do
   sleep(5)
   vm = vm_service.get
-end while vm.status != OvirtSDK4::VmStatus::UP
+  break if vm.status == OvirtSDK4::VmStatus::UP
+end
 
 # Close the connection to the server:
 connection.close

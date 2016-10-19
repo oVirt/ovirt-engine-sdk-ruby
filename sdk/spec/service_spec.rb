@@ -15,88 +15,78 @@
 #
 
 describe SDK::Service do
-
-  describe ".check_fault" do
-
-    context "given a fault" do
-
+  describe '#check_fault' do
+    context 'given a fault' do
       before(:all) do
         @service = SDK::Service.new
-        @response = SDK::HttpResponse.new({
-          :code => 209,
-          :message => 'mymessage',
-          :body => '<fault><reason>myreason</reason><detail>mydetail</detail></fault>'
-        })
+        @response = SDK::HttpResponse.new(
+          code:    209,
+          message: 'mymessage',
+          body:    '<fault><reason>myreason</reason><detail>mydetail</detail></fault>'
+        )
       end
 
-      it "raises an exception containing the code" do
+      it 'raises an exception containing the code' do
         expect { @service.check_fault(@response) }.to raise_error(SDK::Error, /209/)
       end
 
-      it "raises an exception containing the message" do
+      it 'raises an exception containing the message' do
         expect { @service.check_fault(@response) }.to raise_error(SDK::Error, /mymessage/)
       end
 
-      it "raises an exception containing the reason" do
+      it 'raises an exception containing the reason' do
         expect { @service.check_fault(@response) }.to raise_error(SDK::Error, /myreason/)
       end
 
-      it "raises an exception containing the detail" do
+      it 'raises an exception containing the detail' do
         expect { @service.check_fault(@response) }.to raise_error(SDK::Error, /mydetail/)
       end
-
     end
 
-    context "given an empty response, with blank body" do
-
+    context 'given an empty response, with blank body' do
       before(:all) do
         @service = SDK::Service.new
         @response = SDK::HttpResponse.new(
-          :code => 209,
-          :message => 'mymessage',
-          :body => '',
+          code:    209,
+          message: 'mymessage',
+          body:    ''
         )
       end
 
-      it "raises an exception containing the code" do
+      it 'raises an exception containing the code' do
         expect { @service.check_fault(@response) }.to raise_error(SDK::Error, /209/)
       end
 
-      it "raises an exception containing the message" do
+      it 'raises an exception containing the message' do
         expect { @service.check_fault(@response) }.to raise_error(SDK::Error, /mymessage/)
       end
-
     end
 
-    context "given an empty response, with nil body" do
-
+    context 'given an empty response, with nil body' do
       before(:all) do
         @service = SDK::Service.new
         @response = SDK::HttpResponse.new(
-          :code => 209,
-          :message => 'mymessage',
-          :body => nil,
+          code:    209,
+          message: 'mymessage',
+          body:    nil
         )
       end
 
-      it "raises an exception containing the code" do
+      it 'raises an exception containing the code' do
         expect { @service.check_fault(@response) }.to raise_error(SDK::Error, /209/)
       end
 
-      it "raises an exception containing the message" do
+      it 'raises an exception containing the message' do
         expect { @service.check_fault(@response) }.to raise_error(SDK::Error, /mymessage/)
       end
-
     end
-
   end
 
-  describe ".check_action" do
-
+  describe '#check_action' do
     context 'given an empty response, with nil body' do
       it 'raises an error containing the response code' do
         service = SDK::Service.new
-        response = SDK::HttpResponse.new(:code => 209, :body => nil)
+        response = SDK::HttpResponse.new(code: 209, body: nil)
         expect { service.check_action(response) }.to raise_error(SDK::Error, /209/)
       end
     end
@@ -104,51 +94,45 @@ describe SDK::Service do
     context 'given an empty response, with blank body' do
       it 'raises an error containing the response code' do
         service = SDK::Service.new
-        response = SDK::HttpResponse.new(:code => 209, :body => '')
+        response = SDK::HttpResponse.new(code: 209, body: '')
         expect { service.check_action(response) }.to raise_error(SDK::Error, /209/)
       end
     end
 
-    context "given no fault" do
-
+    context 'given no fault' do
       before(:all) do
         @service = SDK::Service.new
-        @response = SDK::HttpResponse.new({
-          :body => '<action><status><state>mystate</state></status></action>'
-        })
+        @response = SDK::HttpResponse.new(
+          body: '<action><status><state>mystate</state></status></action>'
+        )
       end
 
-      it "does not raise an exception" do
+      it 'does not raise an exception' do
         @service.check_action(@response)
       end
-
     end
 
-    context "given a fault" do
-
+    context 'given a fault' do
       before(:all) do
         @service = SDK::Service.new
-        @response = SDK::HttpResponse.new({
-          :body => '<action><fault><reason>myreason</reason></fault></action>'
-        })
+        @response = SDK::HttpResponse.new(
+          body: '<action><fault><reason>myreason</reason></fault></action>'
+        )
       end
 
-      it "raises an exception" do
+      it 'raises an exception' do
         expect { @service.check_action(@response) }.to raise_error(SDK::Error, /myreason/)
       end
-
     end
 
     context 'given a fault instead of an action' do
       it 'raises an error containing the fault reason' do
         service = SDK::Service.new
         response = SDK::HttpResponse.new(
-          :body => '<fault><reason>myreason</reason></fault>'
+          body: '<fault><reason>myreason</reason></fault>'
         )
         expect { service.check_action(response) }.to raise_error(SDK::Error, /myreason/)
       end
     end
-
   end
-
 end

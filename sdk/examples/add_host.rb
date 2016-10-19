@@ -22,37 +22,38 @@ require 'ovirtsdk4'
 # This example will connect to the server and add a new host:
 
 # Create the connection to the server:
-connection = OvirtSDK4::Connection.new({
-  :url => 'https://engine40.example.com/ovirt-engine/api',
-  :username => 'admin@internal',
-  :password => 'redhat123',
-  :ca_file => 'ca.pem',
-  :debug => true,
-  :log => Logger.new('example.log'),
-})
+connection = OvirtSDK4::Connection.new(
+  url: 'https://engine40.example.com/ovirt-engine/api',
+  username: 'admin@internal',
+  password: 'redhat123',
+  ca_file: 'ca.pem',
+  debug: true,
+  log: Logger.new('example.log')
+)
 
 # Get the reference to the hosts service:
 hosts_service = connection.system_service.hosts_service
 
 # Add the host:
 host = hosts_service.add(
-  OvirtSDK4::Host.new({
-    :name => 'myhost',
-    :description => 'My host',
-    :address => 'node40.example.com',
-    :root_password => 'redhat123',
-    :cluster => {
-      :name => 'mycluster',
-    },
-  })
+  OvirtSDK4::Host.new(
+    name: 'myhost',
+    description: 'My host',
+    address: 'node40.example.com',
+    root_password: 'redhat123',
+    cluster: {
+      name: 'mycluster'
+    }
+  )
 )
 
 # Wait till the host is up:
 host_service = hosts_service.host_service(host.id)
-begin
+loop do
   sleep(5)
   host = host_service.get
-end while host.status != OvirtSDK4::HostStatus::UP
+  break if host.status == OvirtSDK4::HostStatus::UP
+end
 
 # Close the connection to the server:
 connection.close

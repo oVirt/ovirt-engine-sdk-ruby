@@ -19,12 +19,13 @@
 require 'rake'
 require 'rake/extensiontask'
 require 'rspec/core/rake_task'
+require 'rubocop/rake_task'
 require 'rubygems'
 require 'rubygems/package_task'
 
 # The names of the gem and the extension:
-GEM_NAME = 'ovirt-engine-sdk'
-EXT_NAME = 'ovirtsdk4c'
+GEM_NAME = 'ovirt-engine-sdk'.freeze
+EXT_NAME = 'ovirtsdk4c'.freeze
 
 # Load the gem specification:
 spec = Gem::Specification.load("#{GEM_NAME}.gemspec")
@@ -32,15 +33,20 @@ spec = Gem::Specification.load("#{GEM_NAME}.gemspec")
 # Add the compilation task:
 Rake::ExtensionTask.new(EXT_NAME, spec)
 
-# Add the test task:
-RSpec::Core::RakeTask.new(:test) do |test|
+# Task to run RSpec:
+RSpec::Core::RakeTask.new(:rspec) do |test|
   test.pattern = 'spec/**/*_spec.rb'
 end
+
+# Task to run Rubocop:
+RuboCop::RakeTask.new(:rubocop)
+
+# Task to run RSpec and Rubocop:
+task test: [:rspec, :rubocop]
 
 # Add the gem packaging task:
 Gem::PackageTask.new(spec) do |pkg|
 end
 
 # In order to run the tests the extension needs to be compiler first:
-task :test => :compile
-
+task test: :compile

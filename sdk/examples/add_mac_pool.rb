@@ -24,12 +24,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  :url => 'https://engine40.example.com/ovirt-engine/api',
-  :username => 'admin@internal',
-  :password => 'redhat123',
-  :ca_file => 'ca.pem',
-  :debug => true,
-  :log => Logger.new('example.log'),
+  url: 'https://engine40.example.com/ovirt-engine/api',
+  username: 'admin@internal',
+  password: 'redhat123',
+  ca_file: 'ca.pem',
+  debug: true,
+  log: Logger.new('example.log')
 )
 
 # Get the reference to the service that manages the MAC address pools:
@@ -38,14 +38,14 @@ pools_service = connection.system_service.mac_pools_service
 # Add a new MAC address pool:
 pool = pools_service.add(
   OvirtSDK4::MacPool.new(
-    :name => 'mymacpool',
-    :ranges => [
+    name: 'mymacpool',
+    ranges: [
       OvirtSDK4::Range.new(
-        :from => '02:00:00:00:00:00',
-        :to => '02:00:00:00:00:00',
-      ),
-    ],
-  ),
+        from: '02:00:00:00:00:00',
+        to: '02:00:00:00:00:00'
+      )
+    ]
+  )
 )
 
 # Find the service that manages clusters, as we need it in order to find
@@ -53,7 +53,7 @@ pool = pools_service.add(
 clusters_service = connection.system_service.clusters_service
 
 # Find the cluster:
-cluster = clusters_service.list(:search => 'name=mycluster')[0]
+cluster = clusters_service.list(search: 'name=mycluster')[0]
 
 # Find the service that manages the cluster, as we need it in order to
 # do the update:
@@ -62,10 +62,10 @@ cluster_service = clusters_service.cluster_service(cluster.id)
 # Update the cluster so that it uses the new MAC pool:
 cluster_service.update(
   OvirtSDK4::Cluster.new(
-    :mac_pool => {
-      :id => pool.id,
-    },
-  ),
+    mac_pool: {
+      id: pool.id
+    }
+  )
 )
 
 # Close the connection to the server:

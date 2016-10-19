@@ -120,15 +120,15 @@ module OvirtSDK4
 
       # Create the HTTP client:
       @client = HttpClient.new(
-        :host           => @host,
-        :port           => @port,
-        :insecure       => @insecure,
-        :ca_file        => @ca_file,
-        :log            => @log,
-        :debug          => @debug,
-        :proxy_url      => @proxy_url,
-        :proxy_username => @proxy_username,
-        :proxy_password => @proxy_password,
+        host:           @host,
+        port:           @port,
+        insecure:       @insecure,
+        ca_file:        @ca_file,
+        log:            @log,
+        debug:          @debug,
+        proxy_url:      @proxy_url,
+        proxy_username: @proxy_username,
+        proxy_password: @proxy_password
       )
     end
 
@@ -141,7 +141,7 @@ module OvirtSDK4
     #
     def probe
       path = detect_path
-      raise OvirtSDK4::Error.new('API path not found') unless path
+      raise Error, 'API path not found' unless path
       detect_version(path).map { |version| ProbeResult.new(version: version) }
     end
 
@@ -155,7 +155,7 @@ module OvirtSDK4
       @client.close if @client
     end
 
-  private
+    private
 
     #
     # We will only check these paths, as there is where the API is available in common installations of the engine.
@@ -182,7 +182,7 @@ module OvirtSDK4
         'User-Agent'   => "RubyProbe/#{VERSION}",
         'Version'      => version,
         'Content-Type' => 'application/xml',
-        'Accept'       => 'application/xml',
+        'Accept'       => 'application/xml'
       )
 
       # Set authentication:
@@ -199,9 +199,9 @@ module OvirtSDK4
     def detect_path
       PATH_CANDIDATES.each do |path|
         begin
-          response = send(:path => path)
+          response = send(path: path)
           return path if response.code == 200
-          raise OvirtSDK4::Error.new('Unauthorized') if response.code == 401
+          raise Error, 'Unauthorized' if response.code == 401
         end
       end
       nil
@@ -215,12 +215,12 @@ module OvirtSDK4
     end
 
     def detect_v3(path)
-      response = send(:version => '3', :path => path)
+      response = send(version: '3', path: path)
       special_response_regexp_in_api3 =~ response.body
     end
 
     def detect_v4(path)
-      response = send(:version => '4', :path => path)
+      response = send(version: '4', path: path)
       special_response_regexp_in_api4 =~ response.body
     end
 
@@ -254,11 +254,11 @@ module OvirtSDK4
     end
 
     # Override the comparison method.
-    def ==(o)
-      o.class == self.class && o.state == state
+    def ==(other)
+      other.class == self.class && other.state == state
     end
 
-    alias_method :eql?, :==
+    alias eql? ==
 
     # Should always be overriden if one overrides ==, used to get a hash value
     # for the object.
@@ -266,7 +266,7 @@ module OvirtSDK4
       state.hash
     end
 
-    #@api private
+    # @api private
     def state
       [version]
     end

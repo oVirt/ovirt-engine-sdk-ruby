@@ -23,14 +23,14 @@ require 'ovirtsdk4'
 # using paging:
 
 # Create the connection to the server:
-connection = OvirtSDK4::Connection.new({
-  :url => 'https://engine40.example.com/ovirt-engine/api',
-  :username => 'admin@internal',
-  :password => 'redhat123',
-  :ca_file => 'ca.pem',
-  :debug => true,
-  :log => Logger.new('example.log'),
-})
+connection = OvirtSDK4::Connection.new(
+  url: 'https://engine40.example.com/ovirt-engine/api',
+  username: 'admin@internal',
+  password: 'redhat123',
+  ca_file: 'ca.pem',
+  debug: true,
+  log: Logger.new('example.log')
+)
 
 # Get the reference to the "vms" service:
 vms_service = connection.system_service.vms_service
@@ -39,13 +39,13 @@ vms_service = connection.system_service.vms_service
 size = 1
 index = 1
 loop do
-  page = vms_service.list({
-    :search => "page #{index}",
-    :max => size,
-  })
-  break unless page.length > 0
+  page = vms_service.list(
+    search: "page #{index}",
+    max: size
+  )
+  break if page.empty?
   page.each do |vm|
-    puts("#{vm.name}")
+    puts(vm.name)
   end
   index += 1
 end

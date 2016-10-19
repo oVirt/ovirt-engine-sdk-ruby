@@ -15,9 +15,7 @@
 #
 
 describe SDK::NetworkWriter do
-
   describe '#write_one' do
-
     context 'when usages is nil' do
       it 'writes the expected XML' do
         network = SDK::Network.new
@@ -29,12 +27,12 @@ describe SDK::NetworkWriter do
     context 'when usages is empty' do
       it 'writes the expected XML' do
         network = SDK::Network.new(
-          usages: [],
+          usages: []
         )
         result = SDK::Writer.write(network)
         expect(result).to eql(
-          '<network>' +
-            '<usages/>' +
+          '<network>' \
+            '<usages/>' \
           '</network>'
         )
       end
@@ -44,15 +42,15 @@ describe SDK::NetworkWriter do
       it 'writes the expected XML' do
         network = SDK::Network.new(
           usages: [
-            SDK::NetworkUsage::VM,
-          ],
+            SDK::NetworkUsage::VM
+          ]
         )
         result = SDK::Writer.write(network)
         expect(result).to eql(
-          '<network>' +
-            '<usages>' +
-              '<usage>vm</usage>' +
-            '</usages>' +
+          '<network>' \
+            '<usages>' \
+              '<usage>vm</usage>' \
+            '</usages>' \
           '</network>'
         )
       end
@@ -63,21 +61,19 @@ describe SDK::NetworkWriter do
         network = SDK::Network.new(
           usages: [
             SDK::NetworkUsage::VM,
-            SDK::NetworkUsage::DISPLAY,
-          ],
+            SDK::NetworkUsage::DISPLAY
+          ]
         )
         result = SDK::Writer.write(network)
         expect(result).to eql(
-          '<network>' +
-            '<usages>' +
-              '<usage>vm</usage>' +
-              '<usage>display</usage>' +
-            '</usages>' +
+          '<network>' \
+            '<usages>' \
+              '<usage>vm</usage>' \
+              '<usage>display</usage>' \
+            '</usages>' \
           '</network>'
         )
       end
     end
-
   end
-
 end

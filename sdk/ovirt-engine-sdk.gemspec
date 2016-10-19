@@ -1,4 +1,4 @@
-#--
+#
 # Copyright (c) 2015-2016 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#++
+#
 
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib)
 require 'ovirtsdk4/version'
 
 Gem::Specification.new do |spec|
-
   # Basic information:
   spec.name        = 'ovirt-engine-sdk'
   spec.version     = OvirtSDK4::VERSION
@@ -37,6 +36,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency('rake', '~> 11.3')
   spec.add_development_dependency('rake-compiler', '~> 0.9')
   spec.add_development_dependency('rspec', '~> 3.3')
+  spec.add_development_dependency('rubocop', '~> 0.44')
   spec.add_development_dependency('yard', '~> 0.8')
 
   # Run time dependencies:
@@ -44,16 +44,16 @@ Gem::Specification.new do |spec|
 
   # Extensions:
   spec.extensions = [
-    'ext/ovirtsdk4c/extconf.rb',
+    'ext/ovirtsdk4c/extconf.rb'
   ]
 
   # Files:
-  spec.files = Dir.glob([
+  patterns = [
     '.yardopts',
     'LICENSE.txt',
     'README.adoc',
     'ext/**/*.{rb,c,h}',
-    'lib/**/*.rb',
-  ])
-
+    'lib/**/*.rb'
+  ]
+  spec.files = Dir.glob(patterns)
 end

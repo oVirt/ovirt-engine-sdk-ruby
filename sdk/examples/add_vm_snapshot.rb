@@ -23,19 +23,19 @@ require 'ovirtsdk4'
 # existing virtual machine:
 
 # Create the connection to the server:
-connection = OvirtSDK4::Connection.new({
-  :url => 'https://engine40.example.com/ovirt-engine/api',
-  :username => 'admin@internal',
-  :password => 'redhat123',
-  :ca_file => 'ca.pem',
-  :debug => true,
-  :log => Logger.new('example.log'),
-})
+connection = OvirtSDK4::Connection.new(
+  url: 'https://engine40.example.com/ovirt-engine/api',
+  username: 'admin@internal',
+  password: 'redhat123',
+  ca_file: 'ca.pem',
+  debug: true,
+  log: Logger.new('example.log')
+)
 
 # Locate the virtual machines service and use it to find the virtual
 # machine:
 vms_service = connection.system_service.vms_service
-vm = vms_service.list({:search => 'name=myvm'})[0]
+vm = vms_service.list(search: 'name=myvm')[0]
 
 # Locate the service that manages the snapshots of the virtual machine:
 snapshots_service = vms_service.vm_service(vm.id).snapshots_service
@@ -43,7 +43,7 @@ snapshots_service = vms_service.vm_service(vm.id).snapshots_service
 # Add the new snapshot:
 snapshots_service.add(
   OvirtSDK4::Snapshot.new(
-    :description => 'My snapshot',
+    description: 'My snapshot'
   )
 )
 

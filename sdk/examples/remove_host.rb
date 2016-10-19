@@ -23,28 +23,26 @@ require 'ovirtsdk4'
 # remove it:
 
 # Create the connection to the server:
-connection = OvirtSDK4::Connection.new({
-  :url => 'https://engine40.example.com/ovirt-engine/api',
-  :username => 'admin@internal',
-  :password => 'redhat123',
-  :ca_file => 'ca.pem',
-  :debug => true,
-  :log => Logger.new('example.log'),
-})
+connection = OvirtSDK4::Connection.new(
+  url: 'https://engine40.example.com/ovirt-engine/api',
+  username: 'admin@internal',
+  password: 'redhat123',
+  ca_file: 'ca.pem',
+  debug: true,
+  log: Logger.new('example.log')
+)
 
 # Find the service that manages hosts:
 hosts_service = connection.system_service.hosts_service
 
 # Find the host:
-host = hosts_service.list({:search => 'name=myhost'})[0]
+host = hosts_service.list(search: 'name=myhost')[0]
 
 # Find the service that manages the host:
 host_service = hosts_service.host_service(host.id)
 
 # If the host isn't down or in maintenance then move it to maintenance:
-unless host.status == OvirtSDK4::HostStatus::MAINTENANCE
-  host_service.deactivate
-end
+host_service.deactivate unless host.status == OvirtSDK4::HostStatus::MAINTENANCE
 
 # Remove the host:
 host_service.remove

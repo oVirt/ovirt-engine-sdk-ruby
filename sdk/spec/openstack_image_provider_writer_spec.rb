@@ -15,35 +15,29 @@
 #
 
 describe SDK::OpenStackImageProviderWriter do
-
   describe '.write_one' do
-
     it 'takes into account the XML schema naming exceptions and uses "openstack" instead of "open_stack"' do
-        provider = SDK::OpenStackImageProvider.new
-        writer = SDK::XmlWriter.new
-        SDK::OpenStackImageProviderWriter.write_one(provider, writer)
-        expect(writer.string).to eql('<openstack_image_provider/>')
-        writer.close
+      provider = SDK::OpenStackImageProvider.new
+      writer = SDK::XmlWriter.new
+      SDK::OpenStackImageProviderWriter.write_one(provider, writer)
+      expect(writer.string).to eql('<openstack_image_provider/>')
+      writer.close
     end
-
   end
 
   describe '.write_many' do
-
     it 'takes into account the XML schema naming exceptions and uses "openstack" instead of "open_stack"' do
-        provider = SDK::OpenStackImageProvider.new
-        providers = [provider, provider]
-        writer = SDK::XmlWriter.new
-        SDK::OpenStackImageProviderWriter.write_many(providers, writer)
-        expect(writer.string).to eql(
-          '<openstack_image_providers>' +
-            '<openstack_image_provider/>' +
-            '<openstack_image_provider/>' +
-          '</openstack_image_providers>'
-        )
-        writer.close
+      provider = SDK::OpenStackImageProvider.new
+      providers = [provider, provider]
+      writer = SDK::XmlWriter.new
+      SDK::OpenStackImageProviderWriter.write_many(providers, writer)
+      expect(writer.string).to eql(
+        '<openstack_image_providers>' \
+          '<openstack_image_provider/>' \
+          '<openstack_image_provider/>' \
+        '</openstack_image_providers>'
+      )
+      writer.close
     end
-
   end
-
 end

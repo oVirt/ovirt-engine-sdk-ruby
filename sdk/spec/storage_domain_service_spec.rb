@@ -15,7 +15,6 @@
 #
 
 describe SDK::StorageDomainService do
-
   before(:all) do
     start_server
     @connection = test_connection
@@ -27,20 +26,15 @@ describe SDK::StorageDomainService do
     stop_server
   end
 
-  describe ".is_attached" do
-
-    context "when invoking the method" do
-
-      it "returns the value of the `is_attached` output parameter" do
+  describe '#is_attached' do
+    context 'when invoking the method' do
+      it 'returns the value of the `is_attached` output parameter' do
         mount_xml(
           path: 'storagedomains/123/isattached',
-          body: '<action><is_attached>true</is_attached></action>',
+          body: '<action><is_attached>true</is_attached></action>'
         )
         expect(@service.is_attached).to be(true)
       end
-
     end
-
   end
-
 end

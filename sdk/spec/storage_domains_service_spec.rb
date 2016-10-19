@@ -15,7 +15,6 @@
 #
 
 describe SDK::StorageDomainsService do
-
   before(:all) do
     start_server
     @connection = test_connection
@@ -27,41 +26,30 @@ describe SDK::StorageDomainsService do
     stop_server
   end
 
-  describe ".data_centers" do
-
-    context "getting the reference to the service" do
-
-      it "doesn't return nil" do
+  describe '#nil?' do
+    context 'getting the reference to the service' do
+      it 'does not return nil' do
         expect(@service).not_to be_nil
       end
-
     end
-
   end
 
-  describe ".list" do
-
-    context "without parameters" do
-
-      it "returns a list, maybe empty" do
+  describe '#list' do
+    context 'without parameters' do
+      it 'returns a list, maybe empty' do
         mount_xml(path: 'storagedomains', body: '<storage_domains/>')
         sds = @service.list
         expect(sds).not_to be_nil
         expect(sds).to be_an(Array)
       end
-
     end
 
-    context "with an unfeasible query" do
-
-      it "returns an empty array" do
+    context 'with an unfeasible query' do
+      it 'returns an empty array' do
         mount_xml(path: 'storagedomains', body: '<storage_domains/>')
-        sds = @service.list(:search => 'name=ugly')
+        sds = @service.list(search: 'name=ugly')
         expect(sds).to eql([])
       end
-
     end
-
   end
-
 end

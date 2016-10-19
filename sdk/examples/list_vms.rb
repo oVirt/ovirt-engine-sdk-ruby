@@ -19,22 +19,24 @@
 require 'logger'
 require 'ovirtsdk4'
 
-# This example will connect to the server and print the names and identifiers of all the virtual machines:
+# This example will connect to the server and print the names and
+# identifiers of all the virtual machines:
 
 # Create the connection to the server:
-connection = OvirtSDK4::Connection.new({
-  :url => 'https://engine40.example.com/ovirt-engine/api',
-  :username => 'admin@internal',
-  :password => 'redhat123',
-  :ca_file => 'ca.pem',
-  :debug => true,
-  :log => Logger.new('example.log'),
-})
+connection = OvirtSDK4::Connection.new(
+  url: 'https://engine40.example.com/ovirt-engine/api',
+  username: 'admin@internal',
+  password: 'redhat123',
+  ca_file: 'ca.pem',
+  debug: true,
+  log: Logger.new('example.log')
+)
 
 # Get the reference to the "vms" service:
 vms_service = connection.system_service.vms_service
 
-# Use the "list" method of the "vms" service to list all the virtual machines of the system:
+# Use the "list" method of the "vms" service to list all the virtual
+# machines of the system:
 vms = vms_service.list
 
 # Print the virtual machine names and identifiers:

@@ -23,28 +23,28 @@ require 'ovirtsdk4'
 # a data center:
 
 # Create the connection to the server:
-connection = OvirtSDK4::Connection.new({
-  :url => 'https://engine40.example.com/ovirt-engine/api',
-  :username => 'admin@internal',
-  :password => 'redhat123',
-  :ca_file => 'ca.pem',
-  :debug => true,
-  :log => Logger.new('example.log'),
-})
+connection = OvirtSDK4::Connection.new(
+  url: 'https://engine40.example.com/ovirt-engine/api',
+  username: 'admin@internal',
+  password: 'redhat123',
+  ca_file: 'ca.pem',
+  debug: true,
+  log: Logger.new('example.log')
+)
 
 # Get the reference to the data centers service:
 dcs_service = connection.system_service.data_centers_service
 
 # Retrieve the description of the data center:
-dc = dcs_service.list({:search => 'name=mydc'})[0]
+dc = dcs_service.list(search: 'name=mydc')[0]
 
 # In order to update the data center we need a reference to the service
 # tht manages it, then we can call the "update" method passing the
 # update:
 dc_service = dcs_service.data_center_service(dc.id)
-dc = dc_service.update({
-  :description => 'Updated description',
-})
+dc = dc_service.update(
+  description: 'Updated description'
+)
 
 # Print the description of the result of the update:
 puts "#{dc.name}: #{dc.description}"

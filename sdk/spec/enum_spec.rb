@@ -15,17 +15,13 @@
 #
 
 describe SDK::Architecture do
-
-  describe "::X86_64" do
-
-    it "exists and has the expected value" do
+  describe '::X86_64' do
+    it 'exists and has the expected value' do
       expect(SDK::Architecture::X86_64).to eql('x86_64')
     end
 
-    it "is frozen" do
+    it 'is frozen' do
       expect(SDK::Architecture::X86_64.frozen?).to be(true)
     end
-
   end
-
 end

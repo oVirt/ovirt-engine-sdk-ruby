@@ -15,12 +15,9 @@
 #
 
 describe SDK::ActionReader do
-
-  describe ".read_one" do
-
-    context "when given an empty XML" do
-
-      it "creates the expected action" do
+  describe '.read_one' do
+    context 'when given an empty XML' do
+      it 'creates the expected action' do
         reader = SDK::XmlReader.new('<fault/>')
         result = SDK::ActionReader.read_one(reader)
         reader.close
@@ -28,12 +25,10 @@ describe SDK::ActionReader do
         expect(result.status).to be_nil
         expect(result.fault).to be_nil
       end
-
     end
 
-    context "when given status" do
-
-      it "creates the expected action" do
+    context 'when given status' do
+      it 'creates the expected action' do
         reader = SDK::XmlReader.new(
           '<action><status>mystatus</status></action>'
         )
@@ -42,12 +37,10 @@ describe SDK::ActionReader do
         expect(result).to be_a(SDK::Action)
         expect(result.status).to eql('mystatus')
       end
-
     end
 
-    context "when given fault" do
-
-      it "creates the expected action" do
+    context 'when given fault' do
+      it 'creates the expected action' do
         reader = SDK::XmlReader.new(
           '<action><fault><reason>myreason</reason></fault></action>'
         )
@@ -56,16 +49,14 @@ describe SDK::ActionReader do
         expect(result.fault).to be_a(SDK::Fault)
         expect(result.fault.reason).to eql('myreason')
       end
-
     end
 
-    context "when given status and fault" do
-
-      it "creates the expected action" do
+    context 'when given status and fault' do
+      it 'creates the expected action' do
         reader = SDK::XmlReader.new(
-          '<action>' +
-            '<status>mystatus</status>' +
-            '<fault><reason>myreason</reason></fault>' +
+          '<action>' \
+            '<status>mystatus</status>' \
+            '<fault><reason>myreason</reason></fault>' \
           '</action>'
         )
         result = SDK::ActionReader.read_one(reader)
@@ -74,9 +65,6 @@ describe SDK::ActionReader do
         expect(result.fault).to be_a(SDK::Fault)
         expect(result.fault.reason).to eql('myreason')
       end
-
     end
-
   end
-
 end

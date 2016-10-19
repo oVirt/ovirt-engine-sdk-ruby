@@ -22,14 +22,14 @@ require 'ovirtsdk4'
 # This example will connect to the server and create a new virtual machine:
 
 # Create the connection to the server:
-connection = OvirtSDK4::Connection.new({
-  :url => 'https://engine40.example.com/ovirt-engine/api',
-  :username => 'admin@internal',
-  :password => 'redhat123',
-  :ca_file => 'ca.pem',
-  :debug => true,
-  :log => Logger.new('example.log'),
-})
+connection = OvirtSDK4::Connection.new(
+  url: 'https://engine40.example.com/ovirt-engine/api',
+  username: 'admin@internal',
+  password: 'redhat123',
+  ca_file: 'ca.pem',
+  debug: true,
+  log: Logger.new('example.log')
+)
 
 # Get the reference to the groups service:
 groups_service = connection.system_service.groups_service
@@ -37,12 +37,12 @@ groups_service = connection.system_service.groups_service
 # Use the "add" method to add group from a directory service.
 # Please note that domain name is name of the authorization provider:
 groups_service.add(
-  OvirtSDK4::Group.new({
-    :name => 'Developers',
-    :domain => {
-      :name => 'internal-authz'
+  OvirtSDK4::Group.new(
+    name: 'Developers',
+    domain: {
+      name: 'internal-authz'
     }
-  })
+  )
 )
 
 # Close the connection to the server:

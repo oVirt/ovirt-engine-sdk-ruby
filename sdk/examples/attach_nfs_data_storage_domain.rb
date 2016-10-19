@@ -23,24 +23,24 @@ require 'ovirtsdk4'
 # data storage domain to a data center.
 
 # Create the connection to the server:
-connection = OvirtSDK4::Connection.new({
-  :url => 'https://engine40.example.com/ovirt-engine/api',
-  :username => 'admin@internal',
-  :password => 'redhat123',
-  :ca_file => 'ca.pem',
-  :debug => true,
-  :log => Logger.new('example.log'),
-})
+connection = OvirtSDK4::Connection.new(
+  url: 'https://engine40.example.com/ovirt-engine/api',
+  username: 'admin@internal',
+  password: 'redhat123',
+  ca_file: 'ca.pem',
+  debug: true,
+  log: Logger.new('example.log')
+)
 
 # Locate the service that manages the storage domains and use it to
 # search for the storage domain:
 sds_service = connection.system_service.storage_domains_service
-sd = sds_service.list({:search => 'name=mydata'})[0]
+sd = sds_service.list(search: 'name=mydata')[0]
 
 # Locate the service that manages the data centers and use it to
 # search for the data center:
 dcs_service = connection.system_service.data_centers_service
-dc = dcs_service.list({:search => 'name=mydc'})[0]
+dc = dcs_service.list(search: 'name=mydc')[0]
 
 # Locate the service that manages the data center where we want to
 # attach the storage domain:
@@ -53,17 +53,18 @@ attached_sds_service = dc_service.storage_domains_service
 # Use the "add" method of service that manages the attached storage
 # domains to attach it:
 attached_sds_service.add(
-  OvirtSDK4::StorageDomain.new({
-    :id => sd.id
-  })
+  OvirtSDK4::StorageDomain.new(
+    id: sd.id
+  )
 )
 
 # Wait till the storage domain is active:
 attached_sd_service = attached_sds_service.storage_domain_service(sd.id)
-begin
+loop do
   sleep(5)
   sd = attached_sd_service.get
-end while sd.status != OvirtSDK4::StorageDomainStatus::ACTIVE
+  break if sd.status == OvirtSDK4::StorageDomainStatus::ACTIVE
+end
 
 # Close the connection to the server:
 connection.close

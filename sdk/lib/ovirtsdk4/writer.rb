@@ -15,7 +15,6 @@
 #
 
 module OvirtSDK4
-
   #
   # This is the base class for all the XML writers used by the SDK. It contains the utility methods used by
   # all of them.
@@ -23,7 +22,6 @@ module OvirtSDK4
   # @api private
   #
   class Writer
-
     #
     # Writes an element with the given name and string value.
     #
@@ -42,11 +40,7 @@ module OvirtSDK4
     # @return [String]
     #
     def self.render_boolean(value)
-      if value
-        return 'true'
-      else
-        return 'false'
-      end
+      value ? 'true' : 'false'
     end
 
     #
@@ -67,7 +61,7 @@ module OvirtSDK4
     # @return [String]
     #
     def self.render_integer(value)
-      return value.to_s
+      value.to_s
     end
 
     #
@@ -88,7 +82,7 @@ module OvirtSDK4
     # @return [String]
     #
     def self.render_decimal(value)
-      return value.to_s
+      value.to_s
     end
 
     #
@@ -109,7 +103,7 @@ module OvirtSDK4
     # @return [String]
     #
     def self.render_date(value)
-      return value.xmlschema
+      value.xmlschema
     end
 
     #
@@ -127,7 +121,7 @@ module OvirtSDK4
     # This hash stores for each known type a reference to the method that writes the XML document corresponding for that
     # type. For example, for the `Vm` type it will contain a reference to the `VmWriter.write_one` method.
     #
-    @@writers = {}
+    @writers = {}
 
     #
     # Registers a write method.
@@ -136,7 +130,7 @@ module OvirtSDK4
     # @param writer [Method] The reference to the method that writes the XML document corresponding to the type.
     #
     def self.register(type, writer)
-      @@writers[type] = writer
+      @writers[type] = writer
     end
 
     #
@@ -168,7 +162,7 @@ module OvirtSDK4
       elsif target.is_a?(XmlWriter)
         cursor = target
       else
-        raise ArgumentError.new("Expected an 'XmlWriter', but got '#{target.class}'")
+        raise ArgumentError, "Expected an 'XmlWriter', but got '#{target.class}'"
       end
 
       # Do the actual write, and make sure to always close the XML writer if we created it:
@@ -176,37 +170,30 @@ module OvirtSDK4
         if object.is_a?(Array)
           # For arrays we can't decide which tag to use, so the 'root' parameter is mandatory in this case:
           if root.nil?
-            raise Error.new("The 'root' option is mandatory when writing arrays")
+            raise Error, "The 'root' option is mandatory when writing arrays"
           end
 
           # Write the root tag, and then recursively call the method to write each of the items of the array:
           cursor.write_start(root)
           object.each do |item|
-            write(item, :target => cursor)
+            write(item, target: cursor)
           end
           cursor.write_end
         else
           # Select the specific writer according to the type:
           type = object.class
-          writer = @@writers[type]
-          if writer.nil?
-            raise Error.new("Can't find a writer for type '#{type}'")
-          end
+          writer = @writers[type]
+          raise Error, "Can't find a writer for type '#{type}'" if writer.nil?
 
           # Write the object using the specific method:
           writer.call(object, cursor, root)
         end
 
         # If no XML cursor was explicitly given, and we created it, then we need to return the generated XML text:
-        if target.nil?
-          cursor.string
-        end
+        cursor.string if target.nil?
       ensure
-        if !cursor.nil? && !cursor.equal?(target)
-          cursor.close
-        end
+        cursor.close if !cursor.nil? && !cursor.equal?(target)
       end
     end
   end
-
 end
