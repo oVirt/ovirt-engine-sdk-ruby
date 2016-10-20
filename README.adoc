@@ -12,26 +12,38 @@ in the `sdk` directory instead.
 == Building
 
 The SDK uses http://www.xmlsoft.org[libxml2] for parsing and rendering
-XML documents, and the part that interacts with this library is written
-in C. This means that before building you must make sure you have the C
-compiler and the required header and libraries files installed in your
-system. For example to install with the `yum` package manager you will
-need to do the following:
+XML documents and https://curl.haxx.se/libcurl[libcurl] for HTTP
+communication. The part of the SDK that interacts with these libraries
+is written in C. This means that before building you must make sure you
+have the C compiler and the required header and libraries files
+installed in your system. For example to install with the `dnf` package
+manager you will need to do the following:
 
-  # yum -y install \
+  # dnf -y install \
   gcc \
+  libcurl-devel \
   libxml2-devel \
+  ruby \
   ruby-devel \
-  rubygem-rake-compiler \
+  rubygems \
   rubygems-devel
+
+To manage the Ruby gems required for the build the project uses
+http://bundler.io[bundler], so you need to install this as well:
+
+  $ gem install bundler
 
 Most of the source code of the Ruby SDK is automatically generated from
 the API model.
 
 The code generator is a Java program that resides in the `generator`
-directory.  This Java program will get the API model and the metamodel
+directory. This Java program will get the API model and the metamodel
 artifacts from the available Maven repositories. To build and run it use
-the following commands:
+the you will need to have https://maven.apache.org[Maven] installed:
+
+  # dnf -y install maven
+
+Once all the requirements are installed the SDK can be built as follows:
 
   $ git clone git://gerrit.ovirt.org/ovirt-engine-sdk-ruby
   $ cd ovirt-engine-sdk-ruby
@@ -39,10 +51,10 @@ the following commands:
 
 This will build the code generator, run it to generate the SDK for the
 version of the API that corresponds to the branch of the SDK that you
-are using, and build the `.gem` file.
+are using, run the tests, and build the `.gem` file.
 
-If you need to generate it for a different version of the API then you
-can use the `model.version` property. For example, if you need to
+If you need to generate the SDK for a different version of the API then
+you can use the `model.version` property. For example, if you need to
 generate the SDK for version `4.1.0` of the SDK you can use this
 command:
 
@@ -56,8 +68,13 @@ The generated `.gem` file will be located in the `sdk` directory:
 == Testing
 
 The test suite of the project is inside the `sdk/spec` directory. To run
-the tests change into the `sdk` directory and execute the `rspec`
-command:
+the tests change into the `sdk` directory and execute the `bundle exec
+rake test` command:
 
   $ cd sdk
+  $ bundle exec rake test
+
+This will run the http://rspec.info[RSpec] tests. You can also run them
+directly with the `rspec` command, if you have it installed:
+
   $ rspec
