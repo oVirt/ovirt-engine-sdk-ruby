@@ -41,6 +41,9 @@ static VALUE LOG_SYMBOL;
 static VALUE PASSWORD_SYMBOL;
 static VALUE TIMEOUT_SYMBOL;
 static VALUE USERNAME_SYMBOL;
+static VALUE PROXY_URL_SYMBOL;
+static VALUE PROXY_USERNAME_SYMBOL;
+static VALUE PROXY_PASSWORD_SYMBOL;
 
 /* Method identifiers: */
 static ID DEBUG_ID;
@@ -342,6 +345,9 @@ static VALUE ov_http_client_initialize(int argc, VALUE* argv, VALUE self) {
     bool debug;
     bool insecure;
     char* ca_file;
+    char* proxy_password;
+    char* proxy_url;
+    char* proxy_username;
     int timeout;
     ov_http_client_object* object;
 
@@ -416,6 +422,36 @@ static VALUE ov_http_client_initialize(int argc, VALUE* argv, VALUE self) {
         compress = RTEST(opt);
     }
 
+    /* Get the value of the 'proxy_url' parameter: */
+    opt = rb_hash_aref(opts, PROXY_URL_SYMBOL);
+    if (NIL_P(opt)) {
+        proxy_url = NULL;
+    }
+    else {
+        Check_Type(opt, T_STRING);
+        proxy_url = StringValueCStr(opt);
+    }
+
+    /* Get the value of the 'proxy_username' parameter: */
+    opt = rb_hash_aref(opts, PROXY_USERNAME_SYMBOL);
+    if (NIL_P(opt)) {
+        proxy_username = NULL;
+    }
+    else {
+        Check_Type(opt, T_STRING);
+        proxy_username = StringValueCStr(opt);
+    }
+
+    /* Get the value of the 'proxy_password' parameter: */
+    opt = rb_hash_aref(opts, PROXY_PASSWORD_SYMBOL);
+    if (NIL_P(opt)) {
+        proxy_password = NULL;
+    }
+    else {
+        Check_Type(opt, T_STRING);
+        proxy_password = StringValueCStr(opt);
+    }
+
     /* Create the libcurl object: */
     object->curl = curl_easy_init();
     if (object->curl == NULL) {
@@ -431,7 +467,6 @@ static VALUE ov_http_client_initialize(int argc, VALUE* argv, VALUE self) {
         curl_easy_setopt(object->curl, CURLOPT_CAINFO, ca_file);
     }
 
-
     /* Configure the timeout: */
     curl_easy_setopt(object->curl, CURLOPT_TIMEOUT, timeout);
 
@@ -445,6 +480,15 @@ static VALUE ov_http_client_initialize(int argc, VALUE* argv, VALUE self) {
     if (debug) {
         curl_easy_setopt(object->curl, CURLOPT_VERBOSE, 1L);
         curl_easy_setopt(object->curl, CURLOPT_DEBUGFUNCTION, ov_http_client_debug_function);
+    }
+
+    /* Configure the proxy: */
+    if (proxy_url != NULL) {
+        curl_easy_setopt(object->curl, CURLOPT_PROXY, proxy_url);
+        if (proxy_username != NULL && proxy_password != NULL) {
+            curl_easy_setopt(object->curl, CURLOPT_PROXYUSERNAME, proxy_username);
+            curl_easy_setopt(object->curl, CURLOPT_PROXYPASSWORD, proxy_password);
+        }
     }
 
     /* Configure callbacks: */
@@ -653,14 +697,17 @@ void ov_http_client_define(void) {
     rb_define_method(ov_http_client_class, "send",      ov_http_client_send,      2);
 
     /* Define the symbols: */
-    USERNAME_SYMBOL = ID2SYM(rb_intern("username"));
-    PASSWORD_SYMBOL = ID2SYM(rb_intern("password"));
-    INSECURE_SYMBOL = ID2SYM(rb_intern("insecure"));
-    CA_FILE_SYMBOL  = ID2SYM(rb_intern("ca_file"));
-    DEBUG_SYMBOL    = ID2SYM(rb_intern("debug"));
-    LOG_SYMBOL      = ID2SYM(rb_intern("log"));
-    COMPRESS_SYMBOL = ID2SYM(rb_intern("compress"));
-    TIMEOUT_SYMBOL  = ID2SYM(rb_intern("timeout"));
+    USERNAME_SYMBOL       = ID2SYM(rb_intern("username"));
+    PASSWORD_SYMBOL       = ID2SYM(rb_intern("password"));
+    INSECURE_SYMBOL       = ID2SYM(rb_intern("insecure"));
+    CA_FILE_SYMBOL        = ID2SYM(rb_intern("ca_file"));
+    DEBUG_SYMBOL          = ID2SYM(rb_intern("debug"));
+    LOG_SYMBOL            = ID2SYM(rb_intern("log"));
+    COMPRESS_SYMBOL       = ID2SYM(rb_intern("compress"));
+    TIMEOUT_SYMBOL        = ID2SYM(rb_intern("timeout"));
+    PROXY_URL_SYMBOL      = ID2SYM(rb_intern("proxy_url"));
+    PROXY_USERNAME_SYMBOL = ID2SYM(rb_intern("proxy_username"));
+    PROXY_PASSWORD_SYMBOL = ID2SYM(rb_intern("proxy_password"));
 
     /* Define the method identifiers: */
     DEBUG_ID           = rb_intern("debug");

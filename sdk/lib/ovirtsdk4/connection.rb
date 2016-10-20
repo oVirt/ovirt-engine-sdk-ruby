@@ -75,6 +75,15 @@ module OvirtSDK4
     #   compressed responses. Note that this is a hint for the server, and that it may return uncompressed data even
     #   when this parameter is set to `true`.
     #
+    # @option opts [String] :proxy_url A string containing the protocol, address and port number of the proxy server
+    #   to use to connect to the server. For example, in order to use the HTTP proxy `proxy.example.com` that is
+    #   listening on port `3128` the value should be `http://proxy.example.com:3128`. This is optional, and if not
+    #   given the connection will go directly to the server specified in the `url` parameter.
+    #
+    # @option opts [String] :proxy_username The name of the user to authenticate to the proxy server.
+    #
+    # @option opts [String] :proxy_password The password of the user to authenticate to the proxy server.
+    #
     def initialize(opts = {})
       # Get the values of the parameters and assign default values:
       @url = opts[:url]
@@ -88,6 +97,9 @@ module OvirtSDK4
       @kerberos = opts[:kerberos] || false
       @timeout = opts[:timeout] || 0
       @compress = opts[:compress] || false
+      @proxy_url = opts[:proxy_url]
+      @proxy_username = opts[:proxy_username]
+      @proxy_password = opts[:proxy_password]
 
       # Create the HTTP client:
       @client = HttpClient.new(
@@ -97,6 +109,9 @@ module OvirtSDK4
         :log => @log,
         :timeout => @timeout,
         :compress => @compress,
+        :proxy_url => @proxy_url,
+        :proxy_username => @proxy_username,
+        :proxy_password => @proxy_password,
       )
     end
 
