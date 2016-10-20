@@ -34,9 +34,13 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = '>= 1.9'
 
   # Build time dependencies:
+  spec.add_development_dependency('rake', '~> 11.3')
   spec.add_development_dependency('rake-compiler', '~> 0.9')
   spec.add_development_dependency('rspec', '~> 3.3')
   spec.add_development_dependency('yard', '~> 0.8')
+
+  # Run time dependencies:
+  spec.add_dependency('json', '~> 2.0')
 
   # Extensions:
   spec.extensions = [

@@ -68,6 +68,14 @@ def dec_version(version):
     return result
 
 
+def extend_path(path):
+    print("Adding directory \"%s\" to the path ..." % path)
+    paths = os.environ["PATH"].split(":")
+    if not path in paths:
+        paths.append(path)
+    os.environ["PATH"] = ":".join(paths)
+
+
 def main():
     # Clean the generated artifacts to the output directory:
     print("Cleaning output directory ...")
@@ -96,7 +104,7 @@ def main():
         print("Can't find version in POM file \"%s\"." % pom_path)
         sys.exit(1)
     pom_version = version_nodes[0].text
-    print("POM version is \"%s\".", pom_version)
+    print("POM version is \"%s\"." % pom_version)
 
     # Extract the subject and identifier of the latest commit:
     print("Extracting commit information ...")
@@ -171,6 +179,26 @@ def main():
         sys.exit(1)
     artifacts_list.append(tar_path)
     print("Tarball file is \"%s\"." % tar_path)
+
+    # When the build runs in mock, it runs as root, and then the
+    # executables installed by gems, like the bundle command, are
+    # installed to /usr/local/bin, so we need to make sure this is added
+    # to the path:
+    extend_path("/usr/local/bin")
+
+    # Install bundler. The io-console gem seems to be required by
+    # bundler when running in a mock environment in Fedora 24, but it
+    # isn't automatically installed.
+    print("Installing bundler ...")
+    result = run_command([
+        "gem",
+        "install",
+        "io-console",
+        "bundler"
+    ])
+    if result != 0:
+        print("Installation of bundler failed with exit code %d." % result)
+        sys.exit(1)
 
     # Build the SDK code generator, run it, and build the gem:
     print("Running Maven build ...")
