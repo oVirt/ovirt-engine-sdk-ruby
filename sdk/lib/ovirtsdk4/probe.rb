@@ -46,6 +46,15 @@ module OvirtSDK4
     #   values is `true` and the `log` parameter isn't `nil` then the data sent to and received from the server will
     #   be written to the log. Be aware that user names and passwords will also be written, so handle with care.
     #
+    # @option opts [String] :proxy_url A string containing the protocol, address and port number of the proxy server
+    #   to use to connect to the server. For example, in order to use the HTTP proxy `proxy.example.com` that is
+    #   listening on port `3128` the value should be `http://proxy.example.com:3128`. This is optional, and if not
+    #   given the connection will go directly to the server specified in the `url` parameter.
+    #
+    # @option opts [String] :proxy_username The name of the user to authenticate to the proxy server.
+    #
+    # @option opts [String] :proxy_password The password of the user to authenticate to the proxy server.
+    #
     # @return [Array<ProbeResult>] An array of objects of the OvirtSDK4::ProbeResult class.
     #
     def self.probe(opts)
@@ -84,27 +93,42 @@ module OvirtSDK4
     #   values is `true` and the `log` parameter isn't `nil` then the data sent to and received from the server will
     #   be written to the log. Be aware that user names and passwords will also be written, so handle with care.
     #
+    # @option opts [String] :proxy_url A string containing the protocol, address and port number of the proxy server
+    #   to use to connect to the server. For example, in order to use the HTTP proxy `proxy.example.com` that is
+    #   listening on port `3128` the value should be `http://proxy.example.com:3128`. This is optional, and if not
+    #   given the connection will go directly to the server specified in the `url` parameter.
+    #
+    # @option opts [String] :proxy_username The name of the user to authenticate to the proxy server.
+    #
+    # @option opts [String] :proxy_password The password of the user to authenticate to the proxy server.
+    #
     # @api private
     #
     def initialize(opts)
       # Get the options and assign default values:
-      @host     = opts[:host]
-      @port     = opts[:port] || 443
-      @username = opts[:username]
-      @password = opts[:password]
-      @insecure = opts[:insecure] || false
-      @ca_file  = opts[:ca_file]
-      @log      = opts[:log]
-      @debug    = opts[:debug] || false
+      @host           = opts[:host]
+      @port           = opts[:port] || 443
+      @username       = opts[:username]
+      @password       = opts[:password]
+      @insecure       = opts[:insecure] || false
+      @ca_file        = opts[:ca_file]
+      @log            = opts[:log]
+      @debug          = opts[:debug] || false
+      @proxy_url      = opts[:proxy_url]
+      @proxy_username = opts[:proxy_username]
+      @proxy_password = opts[:proxy_password]
 
       # Create the HTTP client:
       @client = HttpClient.new(
-        :host     => @host,
-        :port     => @port,
-        :insecure => @insecure,
-        :ca_file  => @ca_file,
-        :log      => @log,
-        :debug    => @debug,
+        :host           => @host,
+        :port           => @port,
+        :insecure       => @insecure,
+        :ca_file        => @ca_file,
+        :log            => @log,
+        :debug          => @debug,
+        :proxy_url      => @proxy_url,
+        :proxy_username => @proxy_username,
+        :proxy_password => @proxy_password,
       )
     end
 
