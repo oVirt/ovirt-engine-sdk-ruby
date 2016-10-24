@@ -357,6 +357,23 @@ def main():
     artifacts_list.extend(rpm_paths)
     print("Generated RPM files are \"%s\"." % rpm_paths)
 
+    # Install the RPMs, but only if running as root, which is the case
+    # when running inside the mock environment:
+    if os.geteuid() == 0:
+       install_program = '/usr/bin/dnf'
+       if not os.path.exists(install_program):
+           install_program = '/usr/bin/yum'
+       binary_rpms = [x for x in rpm_paths if not x.endswith("src.rpm")]
+       install_command = [
+           install_program,
+           "-y",
+           "install",
+       ] + binary_rpms
+       result = run_command(install_command)
+       if result != 0:
+           print("RPM installation failed with exit code %d." % result)
+           sys.exit(1)
+
     # Move all the relevant files to the output directory:
     print("Moving files to the output directory ...")
     for artifact_path in artifacts_list:

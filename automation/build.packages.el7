@@ -1,0 +1,15 @@
+gcc
+git
+java-1.8.0-openjdk-devel
+libcurl-devel
+libxml2-devel
+maven
+python
+python-lxml
+rpm-build
+rpmdevtools
+ruby
+ruby-devel
+rubygems
+rubygems-devel
+yum
