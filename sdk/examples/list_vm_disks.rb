@@ -45,10 +45,17 @@ vm_service = vms_service.vm_service(vm.id)
 # machine:
 disk_attachments_service = vm_service.disk_attachments_service
 
-# Retrieve the list of disks attachments, and print them:
+# Retrieve the list of disks attachments, and print the disk details.
+# Note that each attachment contains a link to the corresponding disk,
+# but not the actual disk data. In order to retrieve the actual disk
+# data we use the `follow_link` method.
 disk_attachments = disk_attachments_service.list
 disk_attachments.each do |disk_attachment|
-  puts disk_attachment.disk.id
+  disk = connection.follow_link(disk_attachment.disk)
+  puts "name: #{disk.name}"
+  puts "id: #{disk.id}"
+  puts "status: #{disk.status}"
+  puts "provisioned_size: #{disk.provisioned_size}"
 end
 
 # Close the connection to the server:
