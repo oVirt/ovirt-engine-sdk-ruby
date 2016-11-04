@@ -41,14 +41,17 @@ vm = vms_service.list(search: 'name=myvm')[0]
 # machine:
 disk_attachments_service = vms_service.vm_service(vm.id).disk_attachments_service
 
-# Use the "add" method of the disk attachments service to add the disk:
+# Use the "add" method of the disk attachments service to add the disk.
+# Note that the size of the disk, the `provisioned_size` attribute, is
+# specified in bytes, so to create a disk of 10 GiB the value should
+# be 10 * 2^30.
 disk_attachment = disk_attachments_service.add(
   OvirtSDK4::DiskAttachment.new(
     disk: {
       name: 'mydisk',
       description: 'My disk',
       format: OvirtSDK4::DiskFormat::COW,
-      provisioned_size: 1 * 2**20,
+      provisioned_size: 10 * 2**30,
       storage_domains: [{
         name: 'mydata'
       }]
