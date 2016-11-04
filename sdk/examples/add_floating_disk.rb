@@ -34,12 +34,14 @@ connection = OvirtSDK4::Connection.new(
 # Get the reference to the disks service:
 disks_service = connection.system_service.disks_service
 
-# Add the disk:
+# Add the disk. Note that the size of the disk, the `provisioned_size`
+# attribute, is specified in bytes, so to create a disk of 10 GiB the
+# value should be 10 * 2^30.
 disk = disks_service.add(
   name: 'mydisk',
   description: 'My disk',
   format: OvirtSDK4::DiskFormat::COW,
-  provisioned_size: 1 * 2**20,
+  provisioned_size: 10 * 2**30,
   storage_domains: [{
     name: 'mydata'
   }]
