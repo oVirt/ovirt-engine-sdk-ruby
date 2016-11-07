@@ -20,7 +20,7 @@ require 'logger'
 require 'ovirtsdk4'
 
 # This example shows how to enable compression of the responses sent by
-# the server:
+# the server.
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
@@ -28,15 +28,17 @@ connection = OvirtSDK4::Connection.new(
   username: 'admin@internal',
   password: 'redhat123',
   ca_file: 'ca.pem',
-  compress: true,
+  compress: false,
   debug: false,
   log: Logger.new('example.log')
 )
 
-# Note that when compression and debug are enabled the raw compressed
-# responses will be written to the log output, so it isn't good idea to
-# use standard output for that, as it will most probably make your
-# terminal behave incorrectly.
+# Note that even when compression is enabled the server may decide to
+# ignore it, and may send uncompressed results.
+
+# Note also that compression and debug aren't compatible. When debug is
+# enabled compression is automatically disabled, as otherwise the debug
+# output would be compressed as well, and useless.
 
 # Get some data:
 api = connection.system_service.get
