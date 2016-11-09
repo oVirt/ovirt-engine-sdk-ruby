@@ -57,7 +57,8 @@ disk_attachment = disk_attachments_service.add(
       }]
     },
     interface: OvirtSDK4::DiskInterface::VIRTIO,
-    bootable: false
+    bootable: false,
+    active: true
   )
 )
 
