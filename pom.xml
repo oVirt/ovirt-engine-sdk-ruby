@@ -26,7 +26,7 @@ limitations under the License.
   <groupId>org.ovirt.engine.api</groupId>
   <artifactId>ruby-sdk-parent</artifactId>
   <packaging>pom</packaging>
-  <version>4.1.0.alpha1-SNAPSHOT</version>
+  <version>4.2.0.alpha1-SNAPSHOT</version>
 
   <name>oVirt Ruby SDK Parent</name>
 
@@ -67,7 +67,7 @@ limitations under the License.
 
     <!-- Version of the metamodel and model used to generate the SDK: -->
     <metamodel.version>1.1.9</metamodel.version>
-    <model.version>4.1.24</model.version>
+    <model.version>4.2.0</model.version>
 
   </properties>
 
