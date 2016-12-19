@@ -1,0 +1,189 @@
+= Changes
+
+This document describes the relevant changes between releases of the SDK.
+
+== 4.0.6 / Oct 18 2016
+
+Update to model 4.0.37.
+
+New features:
+
+* Add services to support disk attachments of virtual machines available
+  for import from storage domains.
+
+* Add `gluster` value to the `NetworkUsage` enum.
+
+* Add `force` parameter to the operation that updates a storage server
+  connection.
+
+Bug fixes:
+
+* Fix the type of the `ticket` parameter of the `VmService.ticket`
+  method.
+
+* Fix the type of the `authentication_method` attribute of the `Ssh`
+  type.
+
+* Rename the `AuthenticationMethod` enum type to `SshAuthenticationMethod`.
+
+* Fix the name of the `exclusive` parameter o the `TemplateService.export`
+  method.
+
+* Add the missing `cluster` parameter to the `OpenstackImageService.import`
+  method.
+
+* Move the `quota` link from the `Vm` type to the `VmBase` type.
+
+* Add missing `template` and `storage_domain` parameters to the
+  operation that imports an image.
+
+* Add the `next_run` parameter to the operation that updates a virtual
+  machine.
+
+* Add the `all_content` parameters to the operations that list and
+  retrieve virtual machines.
+
+* Implement `==` and `eql?` for types https://bugzilla.redhat.com/1383613[#1383613].
+
+== 4.0.5 / Oct 7 2016
+
+Bug Fixes:
+
+* Fix bug failure in Mac OS.
+
+== 4.0.3 / Oct 7 2016
+
+New features:
+
+* Removed dependency on the `curb` gem.
+
+== 4.0.2 / Sep 29 2016
+
+New features:
+
+* Add generic `Writer.write` method to support generating XML from
+  objects of unknown types.
+
+* Add new `Probe.probe` method to detect the versions of the API
+  supported by the server.
+
+Bug fixes:
+
+* Add support for optional parameters to update methods.
+
+* Use XML schema naming exceptions to correctly generate tag names like
+  `openstack_image_provider`.
+
+* Write correctly lists of enum values  https://bugzilla.redhat.com/1378066[#1378066].
+
+* Write correctly empty lists of enum values.
+
+== 4.0.1 / Sep 6 2016
+
+Update to model 4.0.33.
+
+New features:
+
+* Add the `custom_scheduling_policy_properties` attribute to the
+  `Cluster` type.
+
+* Add services and types to support transfer of images.
+
+* Add generic reader.
+
+Bug fixes:
+
+* Remove the `add` and `remove` operations of virtual machine
+  CDROMs.
+
+* Fix the type of the `usages` attribute of the `Network` type, it
+  should be a list of values of the `NetworkUsage` enum, not a list
+  of strings.
+
+* Fix reading of lists of elements https://bugzilla.redhat.com/1373436[#1373436].
+
+* Accept `action` and `fault` from actions.
+
+* Fix reading of list of primitive and enum types.
+
+== 4.0.0 / Aug 29 2016
+
+This version didn't include any change other than removing the `alpha`
+suffix from the version number.
+
+== 4.0.0.alpha21 / Aug 22 2016
+
+Bug fixes:
+
+* Don't send SSO passwords using HTTP GET and query parameter.
+
+== 4.0.0.alpha20 / Aug 18 2016
+
+Update to model 4.0.32.
+
+New features:
+
+* Add `logical_name` attribute to the disk attachment type.
+
+* Add the `clone_permissions` parameter to the operations that add
+  virtual machines and templates.
+
+* Add the `clone` parameter to the operation that adds a new virtual
+  machine.
+
+* Add the `ad_partner_mac` attribute to the bonding type.
+
+* Add the `ad_aggregator_id` attribute to the host NIC type.
+
+* Add the `ExternalVmImportsService` and related types.
+
+Bug fixes:
+
+* Add support for secondary parameters https://bugzilla.redhat.com/1366548[#1366548].
+
+* Fix the name of the parameter to get virtual machine from affinity
+  label, should be `vm` instead of `host`.
+
+== 4.0.0.alpha19 / Jul 30 2016
+
+New features:
+
+* Add support for Mac OS X.
+
+== 4.0.0.alpha18 / Jul 29 2016
+
+Update to model 4.0.29:
+
+Bug fixes:
+
+* Add `logical_name` attribute to the disk attachment type.
+
+* Fix the name of the parameter to get virtual machine from affinity
+  label, should be `vm` instead of `host`.
+
+== 4.0.0.alpha17 / Jul 19 2016
+
+Update to model 4.0.28.
+
+New features:
+
+* Added `switch_type` attribute to `Host` type.
+
+* Add `permits` to the cluster level type.
+
+* Add the `current` parameter to the virtual machine graphics consoles
+  service.
+
+Bug fixes:
+
+* Fix the name of the output parameter of the method to list affinity
+  groups, should be `groups` instead of `list`.
+
+== 4.0.0.alpha16 / Jul 15 2016
+
+New features:
+
+* Use `Logger` instead of file for the `:log` parameter of the
+  connection class.
+
+* Add `dig` method to all types.
