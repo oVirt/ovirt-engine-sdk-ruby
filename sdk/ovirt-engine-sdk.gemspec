@@ -50,6 +50,7 @@ Gem::Specification.new do |spec|
   # Files:
   patterns = [
     '.yardopts',
+    'CHANGES.adoc',
     'LICENSE.txt',
     'README.adoc',
     'ext/**/*.{rb,c,h}',
