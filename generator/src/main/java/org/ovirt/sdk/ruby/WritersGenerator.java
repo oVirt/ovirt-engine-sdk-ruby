@@ -192,7 +192,7 @@ public class WritersGenerator implements RubyGenerator {
     }
 
     private void generateWriteEnumPropertyAsAttribute(EnumType type, String attribute, String value) {
-        buffer.addLine("Writer.write_string(writer, '%1$s', %2$s) unless %2$s.nil?", attribute, value);
+        buffer.addLine("writer.write_attribute('%1$s', %2$s) unless %2$s.nil?", attribute, value);
     }
 
     private void generateMemberWriteAsElement(StructMember member) {
