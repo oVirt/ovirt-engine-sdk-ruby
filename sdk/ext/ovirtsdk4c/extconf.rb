@@ -30,5 +30,15 @@ unless pkg_config('libcurl')
   raise 'The "libcurl" package isn\'t available.'
 end
 
+# When installing the SDK as a plugin in Vagrant there is an issue with
+# some versions of Vagrant that embed "libxml2" and "libcurl", but using
+# an incorrect directory. To avoid that we need to explicitly fix the
+# Vagrant path.
+def fix_vagrant_prefix(flags)
+  flags.gsub!('/vagrant-substrate/staging', '/opt/vagrant')
+end
+fix_vagrant_prefix($CPPFLAGS)
+fix_vagrant_prefix($LDFLAGS)
+
 # Create the Makefile:
 create_makefile 'ovirtsdk4c'
