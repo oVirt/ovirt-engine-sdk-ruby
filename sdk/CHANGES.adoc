@@ -2,6 +2,22 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.0.7 / Jan 12 2017
+
+New features:
+
+* Add HTTP proxy support.
+
+* Require Ruby 2.
+
+Bug fixes:
+
+* Fix writing `id` attribute for enum values
+  https://bugzilla.redhat.com/1408839[#1408839].
+
+* Enable installation in Vagrant with embedded Ruby
+  https://bugzilla.redhat.com/1411594[#1411594].
+
 == 4.0.6 / Oct 18 2016
 
 Update to model 4.0.37.
