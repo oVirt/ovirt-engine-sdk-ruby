@@ -35,6 +35,12 @@ connection = OvirtSDK4::Connection.new(
 # Get the reference to the root of the tree of services:
 system_service = connection.system_service
 
+# Get the reference to the service that manages the storage domains:
+storage_domains_service = system_service.storage_domains_service
+
+# Find the storage domain we want to be used for virtual machine disks:
+storage_domain = storage_domains_service.list(search: 'name=mydata').first
+
 # Get the reference to the service that manages the templates:
 templates_service = system_service.templates_service
 
@@ -45,6 +51,12 @@ templates_service = system_service.templates_service
 templates = templates_service.list(search: 'name=mytemplate')
 template = templates.find { |x| x.version.version_number == 3 }
 template_id = template.id
+
+# Find the template disk we want be created on specific storage domain
+# for our virtual machine:
+template_service = templates_service.template_service(template_id)
+disk_attachments = connection.follow_link(template_service.get.disk_attachments)
+disk = disk_attachments.first.disk
 
 # Get the reference to the service that manages the virtual machines:
 vms_service = system_service.vms_service
@@ -59,7 +71,16 @@ vm = vms_service.add(
     },
     template: {
       id: template_id
-    }
+    },
+    disk_attachments: [{
+      disk: {
+        id: disk.id,
+        format: OvirtSDK4::DiskFormat::COW,
+        storage_domains: [{
+          id: storage_domain.id
+        }]
+      }
+    }]
   )
 )
 
