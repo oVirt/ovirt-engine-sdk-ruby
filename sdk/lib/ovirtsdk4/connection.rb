@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2016 Red Hat, Inc.
+# Copyright (c) 2015-2017 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 #
 
 require 'json'
+require 'tempfile'
 require 'uri'
 
 module OvirtSDK4
@@ -54,8 +55,14 @@ module OvirtSDK4
     #   name should be checked.
     #
     # @option opts [String] :ca_file The name of a PEM file containing the trusted CA certificates. The certificate
-    #   presented by the server will be verified using these CA certificates. If not set then the system wide CA
-    #   certificates store is used.
+    #   presented by the server will be verified using these CA certificates. If neither this nor the `ca_certs`
+    #   options are provided, then the system wide CA certificates store is used. If both options are provided,
+    #   then the certificates from both options will be trusted.
+    #
+    # @option opts [Array<String>] :ca_certs An array of strings containing the trusted CA certificates, in PEM
+    #   format. The certificate presented by the server will be verified using these CA certificates. If neither this
+    #   nor the `ca_file` options are provided, then the system wide CA certificates store is used. If both options
+    #   are provided, then the certificates from both options will be trusted.
     #
     # @option opts [Boolean] :debug (false) A boolean flag indicating if debug output should be generated. If the
     #   values is `true` and the `log` parameter isn't `nil` then the data sent to and received from the server will be
@@ -93,6 +100,7 @@ module OvirtSDK4
       @token = opts[:token]
       @insecure = opts[:insecure] || false
       @ca_file = opts[:ca_file]
+      @ca_certs = opts[:ca_certs]
       @debug = opts[:debug] || false
       @log = opts[:log]
       @kerberos = opts[:kerberos] || false
@@ -106,10 +114,24 @@ module OvirtSDK4
       # libcurl is also compressed, and that isn't useful for debugging:
       @compress = false if @debug
 
+      # Create a temporary file to store the CA certificates, and populate it with the contents of the 'ca_file' and
+      # 'ca_certs' options. The file will be removed when the connection is closed.
+      @ca_store = nil
+      if @ca_file || @ca_certs
+        @ca_store = Tempfile.new('ca_store')
+        @ca_store.write(::File.read(@ca_file)) if @ca_file
+        if @ca_certs
+          @ca_certs.each do |ca_cert|
+            @ca_store.write(ca_cert)
+          end
+        end
+        @ca_store.close
+      end
+
       # Create the HTTP client:
       @client = HttpClient.new(
         insecure: @insecure,
-        ca_file: @ca_file,
+        ca_file: @ca_store ? @ca_store.path : nil,
         debug: @debug,
         log: @log,
         timeout: @timeout,
@@ -405,6 +427,9 @@ module OvirtSDK4
 
       # Close the HTTP client:
       @client.close if @client
+
+      # Remove the temporary file that contains the trusted CA certificates:
+      @ca_store.unlink if @ca_store
     end
   end
 end
