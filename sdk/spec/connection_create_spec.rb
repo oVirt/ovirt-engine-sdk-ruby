@@ -149,5 +149,69 @@ describe SDK::Connection do
         connection.close
       end
     end
+
+    context 'with CA certificate as string' do
+      it 'returns the expected token' do
+        ca_cert = File.read(test_ca_file)
+        connection = SDK::Connection.new(
+          url:      test_url,
+          token:    test_token,
+          ca_certs: [ca_cert],
+          debug:    test_debug,
+          log:      test_log
+        )
+        token = connection.authenticate
+        expect(token).to eql(test_token)
+        connection.close
+      end
+    end
+
+    context 'with multiple CA certificates as strings' do
+      it 'returns the expected token' do
+        ca_cert = File.read(test_ca_file)
+        connection = SDK::Connection.new(
+          url:      test_url,
+          token:    test_token,
+          ca_certs: [ca_cert, ca_cert],
+          debug:    test_debug,
+          log:      test_log
+        )
+        token = connection.authenticate
+        expect(token).to eql(test_token)
+        connection.close
+      end
+    end
+
+    context 'with CA certificate as file and string' do
+      it 'returns the expected token' do
+        ca_cert = File.read(test_ca_file)
+        connection = SDK::Connection.new(
+          url:      test_url,
+          token:    test_token,
+          ca_file:  test_ca_file,
+          ca_certs: [ca_cert],
+          debug:    test_debug,
+          log:      test_log
+        )
+        token = connection.authenticate
+        expect(token).to eql(test_token)
+        connection.close
+      end
+    end
+
+    context 'without CA certificates in insecure mode' do
+      it 'returns the expected token' do
+        connection = SDK::Connection.new(
+          url:      test_url,
+          token:    test_token,
+          debug:    test_debug,
+          log:      test_log,
+          insecure: true
+        )
+        token = connection.authenticate
+        expect(token).to eql(test_token)
+        connection.close
+      end
+    end
   end
 end
