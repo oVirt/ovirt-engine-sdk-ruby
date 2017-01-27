@@ -2,6 +2,16 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.0.8 / Jan 27 2017
+
+Update to model 4.0.41:
+
+* Add `initial_size` attribute to the `Disk` type.
+
+New features:
+
+* Accept CA files and strings.
+
 == 4.0.7 / Jan 12 2017
 
 New features:
