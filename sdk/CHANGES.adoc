@@ -2,9 +2,21 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.1.0-alpha3 / Jan 27 2017
+
+Update to model 4.1.29:
+
+* Add `execution_host` link to the `Step` type.
+
+* Add new `lease` attribute to virtual machines and templates.
+
+New features:
+
+* Accept CA files and strings.
+
 == 4.1.0-alpha2 / Jan 12 2017
 
-Update to model 4.1.16:
+Update to model 4.1.26:
 
 * Add `succeeded` parameter to the operation that end an external job.
 
