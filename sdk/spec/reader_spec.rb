@@ -276,7 +276,7 @@ describe SDK::Reader do
 
     context 'given incorrect input type' do
       it 'raises an exception containing the offending type' do
-        expect { SDK::Reader.read(0) }.to raise_error(ArgumentError, /Fixnum/)
+        expect { SDK::Reader.read(0) }.to raise_error(ArgumentError, /(Fixnum|Integer)/)
       end
     end
 
