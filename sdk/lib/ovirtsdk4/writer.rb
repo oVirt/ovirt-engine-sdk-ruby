@@ -78,7 +78,7 @@ module OvirtSDK4
     #
     # Converts the given decimal value to an string.
     #
-    # @param value [Fixnum]
+    # @param value [Float]
     # @return [String]
     #
     def self.render_decimal(value)
@@ -90,7 +90,7 @@ module OvirtSDK4
     #
     # @param writer [XmlWriter]
     # @param name [String]
-    # @param value [Fixnum]
+    # @param value [Float]
     #
     def self.write_decimal(writer, name, value)
       writer.write_element(name, Writer.render_decimal(value))

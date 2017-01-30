@@ -121,7 +121,7 @@ module OvirtSDK4
     #
     # Converts the given text to a decimal value.
     #
-    # @return [Fixnum]
+    # @return [Float]
     #
     def self.parse_decimal(text)
       return nil if text.nil?
@@ -136,7 +136,7 @@ module OvirtSDK4
     # Reads a decimal value, assuming that the cursor is positioned at the start element that contains the value.
     #
     # @param reader [XmlReader]
-    # @return [Fixnum]
+    # @return [Float]
     #
     def self.read_decimal(reader)
       Reader.parse_decimal(reader.read_element)
@@ -147,7 +147,7 @@ module OvirtSDK4
     # values.
     #
     # @param reader [XmlReader]
-    # @return [Array<Fixnum>]
+    # @return [Array<Float>]
     #
     def self.read_decimals(reader)
       reader.read_elements.map { |text| Reader.parse_decimal(text) }
