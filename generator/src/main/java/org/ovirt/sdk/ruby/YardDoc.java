@@ -48,7 +48,7 @@ public class YardDoc {
                 return "Integer";
             }
             if (type == model.getDecimalType()) {
-                return "Fixnum";
+                return "Float";
             }
             if (type == model.getStringType()) {
                 return "String";
