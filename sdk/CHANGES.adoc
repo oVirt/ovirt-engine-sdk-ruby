@@ -2,6 +2,12 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.1.0 / Jan 31 2017
+
+This release is mostly identical to `4.1.0-alpha3`, the only difference
+is that it fixes a test failure in Ruby 2.4.0, due to the unification of
+integer types.
+
 == 4.1.0-alpha3 / Jan 27 2017
 
 Update to model 4.1.29:
