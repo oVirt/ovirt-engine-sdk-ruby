@@ -2,6 +2,13 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.0.9 / Feb 1 2017
+
+Bug fixes:
+
+* Don't require `json` 1.8, as it makes the SDK incompatible with
+  applications that need version 2.0 or newer.
+
 == 4.0.8 / Jan 27 2017
 
 Update to model 4.0.41:
