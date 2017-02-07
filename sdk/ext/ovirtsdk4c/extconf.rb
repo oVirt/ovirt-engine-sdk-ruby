@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 
 #
-# Copyright (c) 2015-2016 Red Hat, Inc.
+# Copyright (c) 2015-2017 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,15 +18,25 @@
 
 require 'mkmf'
 
-# Check that "libxml2" is available:
-unless find_executable('xml2-config')
+# Check if "libxml2" is available:
+xml2_config = find_executable('xml2-config')
+if xml2_config
+  cflags = `#{xml2_config} --cflags`.strip
+  libs = `#{xml2_config} --libs`.strip
+  $CPPFLAGS = "#{cflags} #{$CPPFLAGS}"
+  $LDFLAGS = "#{libs} #{$LDFLAGS}"
+elsif !pkg_config('libxml2')
   raise 'The "libxml2" package isn\'t available.'
 end
-$CPPFLAGS = "#{`xml2-config --cflags`.strip} #{$CPPFLAGS}"
-$LDFLAGS = "#{`xml2-config --libs`.strip} #{$LDFLAGS}"
 
-# Check that "libcurl" is available:
-unless pkg_config('libcurl')
+# Check if "libcurl" is available:
+curl_config = find_executable('curl-config')
+if curl_config
+  cflags = `#{curl_config} --cflags`.strip
+  libs = `#{curl_config} --libs`.strip
+  $CPPFLAGS = "#{cflags} #{$CPPFLAGS}"
+  $LDFLAGS = "#{libs} #{$LDFLAGS}"
+elsif !pkg_config('libcurl')
   raise 'The "libcurl" package isn\'t available.'
 end
 
