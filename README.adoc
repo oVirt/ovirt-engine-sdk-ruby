@@ -16,8 +16,9 @@ XML documents and https://curl.haxx.se/libcurl[libcurl] for HTTP
 communication. The part of the SDK that interacts with these libraries
 is written in C. This means that before building you must make sure you
 have the C compiler and the required header and libraries files
-installed in your system. For example to install with the `dnf` package
-manager you will need to do the following:
+installed in your system. For example to install with the `yum` or `dnf`
+package manager in distributions like Fedora, CentOS or RHEL you will
+need to do the following:
 
   # dnf -y install \
   gcc \
@@ -28,10 +29,29 @@ manager you will need to do the following:
   rubygems \
   rubygems-devel
 
+If you are the `apt-get` tool, in distributions like Debian, or Ubuntu:
+
+  # apt-get --assume-yes install \
+  gcc \
+  libcurl4-openssl-dev \
+  libxml2-dev \
+  ruby \
+  ruby-dev
+
+Some Linux distributions, like Debian and Ubuntu, provide multiple
+versions of `libcurl`, compiled with support for different TLS
+libraries: OpenSSL, NSS and GnuTLS. Currently the SDK only supports
+OpenSSL, so make sure that you have that version of `libcurl` installed.
+For example, in Ubuntu 16.04 if you have the NSS version installed, you
+will have to remove it and then install the OpenSSL version:
+
+  # apt-get --assume-yes remove libcurl4-nss-dev
+  # apt-get --assume-yes install libcurl4-openssl-dev
+
 To manage the Ruby gems required for the build the project uses
 http://bundler.io[bundler], so you need to install this as well:
 
-  $ gem install bundler
+  # gem install bundler
 
 Most of the source code of the Ruby SDK is automatically generated from
 the API model.
@@ -39,9 +59,14 @@ the API model.
 The code generator is a Java program that resides in the `generator`
 directory. This Java program will get the API model and the metamodel
 artifacts from the available Maven repositories. To build and run it use
-the you will need to have https://maven.apache.org[Maven] installed:
+the you will need to have https://maven.apache.org[Maven] installed. For
+example, in Fedora, CentOS or RHEL:
 
   # dnf -y install maven
+
+And in Debian or Ubuntu:
+
+  # apt-get --assume-yes install maven
 
 Once all the requirements are installed the SDK can be built as follows:
 
