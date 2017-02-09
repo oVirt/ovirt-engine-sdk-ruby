@@ -45,6 +45,7 @@ module Helpers
   attr_reader :last_request_query
   attr_reader :last_request_method
   attr_reader :last_request_body
+  attr_reader :last_request_headers
 
   # The authentication details used by the embedded tests web server:
   REALM = 'API'.freeze
@@ -353,6 +354,7 @@ module Helpers
       # Save the request details:
       @last_request_method = request.request_method
       @last_request_body = request.body
+      @last_request_headers = request.header
 
       # The query string can't be obtained directly from the request object, only a hash with the query
       # parameter, and that is only available for GET and HEAD requests. We need it for POST and PUT
