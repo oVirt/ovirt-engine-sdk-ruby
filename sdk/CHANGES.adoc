@@ -2,6 +2,12 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.1.2 / Feb 9 2017
+
+Bug fixes:
+
+* Use `curl-config` to detect `libcurl`, if possible.
+
 == 4.1.1 / Feb 1 2017
 
 Bug fixes:
