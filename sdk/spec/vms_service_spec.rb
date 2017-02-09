@@ -45,6 +45,39 @@ describe SDK::VmsService do
       end
     end
 
+    context 'when adding a VM with one custom query parameter' do
+      it 'sends a request with a that query parameter' do
+        mount_xml(path: 'vms', body: '<vm/>')
+        @service.add(SDK::Vm.new, query: { my: 'value' })
+        expect(last_request_query).to eql('my=value')
+      end
+    end
+
+    context 'when adding a VM with two custom query parameters' do
+      it 'sends a request with those query parameters' do
+        mount_xml(path: 'vms', body: '<vm/>')
+        @service.add(SDK::Vm.new, query: { my: 'value', your: 'value' })
+        expect(last_request_query).to eql('my=value&your=value')
+      end
+    end
+
+    context 'when adding a VM with one custom header' do
+      it 'sends a request with a that header' do
+        mount_xml(path: 'vms', body: '<vm/>')
+        @service.add(SDK::Vm.new, headers: { my: 'value' })
+        expect(last_request_headers['my']).to eql(['value'])
+      end
+    end
+
+    context 'when adding a VM with two custom headers' do
+      it 'sends a request with those headers' do
+        mount_xml(path: 'vms', body: '<vm/>')
+        @service.add(SDK::Vm.new, headers: { my: 'value', your: 'value' })
+        expect(last_request_headers['my']).to eql(['value'])
+        expect(last_request_headers['your']).to eql(['value'])
+      end
+    end
+
     context 'when the server returns a 200 code' do
       it 'raises no exception' do
         mount_xml(path: 'vms', status: 200, body: '<vm/>')
@@ -93,6 +126,39 @@ describe SDK::VmsService do
         mount_xml(path: 'vms', body: '<vms/>')
         vms = @service.list(search: 'name=ugly')
         expect(vms).to eql([])
+      end
+    end
+
+    context 'with one custom query parameter' do
+      it 'send a request with that query parameter' do
+        mount_xml(path: 'vms', body: '<vms/>')
+        @service.list(query: { my: 'value' })
+        expect(last_request_query).to eql('my=value')
+      end
+    end
+
+    context 'with two custom query parameters' do
+      it 'send a request with those query parameters' do
+        mount_xml(path: 'vms', body: '<vms/>')
+        @service.list(query: { my: 'value', your: 'value' })
+        expect(last_request_query).to eql('my=value&your=value')
+      end
+    end
+
+    context 'with one custom header' do
+      it 'send a request that header' do
+        mount_xml(path: 'vms', body: '<vms/>')
+        @service.list(headers: { my: 'value' })
+        expect(last_request_headers['my']).to eql(['value'])
+      end
+    end
+
+    context 'with two custom headers' do
+      it 'send a request those headers' do
+        mount_xml(path: 'vms', body: '<vms/>')
+        @service.list(headers: { my: 'value', your: 'value' })
+        expect(last_request_headers['my']).to eql(['value'])
+        expect(last_request_headers['your']).to eql(['value'])
       end
     end
   end

@@ -219,6 +219,14 @@ public class ServicesGenerator implements RubyGenerator {
             buffer.addComment();
         });
 
+        // Document the additional headers:
+        buffer.addYardTag("option", "opts [Hash] :headers Additional HTTP headers.");
+        buffer.addComment();
+
+        // Document the additional query parameter:
+        buffer.addYardTag("option", "opts [Hash] :query Additional URL query parameters.");
+        buffer.addComment();
+
         // Document the return value:
         buffer.addYardReturn(primaryParameter);
         buffer.addComment();
@@ -228,9 +236,10 @@ public class ServicesGenerator implements RubyGenerator {
 
         // Generate the method body:
         generateConvertLiteral(primaryParameterType, arg);
-        buffer.addLine("query = {}");
+        buffer.addLine("headers = opts[:headers] || {}");
+        buffer.addLine("query = opts[:query] || {}");
         secondaryParameters.forEach(this::generateUrlParameter);
-        buffer.addLine("request = HttpRequest.new(method: :POST, url: @path, query: query)");
+        buffer.addLine("request = HttpRequest.new(method: :POST, url: @path, headers: headers, query: query)");
         generateWriteRequestBody(primaryParameter, arg);
         buffer.addLine("response = @connection.send(request)");
         buffer.addLine("case response.code");
@@ -265,10 +274,20 @@ public class ServicesGenerator implements RubyGenerator {
             buffer.addComment();
         });
 
+        // Document the additional headers:
+        buffer.addYardTag("option", "opts [Hash] :headers Additional HTTP headers.");
+        buffer.addComment();
+
+        // Document the additional query parameter:
+        buffer.addYardTag("option", "opts [Hash] :query Additional URL query parameters.");
+        buffer.addComment();
+
         // Generate the method declaration:
         buffer.addLine("def %1$s(opts = {})", actionName);
 
         // Generate the method body:
+        buffer.addLine("headers = opts[:headers] || {}");
+        buffer.addLine("query = opts[:query] || {}");
         buffer.addLine("action = Action.new(opts)");
         buffer.addLine("writer = XmlWriter.new(nil, true)");
         buffer.addLine("ActionWriter.write_one(action, writer)");
@@ -277,7 +296,9 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addLine("request = HttpRequest.new(");
         buffer.addLine(  "method: :POST,");
         buffer.addLine(  "url: \"#{@path}/%1$s\",", getPath(methodName));
-        buffer.addLine(  "body: body");
+        buffer.addLine(  "body: body,");
+        buffer.addLine(  "headers: headers,");
+        buffer.addLine(  "query: query");
         buffer.addLine(")");
         buffer.addLine("response = @connection.send(request)");
         buffer.addLine("case response.code");
@@ -333,6 +354,14 @@ public class ServicesGenerator implements RubyGenerator {
             buffer.addComment();
         });
 
+        // Document the additional headers:
+        buffer.addYardTag("option", "opts [Hash] :headers Additional HTTP headers.");
+        buffer.addComment();
+
+        // Document the additional query parameter:
+        buffer.addYardTag("option", "opts [Hash] :query Additional URL query parameters.");
+        buffer.addComment();
+
         // Document the return value:
         buffer.addYardReturn(mainParameter);
         buffer.addComment();
@@ -342,9 +371,10 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addLine("def %1$s(opts = {})", rubyNames.getMemberStyleName(methodName));
 
         // Generate the method body:
-        buffer.addLine("query = {}");
+        buffer.addLine("headers = opts[:headers] || {}");
+        buffer.addLine("query = opts[:query] || {}");
         inParameters.forEach(this::generateUrlParameter);
-        buffer.addLine("request = HttpRequest.new(method: :GET, url: @path, query: query)");
+        buffer.addLine("request = HttpRequest.new(method: :GET, url: @path, headers: headers, query: query)");
         buffer.addLine("response = @connection.send(request)");
         buffer.addLine("case response.code");
         buffer.addLine("when 200");
@@ -391,6 +421,14 @@ public class ServicesGenerator implements RubyGenerator {
             buffer.addComment();
         });
 
+        // Document the additional headers:
+        buffer.addYardTag("option", "opts [Hash] :headers Additional HTTP headers.");
+        buffer.addComment();
+
+        // Document the additional query parameter:
+        buffer.addYardTag("option", "opts [Hash] :query Additional URL query parameters.");
+        buffer.addComment();
+
         // Document the return value:
         buffer.addYardReturn(primaryParameter);
         buffer.addComment();
@@ -401,9 +439,10 @@ public class ServicesGenerator implements RubyGenerator {
 
         // Generate the method body:
         generateConvertLiteral(primaryParameterType, arg);
-        buffer.addLine("query = {}");
+        buffer.addLine("headers = opts[:headers] || {}");
+        buffer.addLine("query = opts[:query] || {}");
         secondaryParameters.forEach(this::generateUrlParameter);
-        buffer.addLine("request = HttpRequest.new(method: :PUT, url: @path, query: query)");
+        buffer.addLine("request = HttpRequest.new(method: :PUT, url: @path, headers: headers, query: query)");
         generateWriteRequestBody(primaryParameter, arg);
         buffer.addLine("response = @connection.send(request)");
         buffer.addLine("case response.code");
@@ -499,14 +538,23 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addComment();
         inParameters.forEach(buffer::addYardOption);
 
+        // Document the additional headers:
+        buffer.addYardTag("option", "opts [Hash] :headers Additional HTTP headers.");
+        buffer.addComment();
+
+        // Document the additional query parameter:
+        buffer.addYardTag("option", "opts [Hash] :query Additional URL query parameters.");
+        buffer.addComment();
+
         // Generate the method declaration:
         Name methodName = method.getName();
         buffer.addLine("def %1$s(opts = {})", rubyNames.getMemberStyleName(methodName));
 
         // Generate method body:
-        buffer.addLine("query = {}");
+        buffer.addLine("headers = opts[:headers] || {}");
+        buffer.addLine("query = opts[:query] || {}");
         inParameters.forEach(this::generateUrlParameter);
-        buffer.addLine(  "request = HttpRequest.new(method: :DELETE, url: @path, query: query)");
+        buffer.addLine(  "request = HttpRequest.new(method: :DELETE, url: @path, headers: headers, query: query)");
         buffer.addLine(  "response = @connection.send(request)");
         buffer.addLine(  "unless response.code == 200");
         buffer.addLine(    "check_fault(response)");

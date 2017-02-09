@@ -68,6 +68,39 @@ describe SDK::VmService do
         expect { @service.start }.to raise_error(SDK::Error, /myreason/)
       end
     end
+
+    context 'with one custom query parameter' do
+      it 'send a request with a that query parameter' do
+        mount_xml(path: 'vms/123/start', body: '<action/>')
+        @service.start(query: { my: 'myvalue' })
+        expect(last_request_query).to eq('my=myvalue')
+      end
+    end
+
+    context 'with two custom query parameters' do
+      it 'send a request with those query parameters' do
+        mount_xml(path: 'vms/123/start', body: '<action/>')
+        @service.start(query: { my: 'myvalue', your: 'yourvalue' })
+        expect(last_request_query).to eq('my=myvalue&your=yourvalue')
+      end
+    end
+
+    context 'with one custom header' do
+      it 'send a request with a that header' do
+        mount_xml(path: 'vms/123/start', body: '<action/>')
+        @service.start(headers: { my: 'myvalue' })
+        expect(last_request_headers['my']).to eq(['myvalue'])
+      end
+    end
+
+    context 'with two custom headers' do
+      it 'send a request with those headers' do
+        mount_xml(path: 'vms/123/start', body: '<action/>')
+        @service.start(headers: { my: 'myvalue', your: 'yourvalue' })
+        expect(last_request_headers['my']).to eq(['myvalue'])
+        expect(last_request_headers['your']).to eq(['yourvalue'])
+      end
+    end
   end
 
   describe '#update' do
@@ -85,6 +118,39 @@ describe SDK::VmService do
           "  <name>newname</name>\n" \
           "</vm>\n"
         )
+      end
+    end
+
+    context 'with one custom query parameter' do
+      it 'send a request with that query parameter' do
+        mount_xml(path: 'vms/123', body: '<vm/>')
+        @service.update(SDK::Vm.new, query: { my: 'myvalue' })
+        expect(last_request_query).to eq('my=myvalue')
+      end
+    end
+
+    context 'with two custom query parameters' do
+      it 'send a request with those query parameter' do
+        mount_xml(path: 'vms/123', body: '<vm/>')
+        @service.update(SDK::Vm.new, query: { my: 'myvalue', your: 'yourvalue' })
+        expect(last_request_query).to eq('my=myvalue&your=yourvalue')
+      end
+    end
+
+    context 'with one custom header' do
+      it 'send a request with that header' do
+        mount_xml(path: 'vms/123', body: '<vm/>')
+        @service.update(SDK::Vm.new, headers: { my: 'value' })
+        expect(last_request_headers['my']).to eq(['value'])
+      end
+    end
+
+    context 'with two custom headers' do
+      it 'send a request with those headers' do
+        mount_xml(path: 'vms/123', body: '<vm/>')
+        @service.update(SDK::Vm.new, headers: { my: 'myvalue', your: 'yourvalue' })
+        expect(last_request_headers['my']).to eq(['myvalue'])
+        expect(last_request_headers['your']).to eq(['yourvalue'])
       end
     end
   end
