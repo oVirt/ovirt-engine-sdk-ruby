@@ -11,5 +11,8 @@ rpm-build
 rpmdevtools
 ruby
 ruby-devel
+rubygem-rake
+rubygem-rake-compiler
+rubygem-rspec
 rubygems
 rubygems-devel

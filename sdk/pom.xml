@@ -72,13 +72,11 @@ limitations under the License.
         </executions>
       </plugin>
 
+      <!-- Run the code generator: -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
-        <version>1.2.1</version>
         <executions>
-
-          <!-- Run the code generator: -->
           <execution>
             <id>generate-code</id>
             <phase>generate-sources</phase>
@@ -97,73 +95,6 @@ limitations under the License.
               <includeProjectDependencies>false</includeProjectDependencies>
             </configuration>
           </execution>
-
-          <!-- Install the dependencies: -->
-          <execution>
-            <id>install-dependencies</id>
-            <phase>compile</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <executable>bundle</executable>
-              <arguments>
-                <argument>install</argument>
-              </arguments>
-            </configuration>
-          </execution>
-
-          <!-- Compile the extension: -->
-          <execution>
-            <id>compile-extension</id>
-            <phase>compile</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <executable>bundle</executable>
-              <arguments>
-                <argument>exec</argument>
-                <argument>rake</argument>
-                <argument>compile</argument>
-              </arguments>
-            </configuration>
-          </execution>
-
-          <!-- Run the tests: -->
-          <execution>
-            <id>run-tests</id>
-            <phase>test</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <executable>bundle</executable>
-              <arguments>
-                <argument>exec</argument>
-                <argument>rake</argument>
-                <argument>test</argument>
-              </arguments>
-            </configuration>
-          </execution>
-
-          <!-- Generate the .gem file: -->
-          <execution>
-            <id>build-gem</id>
-            <phase>package</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <executable>bundle</executable>
-              <arguments>
-                <argument>exec</argument>
-                <argument>rake</argument>
-                <argument>gem</argument>
-              </arguments>
-            </configuration>
-          </execution>
-
         </executions>
         <dependencies>
           <dependency>
@@ -176,5 +107,157 @@ limitations under the License.
 
     </plugins>
   </build>
+
+  <profiles>
+
+    <!-- This profile is used to install the required gems and build the SDK
+         using the 'bundler' tool: -->
+    <profile>
+      <id>bundler</id>
+
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <executions>
+              <!-- Install the dependencies: -->
+              <execution>
+                <id>install-dependencies</id>
+                <phase>compile</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>bundle</executable>
+                  <arguments>
+                    <argument>install</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+
+              <!-- Compile the extension: -->
+              <execution>
+                <id>compile-extension</id>
+                <phase>compile</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>bundle</executable>
+                  <arguments>
+                    <argument>exec</argument>
+                    <argument>rake</argument>
+                    <argument>compile</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+
+              <!-- Run the tests: -->
+              <execution>
+                <id>run-tests</id>
+                <phase>test</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>bundle</executable>
+                  <arguments>
+                    <argument>exec</argument>
+                    <argument>rake</argument>
+                    <argument>test</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+
+              <!-- Generate the .gem file: -->
+              <execution>
+                <id>build-gem</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>bundle</executable>
+                  <arguments>
+                    <argument>exec</argument>
+                    <argument>rake</argument>
+                    <argument>gem</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!-- This profile is used to install when bundler can't be used, for example
+         when building in environments where the required gems are installed
+         with some other mechanism, like RPM packages: -->
+    <profile>
+      <id>rpm</id>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <executions>
+              <!-- Compile the extension: -->
+              <execution>
+                <id>compile-extension</id>
+                <phase>compile</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>rake</executable>
+                  <arguments>
+                    <argument>compile</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+
+              <!-- Run the tests: -->
+              <execution>
+                <id>run-tests</id>
+                <phase>test</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>rake</executable>
+                  <arguments>
+                    <argument>test</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+
+              <!-- Generate the .gem file: -->
+              <execution>
+                <id>build-gem</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>rake</executable>
+                  <arguments>
+                    <argument>gem</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+  </profiles>
 
 </project>
