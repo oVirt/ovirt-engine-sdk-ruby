@@ -186,20 +186,6 @@ def main():
     # to the path:
     extend_path("/usr/local/bin")
 
-    # Install bundler. The io-console gem seems to be required by
-    # bundler when running in a mock environment in Fedora 24, but it
-    # isn't automatically installed.
-    print("Installing bundler ...")
-    result = run_command([
-        "gem",
-        "install",
-        "io-console",
-        "bundler"
-    ])
-    if result != 0:
-        print("Installation of bundler failed with exit code %d." % result)
-        sys.exit(1)
-
     # Build the SDK code generator, run it, and build the gem:
     print("Running Maven build ...")
     settings_path = "settings.xml"
@@ -210,6 +196,7 @@ def main():
         "package",
         "--settings=%s" % settings_path,
         "-Dsdk.version=%s" % full_version,
+        "-P!bundler,rpm",
     ])
     if result != 0:
         print("Maven build failed with exit code %d." % result)
