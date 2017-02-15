@@ -257,30 +257,31 @@ public class WritersGenerator implements RubyGenerator {
         ListType listType = (ListType) type;
         Type elementType = listType.getElementType();
         String property = rubyNames.getMemberStyleName(name);
-        String pluralTag = schemaNames.getSchemaTagName(name);
-        String singularTag = schemaNames.getSchemaTagName(names.getSingular(name));
+        String listTag = schemaNames.getSchemaTagName(name);
         if (elementType instanceof PrimitiveType || elementType instanceof EnumType) {
+            String elementTag = schemaNames.getSchemaTagName(names.getSingular(name));
             buffer.addLine("unless object.%1$s.nil?", property);
-            buffer.addLine(  "writer.write_start('%1$s')", pluralTag);
+            buffer.addLine(  "writer.write_start('%1$s')", listTag);
             buffer.addLine(  "object.%1$s.each do |item|", property);
             if (elementType instanceof PrimitiveType) {
-                generateWritePrimitivePropertyAsElement((PrimitiveType) elementType, singularTag, "item");
+                generateWritePrimitivePropertyAsElement((PrimitiveType) elementType, elementTag, "item");
             }
             else if (elementType instanceof EnumType) {
-                generateWriteEnumPropertyAsElement((EnumType) elementType, singularTag, "item");
+                generateWriteEnumPropertyAsElement((EnumType) elementType, elementTag, "item");
             }
             buffer.addLine(  "end");
             buffer.addLine(  "writer.write_end");
             buffer.addLine("end");
         }
         else if (elementType instanceof StructType) {
+            String elementTag = schemaNames.getSchemaTagName(elementType.getName());
             RubyName elementWriterName = rubyNames.getWriterName(elementType);
             buffer.addLine(
                 "%1$s.write_many(object.%2$s, writer, '%3$s', '%4$s') unless object.%2$s.nil?",
                 elementWriterName.getClassName(),
                 property,
-                singularTag,
-                pluralTag
+                elementTag,
+                listTag
             );
         }
     }
