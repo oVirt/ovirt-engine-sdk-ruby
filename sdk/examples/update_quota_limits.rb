@@ -39,10 +39,9 @@ dcs_service = system_service.data_centers_service
 dc = dcs_service.list(search: 'name=mydc').first
 dc_service = dcs_service.data_center_service(dc.id)
 
-# Find the storage domain and the service that manages it:
+# Find the storage domain:
 sds_service = system_service.storage_domains_service
 sd = sds_service.list(search: 'name=mydata').first
-sd_service = sds_service.storage_domain_service(sd.id)
 
 # Find the quota and the service that manages it. Note that the service that manages the quota doesn't support
 # search, so we need to retrieve all the quotas and filter explicitly. If the quota doesn't exist, create it.
