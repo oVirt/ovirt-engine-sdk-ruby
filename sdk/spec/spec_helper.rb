@@ -126,15 +126,19 @@ module Helpers
     @log ||= Logger.new(CLIENT_LOG)
   end
 
-  def test_connection
-    SDK::Connection.new(
+  def test_connection_options
+    {
       url:      test_url,
       username: test_user,
       password: test_password,
       ca_file:  test_ca_file,
       debug:    test_debug,
       log:      test_log
-    )
+    }
+  end
+
+  def test_connection
+    SDK::Connection.new(test_connection_options)
   end
 
   def check_sso_request(request, response)
