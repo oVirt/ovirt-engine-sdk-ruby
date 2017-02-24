@@ -90,6 +90,11 @@ module OvirtSDK4
     #
     # @option opts [String] :proxy_password The password of the user to authenticate to the proxy server.
     #
+    # @option opts [Hash] :headers Custom HTTP headers to send with all requests. The keys of the hash can be
+    #   strings of symbols, and they will be used as the names of the headers. The values of the hash will be used
+    #   as the names of the headers. If the same header is provided here and in the `headers` parameter of a specific
+    #   method call, then the `headers` parameter of the specific method call will have precendence.
+    #
     def initialize(opts = {})
       # Get the values of the parameters and assign default values:
       @url = opts[:url]
@@ -107,6 +112,7 @@ module OvirtSDK4
       @proxy_url = opts[:proxy_url]
       @proxy_username = opts[:proxy_username]
       @proxy_password = opts[:proxy_password]
+      @headers = opts[:headers]
 
       # Create a temporary file to store the CA certificates, and populate it with the contents of the 'ca_file' and
       # 'ca_certs' options. The file will be removed when the connection is closed.
@@ -185,6 +191,9 @@ module OvirtSDK4
         all_content = request.query['all_content']
         request.headers['All-Content'] = all_content unless all_content.nil?
       end
+
+      # Add the global headers, but without replacing the values that may already exist:
+      request.headers.merge!(@headers) { |_name, local, _global| local } if @headers
 
       # Set the authentication token:
       @token ||= create_access_token
@@ -265,6 +274,9 @@ module OvirtSDK4
         },
         body: URI.encode_www_form(parameters)
       )
+
+      # Add the global headers:
+      request.headers.merge!(@headers) if @headers
 
       # Create an empty response:
       response = HttpResponse.new
