@@ -19,6 +19,7 @@ limitations under the License.
 
 #include <ctype.h>
 #include <curl/curl.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,6 +49,8 @@ static VALUE PROXY_PASSWORD_SYMBOL;
 /* Method identifiers: */
 static ID DEBUG_ID;
 static ID ENCODE_WWW_FORM_ID;
+static ID INFO_ID;
+static ID INFO_Q_ID;
 static ID READ_ID;
 static ID STRING_ID;
 static ID STRING_IO_ID;
@@ -549,6 +552,22 @@ static void ov_http_client_perform_cancel(void* data) {
     perform_context->cancel = true;
 }
 
+static void ov_http_client_log_info(VALUE log, const char* format, ...) {
+    VALUE enabled;
+    VALUE message;
+    va_list args;
+
+    if (!NIL_P(log)) {
+        enabled = rb_funcall(log, INFO_Q_ID, 0);
+        if (RTEST(enabled)) {
+            va_start(args, format);
+            message = rb_vsprintf(format, args);
+            rb_funcall(log, INFO_ID, 1, message);
+            va_end(args);
+        }
+    }
+}
+
 static VALUE ov_http_client_send(VALUE self, VALUE request, VALUE response) {
     VALUE header;
     VALUE url;
@@ -626,6 +645,14 @@ static VALUE ov_http_client_send(VALUE self, VALUE request, VALUE response) {
     }
     curl_easy_setopt(object->curl, CURLOPT_HTTPHEADER, headers);
 
+    /* Send a summary of the request to the log: */
+    ov_http_client_log_info(
+        object->log,
+        "Sending '%"PRIsVALUE"' request to URL '%"PRIsVALUE"'.",
+        request_object->method,
+        url
+    );
+
     /* Performing the request is a potentially lengthy and blocking operation, so we need to make sure that it runs
        without the global interpreter lock acquired as much as possible: */
     perform_context.object = object;
@@ -674,6 +701,13 @@ static VALUE ov_http_client_send(VALUE self, VALUE request, VALUE response) {
     /* Get the response body: */
     response_object->body = rb_funcall(perform_context.out, STRING_ID, 0);
 
+    /* Send a summary of the response to the log: */
+    ov_http_client_log_info(
+        object->log,
+        "Received response code '%"PRIsVALUE"'.",
+        response_object->code
+    );
+
     return Qnil;
 }
 
@@ -712,6 +746,8 @@ void ov_http_client_define(void) {
     /* Define the method identifiers: */
     DEBUG_ID           = rb_intern("debug");
     ENCODE_WWW_FORM_ID = rb_intern("encode_www_form");
+    INFO_ID            = rb_intern("info");
+    INFO_Q_ID          = rb_intern("info?");
     READ_ID            = rb_intern("read");
     STRING_ID          = rb_intern("string");
     STRING_IO_ID       = rb_intern("StringIO");
