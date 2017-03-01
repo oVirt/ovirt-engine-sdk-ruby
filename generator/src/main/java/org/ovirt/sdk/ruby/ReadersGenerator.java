@@ -293,7 +293,11 @@ public class ReadersGenerator implements RubyGenerator {
     }
 
     private void generateReadEnum(StructMember member, String variable) {
-        buffer.addLine("%1$s = Reader.read_string(reader)", variable);
+        buffer.addLine(
+            "%1$s = Reader.read_enum(%2$s, reader)",
+            variable,
+            rubyNames.getClassStyleName(member.getName())
+        );
     }
 
     private void generateReadStruct(StructMember member, String variable) {
@@ -308,7 +312,7 @@ public class ReadersGenerator implements RubyGenerator {
             generateReadPrimitives((PrimitiveType) elementType, variable);
         }
         else if (elementType instanceof EnumType) {
-            generateReadEnum((EnumType) elementType, variable);
+            generateReadEnums((EnumType) elementType, variable);
         }
         else if (elementType instanceof StructType) {
             RubyName readerName = rubyNames.getReaderName(elementType);
@@ -341,8 +345,12 @@ public class ReadersGenerator implements RubyGenerator {
         }
     }
 
-    private void generateReadEnum(EnumType type, String variable) {
-        buffer.addLine("%1$s = Reader.read_strings(reader)", variable);
+    private void generateReadEnums(EnumType type, String variable) {
+        buffer.addLine(
+            "%1$s = Reader.read_enums(%2$s, reader)",
+            variable,
+            rubyNames.getClassStyleName(type.getName())
+        );
     }
 }
 
