@@ -238,5 +238,15 @@ describe SDK::VmReader do
         expect(result.href).to eql('myhref')
       end
     end
+
+    context 'when the enum attribute has a unsupported value' do
+      it 'the attribute is set to nil' do
+        reader = SDK::XmlReader.new('<vm><type>ugly</type></vm>')
+        result = SDK::VmReader.read_one(reader)
+        expect(result).to_not be_nil
+        expect(result).to be_a(SDK::Vm)
+        expect(result.type).to be_nil
+      end
+    end
   end
 end

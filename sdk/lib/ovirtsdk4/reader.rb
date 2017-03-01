@@ -190,6 +190,46 @@ module OvirtSDK4
     end
 
     #
+    # Converts the given text to an enum.
+    #
+    # @param enum_type [module]
+    # @param text [String]
+    # @return [String]
+    #
+    def self.parse_enum(enum_type, text)
+      return nil unless text
+      begin
+        text if enum_type.constants.map(&:downcase).include?(text.to_sym)
+      rescue
+        nil
+      end
+    end
+
+    #
+    # Reads a enum value, assuming that the cursor is positioned at the
+    # start element that contains the value.
+    #
+    # @param enum_type [module]
+    # @param reader [XmlReader]
+    # @return [Array<String>]
+    #
+    def self.read_enum(enum_type, reader)
+      Reader.parse_enum(enum_type, reader.read_element)
+    end
+
+    #
+    # Reads a list of enum values, assuming that the cursor is positioned
+    # at the start element of the element that contains the first value.
+    #
+    # @param enum_type [module]
+    # @param reader [XmlReader]
+    # @return [Array<String>]
+    #
+    def self.read_enums(enum_type, reader)
+      reader.read_elements.map { |text| Reader.parse_enum(enum_type, text) }
+    end
+
+    #
     # This hash stores for each known tag a reference to the method that read the object corresponding for that tag. For
     # example, for the `vm` tag it will contain a reference to the `VmReader.read_one` method, and for the `vms` tag
     # it will contain a reference to the `VmReader.read_many` method.

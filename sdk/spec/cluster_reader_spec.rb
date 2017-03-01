@@ -32,5 +32,23 @@ describe SDK::ClusterReader do
         expect(result.switch_type).to eql(SDK::SwitchType::LEGACY)
       end
     end
+
+    context 'given list of enums where one is unsupported' do
+      it 'both are read correctly, but unsupported one is set to nil' do
+        reader = SDK::XmlReader.new(
+          '<cluster>' \
+            '<required_rng_sources>' \
+            '<required_rng_source>random</required_rng_source>' \
+            '<required_rng_source>ugly</required_rng_source>' \
+            '</required_rng_sources>' \
+          '</cluster>'
+        )
+        result = SDK::ClusterReader.read_one(reader)
+        reader.close
+        expect(result).to_not be_nil
+        expect(result).to be_a(SDK::Cluster)
+        expect(result.required_rng_sources).to eql([SDK::RngSource::RANDOM, nil])
+      end
+    end
   end
 end
