@@ -2,6 +2,22 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.0.11 / Mar 2 2017
+
+New features:
+
+* Add support for custom headers and query parameters.
+
+* Ignore unsupported enum values.
+
+* Check that URL has been provided.
+
+* Send INFO log messages with summaries of requests and responses.
+
+Bug fixes:
+
+* Fix writing of lists of structs.
+
 == 4.0.10 / Feb 9 2017
 
 Bug fixes:
