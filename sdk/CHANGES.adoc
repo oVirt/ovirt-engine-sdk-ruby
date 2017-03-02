@@ -2,6 +2,33 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.1.3 / Mar 2 2017
+
+Update to model 4.1.31:
+
+* Add `auto_storage_select` attribute to the `VmPool` type.
+
+* Move `vnic_profile_mappings` and `reassign_bad_macs` from
+  the `import` operation to the `register` operation
+
+* Add IPv6 details to the `NicConfiguration` type.
+
+* Add NFS 4.2 support.
+
+New features:
+
+* Add support for custom headers and query parameters.
+
+* Ignore unsupported enum values.
+
+* Check that URL has been provided.
+
+* Send INFO log messages with summaries of requests and responses.
+
+Bug fixes:
+
+* Fix writing of lists of structs.
+
 == 4.1.2 / Feb 9 2017
 
 Bug fixes:
