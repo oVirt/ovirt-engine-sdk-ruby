@@ -6,7 +6,7 @@ libcurl-devel
 libxml2-devel
 maven
 python
-python-lxml
+python2-lxml
 rpm-build
 rpmdevtools
 ruby
