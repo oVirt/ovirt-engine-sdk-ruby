@@ -101,6 +101,16 @@ describe SDK::Connection do
         connection.close
       end
     end
+
+    it 'raises exception if no URL is provided' do
+      options = {
+        token:   test_token,
+        ca_file: test_ca_file,
+        debug:   test_debug,
+        log:     test_log
+      }
+      expect { SDK::Connection.new(options) }.to raise_error(ArgumentError, /url/)
+    end
   end
 
   describe '#authenticate' do
