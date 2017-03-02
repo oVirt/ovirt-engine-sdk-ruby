@@ -114,6 +114,9 @@ module OvirtSDK4
       @proxy_password = opts[:proxy_password]
       @headers = opts[:headers]
 
+      # Check that the URL has been provided:
+      raise ArgumentError, "The 'url' option is mandatory" unless @url
+
       # Create a temporary file to store the CA certificates, and populate it with the contents of the 'ca_file' and
       # 'ca_certs' options. The file will be removed when the connection is closed.
       @ca_store = nil
