@@ -248,5 +248,53 @@ describe SDK::VmReader do
         expect(result.type).to be_nil
       end
     end
+
+    it 'reads correctly InheritableBoolean::FALSE' do
+      reader = SDK::XmlReader.new("
+        <vm>
+          <migration>
+            <auto_converge>false</auto_converge>
+          </migration>
+        </vm>
+      ")
+      result = SDK::VmReader.read_one(reader)
+      expect(result.migration.auto_converge).to be(SDK::InheritableBoolean::FALSE)
+    end
+
+    it 'reads correctly InheritableBoolean::TRUE' do
+      reader = SDK::XmlReader.new("
+        <vm>
+          <migration>
+            <auto_converge>true</auto_converge>
+          </migration>
+        </vm>
+      ")
+      result = SDK::VmReader.read_one(reader)
+      expect(result.migration.auto_converge).to be(SDK::InheritableBoolean::TRUE)
+    end
+
+    it 'reads correctly InheritableBoolean::INHERIT' do
+      reader = SDK::XmlReader.new("
+        <vm>
+          <migration>
+            <auto_converge>inherit</auto_converge>
+          </migration>
+        </vm>
+      ")
+      result = SDK::VmReader.read_one(reader)
+      expect(result.migration.auto_converge).to be(SDK::InheritableBoolean::INHERIT)
+    end
+
+    it 'ignores incorrect InheritableBoolean' do
+      reader = SDK::XmlReader.new("
+        <vm>
+          <migration>
+            <auto_converge>ugly</auto_converge>
+          </migration>
+        </vm>
+      ")
+      result = SDK::VmReader.read_one(reader)
+      expect(result.migration.auto_converge).to be_nil
+    end
   end
 end
