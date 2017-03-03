@@ -2,6 +2,15 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.0.12 / Mar 3 2017
+
+Bug fixes:
+
+* Don't avoid reserved words in enum values text.
+
+* Red correctly attributes with enum values
+  https://bugzilla.redhat.com/1428642[#1428642].
+
 == 4.0.11 / Mar 2 2017
 
 New features:
