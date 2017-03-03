@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015-2016 Red Hat, Inc.
+Copyright (c) 2015-2017 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -293,10 +293,11 @@ public class ReadersGenerator implements RubyGenerator {
     }
 
     private void generateReadEnum(StructMember member, String variable) {
+        RubyName typeName = rubyNames.getTypeName(member.getType());
         buffer.addLine(
             "%1$s = Reader.read_enum(%2$s, reader)",
             variable,
-            rubyNames.getClassStyleName(member.getName())
+            typeName.getClassName()
         );
     }
 
@@ -346,10 +347,11 @@ public class ReadersGenerator implements RubyGenerator {
     }
 
     private void generateReadEnums(EnumType type, String variable) {
+        RubyName typeName = rubyNames.getTypeName(type);
         buffer.addLine(
             "%1$s = Reader.read_enums(%2$s, reader)",
             variable,
-            rubyNames.getClassStyleName(type.getName())
+            typeName.getClassName()
         );
     }
 }

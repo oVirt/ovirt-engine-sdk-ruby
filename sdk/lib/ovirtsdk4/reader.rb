@@ -192,41 +192,38 @@ module OvirtSDK4
     #
     # Converts the given text to an enum.
     #
-    # @param enum_type [module]
+    # @param enum_module [Module]
     # @param text [String]
     # @return [String]
     #
-    def self.parse_enum(enum_type, text)
+    def self.parse_enum(enum_module, text)
       return nil unless text
-      begin
-        text if enum_type.constants.map(&:downcase).include?(text.to_sym)
-      rescue
-        nil
-      end
+      values = enum_module.constants.map { |const| enum_module.const_get(const) }
+      values.detect { |value| value.casecmp(text).zero? }
     end
 
     #
     # Reads a enum value, assuming that the cursor is positioned at the
     # start element that contains the value.
     #
-    # @param enum_type [module]
+    # @param enum_module [Module]
     # @param reader [XmlReader]
     # @return [Array<String>]
     #
-    def self.read_enum(enum_type, reader)
-      Reader.parse_enum(enum_type, reader.read_element)
+    def self.read_enum(enum_module, reader)
+      Reader.parse_enum(enum_module, reader.read_element)
     end
 
     #
     # Reads a list of enum values, assuming that the cursor is positioned
     # at the start element of the element that contains the first value.
     #
-    # @param enum_type [module]
+    # @param enum_module [Module]
     # @param reader [XmlReader]
     # @return [Array<String>]
     #
-    def self.read_enums(enum_type, reader)
-      reader.read_elements.map { |text| Reader.parse_enum(enum_type, text) }
+    def self.read_enums(enum_module, reader)
+      reader.read_elements.map { |text| Reader.parse_enum(enum_module, text) }
     end
 
     #
