@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015-2016 Red Hat, Inc.
+Copyright (c) 2015-2017 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import org.ovirt.api.metamodel.concepts.PrimitiveType;
 import org.ovirt.api.metamodel.concepts.StructMember;
 import org.ovirt.api.metamodel.concepts.StructType;
 import org.ovirt.api.metamodel.concepts.Type;
+import org.ovirt.api.metamodel.tool.Names;
 
 /**
  * This class is responsible for generating the classes that represent the types of the model.
@@ -46,6 +47,7 @@ public class TypesGenerator implements RubyGenerator {
     protected File out;
 
     // Reference to the objects used to generate the code:
+    @Inject private Names names;
     @Inject private RubyNames rubyNames;
     @Inject private YardDoc yardDoc;
 
@@ -324,8 +326,9 @@ public class TypesGenerator implements RubyGenerator {
     }
 
     private void generateEnumValue(EnumValue value) {
-        String constantName = rubyNames.getConstantStyleName(value.getName());
-        String constantValue = rubyNames.getMemberStyleName(value.getName());
+        Name name = value.getName();
+        String constantName = rubyNames.getConstantStyleName(name);
+        String constantValue = names.getLowerJoined(name, "_");
         buffer.addLine("%s = '%s'.freeze", constantName, constantValue);
     }
 
