@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015-2016 Red Hat, Inc.
+Copyright (c) 2015-2017 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@ limitations under the License.
 
 #include <ruby.h>
 
-#include <stdbool.h>
 #include <libxml/xmlwriter.h>
 
 #include "ov_module.h"
@@ -31,57 +30,76 @@ static ID STRING_ID;
 static ID STRING_IO_ID;
 static ID WRITE_ID;
 
-typedef struct {
-    VALUE io;
-    xmlTextWriterPtr writer;
-} ov_xml_writer_object;
-
-static void ov_xml_writer_check_closed(ov_xml_writer_object* object) {
-    if (object->writer == NULL) {
+static void ov_xml_writer_check_closed(ov_xml_writer_object* ptr) {
+    if (ptr->writer == NULL) {
         rb_raise(ov_error_class, "The writer is already closed");
     }
 }
 
-static void ov_xml_writer_mark(ov_xml_writer_object *object) {
-    /* Mark the IO object as reachable: */
-    if (!NIL_P(object->io)) {
-        rb_gc_mark(object->io);
-    }
+static void ov_xml_writer_mark(void* vptr) {
+    ov_xml_writer_object* ptr;
+
+    ptr = vptr;
+    rb_gc_mark(ptr->io);
 }
 
-static void ov_xml_writer_free(ov_xml_writer_object *object) {
+static void ov_xml_writer_free(void* vptr) {
+    ov_xml_writer_object* ptr;
+
+    /* Get the pointer: */
+    ptr = vptr;
+
     /* Free the libxml writer, the buffer is automatically closed: */
-    if (object->writer != NULL) {
-        xmlTextWriterPtr tmp = object->writer;
-        object->writer = NULL;
+    if (ptr->writer != NULL) {
+        xmlTextWriterPtr tmp = ptr->writer;
+        ptr->writer = NULL;
         xmlFreeTextWriter(tmp);
     }
 
     /* Free this object: */
-    xfree(object);
+    xfree(ptr);
 }
 
-static VALUE ov_xml_writer_alloc(VALUE klass) {
-    ov_xml_writer_object* object = NULL;
+rb_data_type_t ov_xml_writer_type = {
+    .wrap_struct_name = "OVXMLWRITER",
+    .function = {
+        .dmark = ov_xml_writer_mark,
+        .dfree = ov_xml_writer_free,
+        .dsize = NULL,
+        .reserved = { NULL, NULL }
+    },
+#ifdef RUBY_TYPED_FREE_IMMEDIATELY
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY,
+#endif
+};
 
-    object = ALLOC(ov_xml_writer_object);
-    memset(object, 0, sizeof(ov_xml_writer_object));
-    return Data_Wrap_Struct(klass, ov_xml_writer_mark, ov_xml_writer_free, object);
+static VALUE ov_xml_writer_alloc(VALUE klass) {
+    ov_xml_writer_object* ptr;
+
+    ptr = ALLOC(ov_xml_writer_object);
+    ptr->io = Qnil;
+    ptr->writer = NULL;
+    return TypedData_Wrap_Struct(klass, &ov_xml_writer_type, ptr);
 }
 
 static int ov_xml_writer_callback(void *context, const char *buffer, int length) {
     VALUE count;
     VALUE data;
-    ov_xml_writer_object *object = (ov_xml_writer_object*) context;
+    ov_xml_writer_object* ptr;
+
+    /* Get the pointer: */
+    ptr = context;
 
     /* Do nothing if the writer is already closed: */
-    if (object->writer == NULL) {
+    if (ptr->writer == NULL) {
         return 0;
     }
 
     /* Convert the buffer to a Ruby string and write it to the IO object, using the "write" method: */
     data = rb_str_new(buffer, length);
-    count = rb_funcall(object->io, WRITE_ID, 1, data);
+    count = rb_funcall(ptr->io, WRITE_ID, 1, data);
 
     return NUM2INT(count);
 }
@@ -99,11 +117,11 @@ static VALUE ov_xml_writer_initialize(int argc, VALUE* argv, VALUE self) {
     VALUE indent;
     VALUE io;
     VALUE io_class;
-    ov_xml_writer_object* object = NULL;
-    xmlOutputBufferPtr buffer = NULL;
+    ov_xml_writer_object* ptr;
+    xmlOutputBufferPtr buffer;
 
     /* Get the pointer to the object: */
-    Data_Get_Struct(self, ov_xml_writer_object, object);
+    ov_xml_writer_ptr(self, ptr);
 
     /* Get the values of the parameters: */
     if (argc > 2) {
@@ -115,12 +133,12 @@ static VALUE ov_xml_writer_initialize(int argc, VALUE* argv, VALUE self) {
     /* The first parameter can be an IO object or nil. If it is nil then we need to create a IO object where we can
        write the generated XML. */
     if (NIL_P(io)) {
-        object->io = ov_xml_writer_create_string_io();
+        ptr->io = ov_xml_writer_create_string_io();
     }
     else {
         io_class = rb_class_of(io);
         if (io_class == rb_cIO) {
-            object->io = io;
+            ptr->io = io;
         }
         else {
             rb_raise(
@@ -132,50 +150,50 @@ static VALUE ov_xml_writer_initialize(int argc, VALUE* argv, VALUE self) {
     }
 
     /* Create the libxml buffer that writes to the IO object: */
-    buffer = xmlOutputBufferCreateIO(ov_xml_writer_callback, NULL, object, NULL);
+    buffer = xmlOutputBufferCreateIO(ov_xml_writer_callback, NULL, ptr, NULL);
     if (buffer == NULL) {
         rb_raise(ov_error_class, "Can't create XML buffer");
     }
 
     /* Create the libxml writer: */
-    object->writer = xmlNewTextWriter(buffer);
-    if (object->writer == NULL) {
+    ptr->writer = xmlNewTextWriter(buffer);
+    if (ptr->writer == NULL) {
         xmlOutputBufferClose(buffer);
         rb_raise(ov_error_class, "Can't create XML writer");
     }
 
     /* Enable indentation: */
     if (RTEST(indent)) {
-        xmlTextWriterSetIndent(object->writer, 1);
-        xmlTextWriterSetIndentString(object->writer, BAD_CAST "  ");
+        xmlTextWriterSetIndent(ptr->writer, 1);
+        xmlTextWriterSetIndentString(ptr->writer, BAD_CAST "  ");
     }
 
     return self;
 }
 
 static VALUE ov_xml_writer_string(VALUE self) {
-    int rc = 0;
-    ov_xml_writer_object* object = NULL;
+    int rc;
+    ov_xml_writer_object* ptr;
 
-    Data_Get_Struct(self, ov_xml_writer_object, object);
-    ov_xml_writer_check_closed(object);
-    rc = xmlTextWriterFlush(object->writer);
+    ov_xml_writer_ptr(self, ptr);
+    ov_xml_writer_check_closed(ptr);
+    rc = xmlTextWriterFlush(ptr->writer);
     if (rc < 0) {
         rb_raise(ov_error_class, "Can't flush XML writer");
     }
-    return rb_funcall(object->io, STRING_ID, 0, NULL);
+    return rb_funcall(ptr->io, STRING_ID, 0, NULL);
 }
 
 static VALUE ov_xml_writer_write_start(VALUE self, VALUE name) {
-    char* c_name = NULL;
-    int rc = 0;
-    ov_xml_writer_object* object = NULL;
+    char* c_name;
+    int rc;
+    ov_xml_writer_object* ptr;
 
-    Data_Get_Struct(self, ov_xml_writer_object, object);
-    ov_xml_writer_check_closed(object);
+    ov_xml_writer_ptr(self, ptr);
+    ov_xml_writer_check_closed(ptr);
     Check_Type(name, T_STRING);
     c_name = StringValueCStr(name);
-    rc = xmlTextWriterStartElement(object->writer, BAD_CAST c_name);
+    rc = xmlTextWriterStartElement(ptr->writer, BAD_CAST c_name);
     if (rc < 0) {
         rb_raise(ov_error_class, "Can't start XML element");
     }
@@ -183,12 +201,12 @@ static VALUE ov_xml_writer_write_start(VALUE self, VALUE name) {
 }
 
 static VALUE ov_xml_writer_write_end(VALUE self) {
-    int rc = 0;
-    ov_xml_writer_object* object = NULL;
+    int rc;
+    ov_xml_writer_object* ptr;
 
-    Data_Get_Struct(self, ov_xml_writer_object, object);
-    ov_xml_writer_check_closed(object);
-    rc = xmlTextWriterEndElement(object->writer);
+    ov_xml_writer_ptr(self, ptr);
+    ov_xml_writer_check_closed(ptr);
+    rc = xmlTextWriterEndElement(ptr->writer);
     if (rc < 0) {
         rb_raise(ov_error_class, "Can't end XML element");
     }
@@ -196,18 +214,18 @@ static VALUE ov_xml_writer_write_end(VALUE self) {
 }
 
 static VALUE ov_xml_writer_write_attribute(VALUE self, VALUE name, VALUE value) {
-    char* c_name = NULL;
-    char* c_value = NULL;
-    int rc = 0;
-    ov_xml_writer_object* object = NULL;
+    char* c_name;
+    char* c_value;
+    int rc;
+    ov_xml_writer_object* ptr;
 
-    Data_Get_Struct(self, ov_xml_writer_object, object);
-    ov_xml_writer_check_closed(object);
+    ov_xml_writer_ptr(self, ptr);
+    ov_xml_writer_check_closed(ptr);
     Check_Type(name, T_STRING);
     Check_Type(value, T_STRING);
     c_name = StringValueCStr(name);
     c_value = StringValueCStr(value);
-    rc = xmlTextWriterWriteAttribute(object->writer, BAD_CAST c_name, BAD_CAST c_value);
+    rc = xmlTextWriterWriteAttribute(ptr->writer, BAD_CAST c_name, BAD_CAST c_value);
     if (rc < 0) {
         rb_raise(ov_error_class, "Can't write attribute with name \"%s\" and value \"%s\"", c_name, c_value);
     }
@@ -215,18 +233,18 @@ static VALUE ov_xml_writer_write_attribute(VALUE self, VALUE name, VALUE value) 
 }
 
 static VALUE ov_xml_writer_write_element(VALUE self, VALUE name, VALUE value) {
-    char* c_name = NULL;
-    char* c_value = NULL;
-    int rc = 0;
-    ov_xml_writer_object* object = NULL;
+    char* c_name;
+    char* c_value;
+    int rc;
+    ov_xml_writer_object* ptr;
 
-    Data_Get_Struct(self, ov_xml_writer_object, object);
-    ov_xml_writer_check_closed(object);
+    ov_xml_writer_ptr(self, ptr);
+    ov_xml_writer_check_closed(ptr);
     Check_Type(name, T_STRING);
     Check_Type(value, T_STRING);
     c_name = StringValueCStr(name);
     c_value = StringValueCStr(value);
-    rc = xmlTextWriterWriteElement(object->writer, BAD_CAST c_name, BAD_CAST c_value);
+    rc = xmlTextWriterWriteElement(ptr->writer, BAD_CAST c_name, BAD_CAST c_value);
     if (rc < 0) {
         rb_raise(ov_error_class, "Can't write element with name \"%s\" and value \"%s\"", c_name, c_value);
     }
@@ -234,12 +252,12 @@ static VALUE ov_xml_writer_write_element(VALUE self, VALUE name, VALUE value) {
 }
 
 static VALUE ov_xml_writer_flush(VALUE self) {
-    ov_xml_writer_object* object = NULL;
-    int rc = 0;
+    int rc;
+    ov_xml_writer_object* ptr;
 
-    Data_Get_Struct(self, ov_xml_writer_object, object);
-    ov_xml_writer_check_closed(object);
-    rc = xmlTextWriterFlush(object->writer);
+    ov_xml_writer_ptr(self, ptr);
+    ov_xml_writer_check_closed(ptr);
+    rc = xmlTextWriterFlush(ptr->writer);
     if (rc < 0) {
         rb_raise(ov_error_class, "Can't flush XML writer");
     }
@@ -247,12 +265,12 @@ static VALUE ov_xml_writer_flush(VALUE self) {
 }
 
 static VALUE ov_xml_writer_close(VALUE self) {
-    ov_xml_writer_object* object = NULL;
+    ov_xml_writer_object* ptr;
 
-    Data_Get_Struct(self, ov_xml_writer_object, object);
-    ov_xml_writer_check_closed(object);
-    xmlFreeTextWriter(object->writer);
-    object->writer = NULL;
+    ov_xml_writer_ptr(self, ptr);
+    ov_xml_writer_check_closed(ptr);
+    xmlFreeTextWriter(ptr->writer);
+    ptr->writer = NULL;
     return Qnil;
 }
 

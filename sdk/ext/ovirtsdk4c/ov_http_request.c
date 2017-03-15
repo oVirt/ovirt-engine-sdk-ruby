@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2016 Red Hat, Inc.
+Copyright (c) 2016-2017 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -40,218 +40,221 @@ static VALUE TOKEN_SYMBOL;
 static VALUE KERBEROS_SYMBOL;
 static VALUE BODY_SYMBOL;
 
-static void ov_http_request_mark(ov_http_request_object *object) {
-    if (!NIL_P(object->method)) {
-        rb_gc_mark(object->method);
-    }
-    if (!NIL_P(object->url)) {
-        rb_gc_mark(object->url);
-    }
-    if (!NIL_P(object->query)) {
-        rb_gc_mark(object->query);
-    }
-    if (!NIL_P(object->headers)) {
-        rb_gc_mark(object->headers);
-    }
-    if (!NIL_P(object->username)) {
-        rb_gc_mark(object->username);
-    }
-    if (!NIL_P(object->password)) {
-        rb_gc_mark(object->password);
-    }
-    if (!NIL_P(object->token)) {
-        rb_gc_mark(object->token);
-    }
-    if (!NIL_P(object->kerberos)) {
-        rb_gc_mark(object->kerberos);
-    }
-    if (!NIL_P(object->body)) {
-        rb_gc_mark(object->body);
-    }
+static void ov_http_request_mark(void* vptr) {
+    ov_http_request_object* ptr;
+
+    ptr = vptr;
+    rb_gc_mark(ptr->method);
+    rb_gc_mark(ptr->url);
+    rb_gc_mark(ptr->query);
+    rb_gc_mark(ptr->headers);
+    rb_gc_mark(ptr->username);
+    rb_gc_mark(ptr->password);
+    rb_gc_mark(ptr->token);
+    rb_gc_mark(ptr->kerberos);
+    rb_gc_mark(ptr->body);
 }
 
-static void ov_http_request_free(ov_http_request_object *object) {
-    xfree(object);
+static void ov_http_request_free(void* vptr) {
+    ov_http_request_object* ptr;
+
+    ptr = vptr;
+    xfree(ptr);
 }
+
+rb_data_type_t ov_http_request_type = {
+    .wrap_struct_name = "OVHTTPREQUEST",
+    .function = {
+        .dmark = ov_http_request_mark,
+        .dfree = ov_http_request_free,
+        .dsize = NULL,
+        .reserved = { NULL, NULL }
+    },
+#ifdef RUBY_TYPED_FREE_IMMEDIATELY
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY,
+#endif
+};
 
 static VALUE ov_http_request_alloc(VALUE klass) {
-    ov_http_request_object* object = NULL;
+    ov_http_request_object* ptr;
 
-    object = ALLOC(ov_http_request_object);
-    object->method   = Qnil;
-    object->url      = Qnil;
-    object->query    = Qnil;
-    object->headers  = Qnil;
-    object->username = Qnil;
-    object->password = Qnil;
-    object->token    = Qnil;
-    object->kerberos = Qnil;
-    object->body     = Qnil;
-    return Data_Wrap_Struct(klass, ov_http_request_mark, ov_http_request_free, object);
+    ptr = ALLOC(ov_http_request_object);
+    ptr->method   = Qnil;
+    ptr->url      = Qnil;
+    ptr->query    = Qnil;
+    ptr->headers  = Qnil;
+    ptr->username = Qnil;
+    ptr->password = Qnil;
+    ptr->token    = Qnil;
+    ptr->kerberos = Qnil;
+    ptr->body     = Qnil;
+    return TypedData_Wrap_Struct(klass, &ov_http_request_type, ptr);
 }
 
 static VALUE ov_http_request_get_method(VALUE self) {
-    ov_http_request_object* object = NULL;
+    ov_http_request_object* ptr;
 
-    Data_Get_Struct(self, ov_http_request_object, object);
-    return object->method;
+    ov_http_request_ptr(self, ptr);
+    return ptr->method;
 }
 
 static VALUE ov_http_request_set_method(VALUE self, VALUE value) {
-    ov_http_request_object* object = NULL;
+    ov_http_request_object* ptr;
 
-    Data_Get_Struct(self, ov_http_request_object, object);
+    ov_http_request_ptr(self, ptr);
     if (NIL_P(value)) {
-        object->method = GET_SYMBOL;
+        ptr->method = GET_SYMBOL;
     }
     else {
         Check_Type(value, T_SYMBOL);
-        object->method = value;
+        ptr->method = value;
     }
     return Qnil;
 }
 
 static VALUE ov_http_request_get_url(VALUE self) {
-    ov_http_request_object* object = NULL;
+    ov_http_request_object* ptr;
 
-    Data_Get_Struct(self, ov_http_request_object, object);
-    return object->url;
+    ov_http_request_ptr(self, ptr);
+    return ptr->url;
 }
 
 static VALUE ov_http_request_set_url(VALUE self, VALUE value) {
-    ov_http_request_object* object = NULL;
+    ov_http_request_object* ptr;
 
-    Data_Get_Struct(self, ov_http_request_object, object);
+    ov_http_request_ptr(self, ptr);
     if (!NIL_P(value)) {
         Check_Type(value, T_STRING);
     }
-    object->url = value;
+    ptr->url = value;
     return Qnil;
 }
 
 static VALUE ov_http_request_get_query(VALUE self) {
-    ov_http_request_object* object = NULL;
+    ov_http_request_object* ptr;
 
-    Data_Get_Struct(self, ov_http_request_object, object);
-    return object->query;
+    ov_http_request_ptr(self, ptr);
+    return ptr->query;
 }
 
 static VALUE ov_http_request_set_query(VALUE self, VALUE value) {
-    ov_http_request_object* object = NULL;
+    ov_http_request_object* ptr;
 
-    Data_Get_Struct(self, ov_http_request_object, object);
+    ov_http_request_ptr(self, ptr);
     if (!NIL_P(value)) {
         Check_Type(value, T_HASH);
     }
-    object->query = value;
+    ptr->query = value;
     return Qnil;
 }
 
 static VALUE ov_http_request_get_headers(VALUE self) {
-    ov_http_request_object* object = NULL;
+    ov_http_request_object* ptr;
 
-    Data_Get_Struct(self, ov_http_request_object, object);
-    return object->headers;
+    ov_http_request_ptr(self, ptr);
+    return ptr->headers;
 }
 
 static VALUE ov_http_request_set_headers(VALUE self, VALUE value) {
-    ov_http_request_object* object = NULL;
+    ov_http_request_object* ptr;
 
-    Data_Get_Struct(self, ov_http_request_object, object);
+    ov_http_request_ptr(self, ptr);
     if (NIL_P(value)) {
-        object->headers = rb_hash_new();
+        ptr->headers = rb_hash_new();
     }
     else {
         Check_Type(value, T_HASH);
-        object->headers = value;
+        ptr->headers = value;
     }
     return Qnil;
 }
 
 static VALUE ov_http_request_get_username(VALUE self) {
-    ov_http_request_object* object = NULL;
+    ov_http_request_object* ptr;
 
-    Data_Get_Struct(self, ov_http_request_object, object);
-    return object->username;
+    ov_http_request_ptr(self, ptr);
+    return ptr->username;
 }
 
 static VALUE ov_http_request_set_username(VALUE self, VALUE value) {
-    ov_http_request_object* object = NULL;
+    ov_http_request_object* ptr;
 
-    Data_Get_Struct(self, ov_http_request_object, object);
+    ov_http_request_ptr(self, ptr);
     if (!NIL_P(value)) {
         Check_Type(value, T_STRING);
     }
-    object->username = value;
+    ptr->username = value;
     return Qnil;
 }
 
 static VALUE ov_http_request_get_password(VALUE self) {
-    ov_http_request_object* object = NULL;
+    ov_http_request_object* ptr;
 
-    Data_Get_Struct(self, ov_http_request_object, object);
-    return object->password;
+    ov_http_request_ptr(self, ptr);
+    return ptr->password;
 }
 
 static VALUE ov_http_request_set_password(VALUE self, VALUE value) {
-    ov_http_request_object* object = NULL;
+    ov_http_request_object* ptr;
 
-    Data_Get_Struct(self, ov_http_request_object, object);
+    ov_http_request_ptr(self, ptr);
     if (!NIL_P(value)) {
         Check_Type(value, T_STRING);
     }
-    object->password = value;
+    ptr->password = value;
     return Qnil;
 }
 
 static VALUE ov_http_request_get_token(VALUE self) {
-    ov_http_request_object* object = NULL;
+    ov_http_request_object* ptr;
 
-    Data_Get_Struct(self, ov_http_request_object, object);
-    return object->token;
+    ov_http_request_ptr(self, ptr);
+    return ptr->token;
 }
 
 static VALUE ov_http_request_set_token(VALUE self, VALUE value) {
-    ov_http_request_object* object = NULL;
+    ov_http_request_object* ptr;
 
-    Data_Get_Struct(self, ov_http_request_object, object);
+    ov_http_request_ptr(self, ptr);
     if (!NIL_P(value)) {
         Check_Type(value, T_STRING);
     }
-    object->token = value;
+    ptr->token = value;
     return Qnil;
 }
 
 static VALUE ov_http_request_get_kerberos(VALUE self) {
-    ov_http_request_object* object = NULL;
+    ov_http_request_object* ptr;
 
-    Data_Get_Struct(self, ov_http_request_object, object);
-    return object->kerberos;
+    ov_http_request_ptr(self, ptr);
+    return ptr->kerberos;
 }
 
 static VALUE ov_http_request_set_kerberos(VALUE self, VALUE value) {
-    ov_http_request_object* object = NULL;
+    ov_http_request_object* ptr;
 
-    Data_Get_Struct(self, ov_http_request_object, object);
-    object->kerberos = RTEST(value);
+    ov_http_request_ptr(self, ptr);
+    ptr->kerberos = RTEST(value);
     return Qnil;
 }
 
 static VALUE ov_http_request_get_body(VALUE self) {
-    ov_http_request_object* object = NULL;
+    ov_http_request_object* ptr;
 
-    Data_Get_Struct(self, ov_http_request_object, object);
-    return object->body;
+    ov_http_request_ptr(self, ptr);
+    return ptr->body;
 }
 
 static VALUE ov_http_request_set_body(VALUE self, VALUE value) {
-    ov_http_request_object* object = NULL;
+    ov_http_request_object* ptr;
 
-    Data_Get_Struct(self, ov_http_request_object, object);
+    ov_http_request_ptr(self, ptr);
     if (!NIL_P(value)) {
         Check_Type(value, T_STRING);
     }
-    object->body = value;
+    ptr->body = value;
     return Qnil;
 }
 
@@ -285,7 +288,7 @@ static VALUE ov_http_request_initialize(int argc, VALUE* argv, VALUE self) {
 
 void ov_http_request_define(void) {
     /* Define the class: */
-    ov_http_request_class = rb_define_class_under(ov_module, "HttpRequest", rb_cObject);
+    ov_http_request_class = rb_define_class_under(ov_module, "HttpRequest", rb_cData);
 
     /* Define the constructor: */
     rb_define_alloc_func(ov_http_request_class, ov_http_request_alloc);

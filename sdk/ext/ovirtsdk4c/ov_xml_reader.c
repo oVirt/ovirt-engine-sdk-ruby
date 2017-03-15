@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015-2016 Red Hat, Inc.
+Copyright (c) 2015-2017 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,63 +30,79 @@ limitations under the License.
 /* Class: */
 VALUE ov_xml_reader_class;
 
-// Method identifiers:
+/* Method identifiers: */
 static ID READ_ID;
 static ID STRING_IO_ID;
 
-typedef struct {
-    VALUE io;
-    xmlTextReaderPtr reader;
-    bool closed;
-} ov_xml_reader_object;
-
-static void ov_xml_reader_check_closed(ov_xml_reader_object* object) {
-    if (object->closed) {
+static void ov_xml_reader_check_closed(ov_xml_reader_object* ptr) {
+    if (ptr->closed) {
         rb_raise(ov_error_class, "The reader is already closed");
     }
 }
 
-static void ov_xml_reader_mark(ov_xml_reader_object *object) {
-    /* Mark the IO object as reachable: */
-    if (!NIL_P(object->io)) {
-        rb_gc_mark(object->io);
-    }
+static void ov_xml_reader_mark(void* vptr) {
+    ov_xml_reader_object* ptr;
+
+    ptr = vptr;
+    rb_gc_mark(ptr->io);
 }
 
-static void ov_xml_reader_free(ov_xml_reader_object *object) {
+static void ov_xml_reader_free(void* vptr) {
+    ov_xml_reader_object* ptr;
+
+    /* Get the pointer: */
+    ptr = vptr;
+
     /* Free the libxml reader: */
-    if (!object->closed) {
-       if (object->reader != NULL) {
-           xmlFreeTextReader(object->reader);
+    if (!ptr->closed) {
+       if (ptr->reader != NULL) {
+           xmlFreeTextReader(ptr->reader);
        }
-       object->reader = NULL;
-       object->closed = true;
+       ptr->reader = NULL;
+       ptr->closed = true;
     }
 
     /* Free this object: */
-    xfree(object);
+    xfree(ptr);
 }
 
-static VALUE ov_xml_reader_alloc(VALUE klass) {
-    ov_xml_reader_object* object = NULL;
+rb_data_type_t ov_xml_reader_type = {
+    .wrap_struct_name = "OVXMLREADER",
+    .function = {
+        .dmark = ov_xml_reader_mark,
+        .dfree = ov_xml_reader_free,
+        .dsize = NULL,
+        .reserved = { NULL, NULL }
+    },
+#ifdef RUBY_TYPED_FREE_IMMEDIATELY
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY,
+#endif
+};
 
-    object = ALLOC(ov_xml_reader_object);
-    memset(object, 0, sizeof(ov_xml_reader_object));
-    return Data_Wrap_Struct(klass, ov_xml_reader_mark, ov_xml_reader_free, object);
+static VALUE ov_xml_reader_alloc(VALUE klass) {
+    ov_xml_reader_object* ptr;
+
+    ptr = ALLOC(ov_xml_reader_object);
+    ptr->io     = Qnil;
+    ptr->reader = NULL;
+    ptr->closed = false;
+    return TypedData_Wrap_Struct(klass, &ov_xml_reader_type, ptr);
 }
 
 static int ov_xml_reader_callback(void *context, char *buffer, int length) {
     VALUE data;
-    ov_xml_reader_object* object = NULL;
+    ov_xml_reader_object* ptr;
 
     /* Do nothing if the reader is already closed: */
-    object = (ov_xml_reader_object*) context;
-    if (object->closed) {
+    ptr = (ov_xml_reader_object*) context;
+    if (ptr->closed) {
         return -1;
     }
 
     /* Read from the Ruby IO object, and copy the result to the buffer: */
-    data = rb_funcall(object->io, READ_ID, 1, INT2NUM(length));
+    data = rb_funcall(ptr->io, READ_ID, 1, INT2NUM(length));
     if (NIL_P(data)) {
         return 0;
     }
@@ -107,20 +123,20 @@ static VALUE ov_xml_reader_create_string_io(VALUE text) {
 
 static VALUE ov_xml_reader_initialize(VALUE self, VALUE io) {
     VALUE io_class;
-    int rc = 0;
-    ov_xml_reader_object* object = NULL;
+    int rc;
+    ov_xml_reader_object* ptr;
 
     /* Get the pointer to the object: */
-    Data_Get_Struct(self, ov_xml_reader_object, object);
+    ov_xml_reader_ptr(self, ptr);
 
     /* The parameter of the constructor can be a string or an IO object. If it is a string then we need to create aa
        IO object to read from it. */
     io_class = rb_class_of(io);
     if (io_class == rb_cString) {
-        object->io = ov_xml_reader_create_string_io(io);
+        ptr->io = ov_xml_reader_create_string_io(io);
     }
     else if (io_class == rb_cIO) {
-        object->io = io;
+        ptr->io = io;
     }
     else {
         rb_raise(
@@ -131,16 +147,16 @@ static VALUE ov_xml_reader_initialize(VALUE self, VALUE io) {
     }
 
     /* Clear the closed flag: */
-    object->closed = false;
+    ptr->closed = false;
 
     /* Create the libxml reader: */
-    object->reader = xmlReaderForIO(ov_xml_reader_callback, NULL, object, NULL, NULL, 0);
-    if (object->reader == NULL) {
+    ptr->reader = xmlReaderForIO(ov_xml_reader_callback, NULL, ptr, NULL, NULL, 0);
+    if (ptr->reader == NULL) {
         rb_raise(ov_error_class, "Can't create reader");
     }
 
     /* Move the cursor to the first node: */
-    rc = xmlTextReaderRead(object->reader);
+    rc = xmlTextReaderRead(ptr->reader);
     if (rc == -1) {
         rb_raise(ov_error_class, "Can't read first node");
     }
@@ -150,11 +166,11 @@ static VALUE ov_xml_reader_initialize(VALUE self, VALUE io) {
 
 static VALUE ov_xml_reader_read(VALUE self) {
     int rc = 0;
-    ov_xml_reader_object* object = NULL;
+    ov_xml_reader_object* ptr;
 
-    Data_Get_Struct(self, ov_xml_reader_object, object);
-    ov_xml_reader_check_closed(object);
-    rc = xmlTextReaderRead(object->reader);
+    ov_xml_reader_ptr(self, ptr);
+    ov_xml_reader_check_closed(ptr);
+    rc = xmlTextReaderRead(ptr->reader);
     if (rc == 0) {
         return Qfalse;
     }
@@ -168,13 +184,13 @@ static VALUE ov_xml_reader_read(VALUE self) {
 static VALUE ov_xml_reader_forward(VALUE self) {
     int c_type = 0;
     int rc = 0;
-    ov_xml_reader_object *object = NULL;
+    ov_xml_reader_object* ptr;
 
-    Data_Get_Struct(self, ov_xml_reader_object, object);
-    ov_xml_reader_check_closed(object);
+    ov_xml_reader_ptr(self, ptr);
+    ov_xml_reader_check_closed(ptr);
 
     for (;;) {
-        c_type = xmlTextReaderNodeType(object->reader);
+        c_type = xmlTextReaderNodeType(ptr->reader);
         if (c_type == -1) {
             rb_raise(ov_error_class, "Can't get current node type");
         }
@@ -185,7 +201,7 @@ static VALUE ov_xml_reader_forward(VALUE self) {
             return Qfalse;
         }
         else {
-            rc = xmlTextReaderRead(object->reader);
+            rc = xmlTextReaderRead(ptr->reader);
             if (rc == -1) {
                 rb_raise(ov_error_class, "Can't move to next node");
             }
@@ -195,12 +211,12 @@ static VALUE ov_xml_reader_forward(VALUE self) {
 
 static VALUE ov_xml_reader_node_name(VALUE self) {
     VALUE name;
-    const xmlChar* c_name = NULL;
-    ov_xml_reader_object* object = NULL;
+    const xmlChar* c_name;
+    ov_xml_reader_object* ptr;
 
-    Data_Get_Struct(self, ov_xml_reader_object, object);
-    ov_xml_reader_check_closed(object);
-    c_name = xmlTextReaderConstName(object->reader);
+    ov_xml_reader_ptr(self, ptr);
+    ov_xml_reader_check_closed(ptr);
+    c_name = xmlTextReaderConstName(ptr->reader);
     if (c_name == NULL) {
         return Qnil;
     }
@@ -209,12 +225,12 @@ static VALUE ov_xml_reader_node_name(VALUE self) {
 }
 
 static VALUE ov_xml_reader_empty_element(VALUE self) {
-    int c_empty = 0;
-    ov_xml_reader_object* object = NULL;
+    int c_empty;
+    ov_xml_reader_object* ptr;
 
-    Data_Get_Struct(self, ov_xml_reader_object, object);
-    ov_xml_reader_check_closed(object);
-    c_empty = xmlTextReaderIsEmptyElement(object->reader);
+    ov_xml_reader_ptr(self, ptr);
+    ov_xml_reader_check_closed(ptr);
+    c_empty = xmlTextReaderIsEmptyElement(ptr->reader);
     if (c_empty == -1) {
         rb_raise(ov_error_class, "Can't check if current element is empty");
     }
@@ -223,14 +239,14 @@ static VALUE ov_xml_reader_empty_element(VALUE self) {
 
 static VALUE ov_xml_reader_get_attribute(VALUE self, VALUE name) {
     VALUE value;
-    ov_xml_reader_object* object = NULL;
-    xmlChar* c_name = NULL;
-    xmlChar* c_value = NULL;
+    ov_xml_reader_object* ptr;
+    xmlChar* c_name;
+    xmlChar* c_value;
 
-    Data_Get_Struct(self, ov_xml_reader_object, object);
-    ov_xml_reader_check_closed(object);
+    ov_xml_reader_ptr(self, ptr);
+    ov_xml_reader_check_closed(ptr);
     c_name = (xmlChar*) StringValueCStr(name);
-    c_value = xmlTextReaderGetAttribute(object->reader, c_name);
+    c_value = xmlTextReaderGetAttribute(ptr->reader, c_name);
     if (c_value == NULL) {
         return Qnil;
     }
@@ -241,17 +257,17 @@ static VALUE ov_xml_reader_get_attribute(VALUE self, VALUE name) {
 
 static VALUE ov_xml_reader_read_element(VALUE self) {
     VALUE value;
-    int c_empty = 0;
-    int c_type = 0;
-    int rc = 0;
-    ov_xml_reader_object *object = NULL;
-    xmlChar *c_value = NULL;
+    int c_empty;
+    int c_type;
+    int rc;
+    ov_xml_reader_object* ptr;
+    xmlChar* c_value;
 
-    Data_Get_Struct(self, ov_xml_reader_object, object);
-    ov_xml_reader_check_closed(object);
+    ov_xml_reader_ptr(self, ptr);
+    ov_xml_reader_check_closed(ptr);
 
     /* Check the type of the current node: */
-    c_type = xmlTextReaderNodeType(object->reader);
+    c_type = xmlTextReaderNodeType(ptr->reader);
     if (c_type == -1) {
         rb_raise(ov_error_class, "Can't get current node type");
     }
@@ -260,7 +276,7 @@ static VALUE ov_xml_reader_read_element(VALUE self) {
     }
 
     /* Check if the current node is empty: */
-    c_empty = xmlTextReaderIsEmptyElement(object->reader);
+    c_empty = xmlTextReaderIsEmptyElement(ptr->reader);
     if (c_empty == -1) {
         rb_raise(ov_error_class, "Can't check if current element is empty");
     }
@@ -271,7 +287,7 @@ static VALUE ov_xml_reader_read_element(VALUE self) {
         c_value = NULL;
     }
     else {
-        c_value = xmlTextReaderReadString(object->reader);
+        c_value = xmlTextReaderReadString(ptr->reader);
         if (c_value == NULL) {
             c_value = xmlCharStrdup("");
             if (c_value == NULL) {
@@ -281,7 +297,7 @@ static VALUE ov_xml_reader_read_element(VALUE self) {
     }
 
     /* Move to the next element: */
-    rc = xmlTextReaderNext(object->reader);
+    rc = xmlTextReaderNext(ptr->reader);
     if (rc == -1) {
         if (c_value != NULL) {
             xmlFree(c_value);
@@ -301,14 +317,14 @@ static VALUE ov_xml_reader_read_element(VALUE self) {
 static VALUE ov_xml_reader_read_elements(VALUE self) {
     VALUE element;
     VALUE list;
-    int c_empty = 0;
-    int c_type = 0;
-    int rc = 0;
-    ov_xml_reader_object* object = NULL;
+    int c_empty;
+    int c_type;
+    int rc;
+    ov_xml_reader_object* ptr;
 
     /* Get the pointer to the object and check that it isn't closed: */
-    Data_Get_Struct(self, ov_xml_reader_object, object);
-    ov_xml_reader_check_closed(object);
+    ov_xml_reader_ptr(self, ptr);
+    ov_xml_reader_check_closed(ptr);
 
     /* This method assumes that the reader is positioned at the element that contains the values to read. For example
        if the XML document is the following:
@@ -319,7 +335,7 @@ static VALUE ov_xml_reader_read_elements(VALUE self) {
        </list>
 
        The reader should be positioned at the <list> element. The first thing we need to do is to check: */
-    c_type = xmlTextReaderNodeType(object->reader);
+    c_type = xmlTextReaderNodeType(ptr->reader);
     if (c_type == -1) {
         rb_raise(ov_error_class, "Can't get current node type");
     }
@@ -329,14 +345,14 @@ static VALUE ov_xml_reader_read_elements(VALUE self) {
 
     /* If we are indeed positioned at the first element, then we need to check if it is empty, <list/>, as we will
        need this lter, after discarding the element: */
-    c_empty = xmlTextReaderIsEmptyElement(object->reader);
+    c_empty = xmlTextReaderIsEmptyElement(ptr->reader);
     if (c_empty == -1) {
         rb_raise(ov_error_class, "Can't check if current element is empty");
     }
 
     /* Now we need to discard the current element, as we are interested only in the nested <value>...</value>
        elements: */
-    rc = xmlTextReaderRead(object->reader);
+    rc = xmlTextReaderRead(ptr->reader);
     if (rc == -1) {
         rb_raise(ov_error_class, "Can't move to next node");
     }
@@ -351,7 +367,7 @@ static VALUE ov_xml_reader_read_elements(VALUE self) {
 
     /* Process the nested elements: */
     for (;;) {
-        c_type = xmlTextReaderNodeType(object->reader);
+        c_type = xmlTextReaderNodeType(ptr->reader);
         if (c_type == -1) {
             rb_raise(ov_error_class, "Can't get current node type");
         }
@@ -363,7 +379,7 @@ static VALUE ov_xml_reader_read_elements(VALUE self) {
             break;
         }
         else {
-            rc = xmlTextReaderNext(object->reader);
+            rc = xmlTextReaderNext(ptr->reader);
             if (rc == -1) {
                 rb_raise(ov_error_class, "Can't move to the next node");
             }
@@ -373,7 +389,7 @@ static VALUE ov_xml_reader_read_elements(VALUE self) {
     /* Once all the nested <value>...</value> elements are processed the reader will be positioned at the closing
        </list> element, or at the end of the document. If it is the closing element then we need to discard it. */
     if (c_type == XML_READER_TYPE_END_ELEMENT) {
-        rc = xmlTextReaderRead(object->reader);
+        rc = xmlTextReaderRead(ptr->reader);
         if (rc == -1) {
             rb_raise(ov_error_class, "Can't move to next node");
         }
@@ -383,12 +399,12 @@ static VALUE ov_xml_reader_read_elements(VALUE self) {
 }
 
 static VALUE ov_xml_reader_next_element(VALUE self) {
-    int rc = 0;
-    ov_xml_reader_object* object = NULL;
+    int rc;
+    ov_xml_reader_object* ptr;
 
-    Data_Get_Struct(self, ov_xml_reader_object, object);
-    ov_xml_reader_check_closed(object);
-    rc = xmlTextReaderNext(object->reader);
+    ov_xml_reader_ptr(self, ptr);
+    ov_xml_reader_check_closed(ptr);
+    rc = xmlTextReaderNext(ptr->reader);
     if (rc == 0) {
         return Qfalse;
     }
@@ -399,13 +415,13 @@ static VALUE ov_xml_reader_next_element(VALUE self) {
 }
 
 static VALUE ov_xml_reader_close(VALUE self) {
-    ov_xml_reader_object* object = NULL;
+    ov_xml_reader_object* ptr;
 
-    Data_Get_Struct(self, ov_xml_reader_object, object);
-    ov_xml_reader_check_closed(object);
-    xmlFreeTextReader(object->reader);
-    object->reader = NULL;
-    object->closed = true;
+    ov_xml_reader_ptr(self, ptr);
+    ov_xml_reader_check_closed(ptr);
+    xmlFreeTextReader(ptr->reader);
+    ptr->reader = NULL;
+    ptr->closed = true;
     return Qnil;
 }
 
@@ -414,7 +430,7 @@ void ov_xml_reader_define(void) {
     rb_require("stringio");
 
     /* Define the class: */
-    ov_xml_reader_class = rb_define_class_under(ov_module, "XmlReader", rb_cObject);
+    ov_xml_reader_class = rb_define_class_under(ov_module, "XmlReader", rb_cData);
 
     /* Define the constructor: */
     rb_define_alloc_func(ov_xml_reader_class, ov_xml_reader_alloc);

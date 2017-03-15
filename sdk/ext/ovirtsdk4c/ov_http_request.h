@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2016 Red Hat, Inc.
+Copyright (c) 2016-2017 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,7 +17,10 @@ limitations under the License.
 #ifndef __OV_HTTP_REQUEST_H__
 #define __OV_HTTP_REQUEST_H__
 
-/* Class: */
+#include <ruby.h>
+
+/* Data type and class: */
+extern rb_data_type_t ov_http_request_type;
 extern VALUE ov_http_request_class;
 
 /* Symbols for HTTP methods: */
@@ -38,6 +41,10 @@ typedef struct {
     VALUE kerberos; /* Boolean */
     VALUE body;     /* String */
 } ov_http_request_object;
+
+/* Macro to get the pointer: */
+#define ov_http_request_ptr(object, ptr) \
+    TypedData_Get_Struct((object), ov_http_request_object, &ov_http_request_type, (ptr))
 
 /* Initialization function: */
 extern void ov_http_request_define(void);

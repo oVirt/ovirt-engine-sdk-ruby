@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2016 Red Hat, Inc.
+Copyright (c) 2016-2017 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,108 +28,121 @@ static VALUE CODE_SYMBOL;
 static VALUE HEADERS_SYMBOL;
 static VALUE MESSAGE_SYMBOL;
 
-static void ov_http_response_mark(ov_http_response_object *object) {
-    if (!NIL_P(object->body)) {
-        rb_gc_mark(object->body);
-    }
-    if (!NIL_P(object->code)) {
-        rb_gc_mark(object->code);
-    }
-    if (!NIL_P(object->headers)) {
-        rb_gc_mark(object->headers);
-    }
-    if (!NIL_P(object->message)) {
-        rb_gc_mark(object->message);
-    }
+static void ov_http_response_mark(void* vptr) {
+    ov_http_response_object* ptr;
+
+    ptr = vptr;
+    rb_gc_mark(ptr->body);
+    rb_gc_mark(ptr->code);
+    rb_gc_mark(ptr->headers);
+    rb_gc_mark(ptr->message);
 }
 
-static void ov_http_response_free(ov_http_response_object *object) {
-    xfree(object);
+static void ov_http_response_free(void* vptr) {
+    ov_http_response_object* ptr;
+
+    ptr = vptr;
+    xfree(ptr);
 }
+
+rb_data_type_t ov_http_response_type = {
+    .wrap_struct_name = "OVHTTPRESPONSE",
+    .function = {
+        .dmark = ov_http_response_mark,
+        .dfree = ov_http_response_free,
+        .dsize = NULL,
+        .reserved = { NULL, NULL }
+    },
+#ifdef RUBY_TYPED_FREE_IMMEDIATELY
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY,
+#endif
+};
 
 static VALUE ov_http_response_alloc(VALUE klass) {
-    ov_http_response_object* object = NULL;
+    ov_http_response_object* ptr;
 
-    object = ALLOC(ov_http_response_object);
-    object->body = Qnil;
-    object->code = Qnil;
-    object->headers = Qnil;
-    object->message = Qnil;
-    return Data_Wrap_Struct(klass, ov_http_response_mark, ov_http_response_free, object);
+    ptr = ALLOC(ov_http_response_object);
+    ptr->body = Qnil;
+    ptr->code = Qnil;
+    ptr->headers = Qnil;
+    ptr->message = Qnil;
+    return TypedData_Wrap_Struct(klass, &ov_http_response_type, ptr);
 }
 
 static VALUE ov_http_response_get_body(VALUE self) {
-    ov_http_response_object* object = NULL;
+    ov_http_response_object* ptr;
 
-    Data_Get_Struct(self, ov_http_response_object, object);
-    return object->body;
+    ov_http_response_ptr(self, ptr);
+    return ptr->body;
 }
 
 static VALUE ov_http_response_set_body(VALUE self, VALUE value) {
-    ov_http_response_object* object = NULL;
+    ov_http_response_object* ptr;
 
-    Data_Get_Struct(self, ov_http_response_object, object);
+    ov_http_response_ptr(self, ptr);
     if (!NIL_P(value)) {
         Check_Type(value, T_STRING);
     }
-    object->body = value;
+    ptr->body = value;
     return Qnil;
 }
 
 static VALUE ov_http_response_get_code(VALUE self) {
-    ov_http_response_object* object = NULL;
+    ov_http_response_object* ptr;
 
-    Data_Get_Struct(self, ov_http_response_object, object);
-    return object->code;
+    ov_http_response_ptr(self, ptr);
+    return ptr->code;
 }
 
 static VALUE ov_http_response_set_code(VALUE self, VALUE value) {
-    ov_http_response_object* object = NULL;
+    ov_http_response_object* ptr;
 
-    Data_Get_Struct(self, ov_http_response_object, object);
+    ov_http_response_ptr(self, ptr);
     if (!NIL_P(value)) {
         Check_Type(value, T_FIXNUM);
     }
-    object->code = value;
+    ptr->code = value;
     return Qnil;
 }
 
 static VALUE ov_http_response_get_headers(VALUE self) {
-    ov_http_response_object* object = NULL;
+    ov_http_response_object* ptr;
 
-    Data_Get_Struct(self, ov_http_response_object, object);
-    return object->headers;
+    ov_http_response_ptr(self, ptr);
+    return ptr->headers;
 }
 
 static VALUE ov_http_response_set_headers(VALUE self, VALUE value) {
-    ov_http_response_object* object = NULL;
+    ov_http_response_object* ptr;
 
-    Data_Get_Struct(self, ov_http_response_object, object);
+    ov_http_response_ptr(self, ptr);
     if (NIL_P(value)) {
-        object->headers = rb_hash_new();
+        ptr->headers = rb_hash_new();
     }
     else {
         Check_Type(value, T_HASH);
-        object->headers = value;
+        ptr->headers = value;
     }
     return Qnil;
 }
 
 static VALUE ov_http_response_get_message(VALUE self) {
-    ov_http_response_object* object = NULL;
+    ov_http_response_object* ptr;
 
-    Data_Get_Struct(self, ov_http_response_object, object);
-    return object->message;
+    ov_http_response_ptr(self, ptr);
+    return ptr->message;
 }
 
 static VALUE ov_http_response_set_message(VALUE self, VALUE value) {
-    ov_http_response_object* object = NULL;
+    ov_http_response_object* ptr;
 
-    Data_Get_Struct(self, ov_http_response_object, object);
+    ov_http_response_ptr(self, ptr);
     if (!NIL_P(value)) {
         Check_Type(value, T_STRING);
     }
-    object->message = value;
+    ptr->message = value;
     return Qnil;
 }
 
@@ -159,7 +172,7 @@ static VALUE ov_http_response_initialize(int argc, VALUE* argv, VALUE self) {
 
 void ov_http_response_define(void) {
     /* Define the class: */
-    ov_http_response_class = rb_define_class_under(ov_module, "HttpResponse", rb_cObject);
+    ov_http_response_class = rb_define_class_under(ov_module, "HttpResponse", rb_cData);
 
     /* Define the constructor: */
     rb_define_alloc_func(ov_http_response_class, ov_http_response_alloc);
