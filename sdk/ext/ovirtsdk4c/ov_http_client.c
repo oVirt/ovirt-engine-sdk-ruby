@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2016 Red Hat, Inc.
+Copyright (c) 2016-2017 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -71,11 +71,6 @@ const char LF = '\x0A';
 #endif
 
 typedef struct {
-    CURL* curl;
-    VALUE log; /* Logger */
-} ov_http_client_object;
-
-typedef struct {
     ov_http_client_object* object;
     ov_http_response_object* response;
     VALUE in; /* IO */
@@ -114,39 +109,63 @@ static void ov_http_client_check_closed(ov_http_client_object* object) {
     }
 }
 
-static void ov_http_client_mark(ov_http_client_object *object) {
-    /* Nothing to mark. */
+static void ov_http_client_mark(void* vptr) {
+    ov_http_client_object* ptr;
+
+    ptr = vptr;
+    rb_gc_mark(ptr->log);
+
 }
 
-static void ov_http_client_free(ov_http_client_object *object) {
+static void ov_http_client_free(void* vptr) {
+    ov_http_client_object* ptr;
+
+    /* Get the pointer: */
+    ptr = vptr;
+
     /* Release the resources used by libcurl. The callbacks need to be cleared before cleaning the libcurl handle
        because libcurl calls them during the cleanup, and we can't call Ruby code from this method. */
-    if (object->curl != NULL) {
-        curl_easy_setopt(object->curl, CURLOPT_DEBUGFUNCTION, NULL);
-        curl_easy_setopt(object->curl, CURLOPT_WRITEFUNCTION, NULL);
-        curl_easy_setopt(object->curl, CURLOPT_HEADERFUNCTION, NULL);
-        curl_easy_cleanup(object->curl);
-        object->curl = NULL;
+    if (ptr->curl != NULL) {
+        curl_easy_setopt(ptr->curl, CURLOPT_DEBUGFUNCTION, NULL);
+        curl_easy_setopt(ptr->curl, CURLOPT_WRITEFUNCTION, NULL);
+        curl_easy_setopt(ptr->curl, CURLOPT_HEADERFUNCTION, NULL);
+        curl_easy_cleanup(ptr->curl);
+        ptr->curl = NULL;
     }
 
     /* Free this object: */
-    xfree(object);
+    xfree(ptr);
 }
 
-static VALUE ov_http_client_alloc(VALUE klass) {
-    ov_http_client_object* object;
+rb_data_type_t ov_http_client_type = {
+    .wrap_struct_name = "OVHTTPCLIENT",
+    .function = {
+        .dmark = ov_http_client_mark,
+        .dfree = ov_http_client_free,
+        .dsize = NULL,
+        .reserved = { NULL, NULL }
+    },
+#ifdef RUBY_TYPED_FREE_IMMEDIATELY
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY,
+#endif
+};
 
-    object = ALLOC(ov_http_client_object);
-    object->curl = NULL;
-    object->log = Qnil;
-    return Data_Wrap_Struct(klass, ov_http_client_mark, ov_http_client_free, object);
+static VALUE ov_http_client_alloc(VALUE klass) {
+    ov_http_client_object* ptr;
+
+    ptr = ALLOC(ov_http_client_object);
+    ptr->curl = NULL;
+    ptr->log  = Qnil;
+    return TypedData_Wrap_Struct(klass, &ov_http_client_type, ptr);
 }
 
 static VALUE ov_http_client_close(VALUE self) {
     ov_http_client_object* object;
 
     /* Get the pointer to the native object and check that it isn't closed: */
-    Data_Get_Struct(self, ov_http_client_object, object);
+    ov_http_client_ptr(self, object);
     ov_http_client_check_closed(object);
 
     /* Release the resources used by libcurl. In this case we don't need to clear the callbacks in advance, because
@@ -355,7 +374,7 @@ static VALUE ov_http_client_initialize(int argc, VALUE* argv, VALUE self) {
     ov_http_client_object* object;
 
     /* Get the pointer to the native object: */
-    Data_Get_Struct(self, ov_http_client_object, object);
+    ov_http_client_ptr(self, object);
 
     /* Check the number of arguments: */
     if (argc > 1) {
@@ -506,7 +525,7 @@ static VALUE ov_http_client_build_url(VALUE self, VALUE url, VALUE query) {
     ov_http_client_object* object;
 
     /* Get the pointer to the native object and check that it isn't closed: */
-    Data_Get_Struct(self, ov_http_client_object, object);
+    ov_http_client_ptr(self, object);
     ov_http_client_check_closed(object);
 
     /* Copy the URL: */
@@ -579,7 +598,7 @@ static VALUE ov_http_client_send(VALUE self, VALUE request, VALUE response) {
     struct curl_slist* headers;
 
     /* Get the pointer to the native object and check that it isn't closed: */
-    Data_Get_Struct(self, ov_http_client_object, object);
+    ov_http_client_ptr(self, object);
     ov_http_client_check_closed(object);
 
     /* Check the type of request and get the pointer to the native object: */
@@ -589,7 +608,7 @@ static VALUE ov_http_client_send(VALUE self, VALUE request, VALUE response) {
     if (!rb_obj_is_instance_of(request, ov_http_request_class)) {
         rb_raise(ov_error_class, "The 'request' parameter isn't an instance of class 'HttpRequest'");
     }
-    Data_Get_Struct(request, ov_http_request_object, request_object);
+    ov_http_request_ptr(request, request_object);
 
     /* Check the type of response and get the pointer to the native object: */
     if (NIL_P(response)) {
@@ -598,7 +617,7 @@ static VALUE ov_http_client_send(VALUE self, VALUE request, VALUE response) {
     if (!rb_obj_is_instance_of(response, ov_http_response_class)) {
         rb_raise(ov_error_class, "The 'response' parameter isn't an instance of class 'HttpResponse'");
     }
-    Data_Get_Struct(response, ov_http_response_object, response_object);
+    ov_http_response_ptr(response, response_object);
 
     /* Build and set the URL: */
     url = ov_http_client_build_url(self, request_object->url, request_object->query);
