@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015-2016 Red Hat, Inc.
+Copyright (c) 2015-2017 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import java.util.Optional;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 
+import org.ovirt.api.metamodel.concepts.EnumType;
 import org.ovirt.api.metamodel.concepts.ListType;
 import org.ovirt.api.metamodel.concepts.Locator;
 import org.ovirt.api.metamodel.concepts.Method;
@@ -38,7 +39,6 @@ import org.ovirt.api.metamodel.concepts.NameParser;
 import org.ovirt.api.metamodel.concepts.Parameter;
 import org.ovirt.api.metamodel.concepts.PrimitiveType;
 import org.ovirt.api.metamodel.concepts.Service;
-import org.ovirt.api.metamodel.concepts.StructType;
 import org.ovirt.api.metamodel.concepts.Type;
 import org.ovirt.api.metamodel.tool.SchemaNames;
 
@@ -136,22 +136,6 @@ public class ServicesGenerator implements RubyGenerator {
         generateClassDeclaration(service);
         buffer.addLine();
 
-        // Generate the constructor:
-        buffer.addComment();
-        buffer.addComment("Creates a new implementation of the service.");
-        buffer.addComment();
-        buffer.addYardTag("param", "connection [Connection] The connection to be used by this service.");
-        buffer.addComment();
-        buffer.addYardTag("param", "path [String] The relative path of this service, for example `vms/123/disks`.");
-        buffer.addComment();
-        buffer.addYardTag("api", "private");
-        buffer.addComment();
-        buffer.addLine("def initialize(connection, path)");
-        buffer.addLine(  "@connection = connection");
-        buffer.addLine(  "@path = path");
-        buffer.addLine("end");
-        buffer.addLine();
-
         // Generate the methods and locators:
         service.methods().sorted().forEach(this::generateMethod);
         service.locators().sorted().forEach(this::generateLocator);
@@ -190,14 +174,19 @@ public class ServicesGenerator implements RubyGenerator {
         Parameter primaryParameter = getPrimaryParameter(method);
         List<Parameter> secondaryParameters = getSecondaryParameters(method);
 
-        // Document the method:
+        // Generate the parameter specs:
         Name methodName = method.getName();
+        String specConstant = rubyNames.getConstantStyleName(methodName);
+        generateParameterSpecs(specConstant, secondaryParameters);
+
+        // Document the method:
         Type primaryParameterType = primaryParameter.getType();
         Name primaryParameterName = primaryParameter.getName();
-        String arg = rubyNames.getMemberStyleName(primaryParameterName);
+        RubyName argType = rubyNames.getTypeName(primaryParameterType);
+        String argName = rubyNames.getMemberStyleName(primaryParameterName);
         String methodDoc = method.getDoc();
         if (methodDoc == null) {
-            methodDoc = String.format("Adds a new `%1$s`.", arg);
+            methodDoc = String.format("Adds a new `%1$s`.", argName);
         }
         buffer.addComment();
         buffer.addComment(methodDoc);
@@ -206,7 +195,7 @@ public class ServicesGenerator implements RubyGenerator {
         // Document the primary parameter:
         String primaryParameterDoc = primaryParameter.getDoc();
         if (primaryParameterDoc == null) {
-            primaryParameterDoc = String.format("The `%1$s` to add.", arg);
+            primaryParameterDoc = String.format("The `%1$s` to add.", argName);
         }
         buffer.addYardParam(primaryParameter, primaryParameterDoc);
         buffer.addComment();
@@ -219,42 +208,29 @@ public class ServicesGenerator implements RubyGenerator {
             buffer.addComment();
         });
 
-        // Document the additional headers:
-        buffer.addYardTag("option", "opts [Hash] :headers Additional HTTP headers.");
-        buffer.addComment();
-
-        // Document the additional query parameter:
-        buffer.addYardTag("option", "opts [Hash] :query Additional URL query parameters.");
-        buffer.addComment();
+        // Document builtin parameters:
+        documentBuiltinParameters();
 
         // Document the return value:
         buffer.addYardReturn(primaryParameter);
         buffer.addComment();
 
         // Generate the method declaration:
-        buffer.addLine("def %1$s(%2$s, opts = {})", rubyNames.getMemberStyleName(methodName), arg);
-
-        // Generate the method body:
-        generateConvertLiteral(primaryParameterType, arg);
-        buffer.addLine("headers = opts[:headers] || {}");
-        buffer.addLine("query = opts[:query] || {}");
-        secondaryParameters.forEach(this::generateUrlParameter);
-        buffer.addLine("request = HttpRequest.new(method: :POST, url: @path, headers: headers, query: query)");
-        generateWriteRequestBody(primaryParameter, arg);
-        buffer.addLine("response = @connection.send(request)");
-        buffer.addLine("case response.code");
-        buffer.addLine("when 200, 201, 202");
-        generateReturnResponseBody(primaryParameter);
-        buffer.addLine("else");
-        buffer.addLine(  "check_fault(response)");
-        buffer.addLine("end");
-
-        // End method:
+        buffer.addLine("def add(%1$s, opts = {})", argName);
+        buffer.addLine(  "internal_add(%1$s, %2$s, %3$s, opts)", argName, argType.getClassName(), specConstant);
         buffer.addLine("end");
         buffer.addLine();
     }
 
     private void generateActionHttpPost(Method method) {
+        // Get the name of output parameter:
+        String resultName = method.parameters()
+            .filter(Parameter::isOut)
+            .findFirst()
+            .map(Parameter::getName)
+            .map(rubyNames::getMemberStyleName)
+            .orElse(null);
+
         // Document the method:
         Name methodName = method.getName();
         String actionName = rubyNames.getMemberStyleName(methodName);
@@ -274,51 +250,16 @@ public class ServicesGenerator implements RubyGenerator {
             buffer.addComment();
         });
 
-        // Document the additional headers:
-        buffer.addYardTag("option", "opts [Hash] :headers Additional HTTP headers.");
-        buffer.addComment();
-
-        // Document the additional query parameter:
-        buffer.addYardTag("option", "opts [Hash] :query Additional URL query parameters.");
-        buffer.addComment();
+        // Document builtin parameters:
+        documentBuiltinParameters();
 
         // Generate the method declaration:
+        String actionPath = getPath(methodName);
+        String resultArg = resultName != null? ":" + resultName: "nil";
         buffer.addLine("def %1$s(opts = {})", actionName);
-
-        // Generate the method body:
-        buffer.addLine("headers = opts[:headers] || {}");
-        buffer.addLine("query = opts[:query] || {}");
-        buffer.addLine("action = Action.new(opts)");
-        buffer.addLine("writer = XmlWriter.new(nil, true)");
-        buffer.addLine("ActionWriter.write_one(action, writer)");
-        buffer.addLine("body = writer.string");
-        buffer.addLine("writer.close");
-        buffer.addLine("request = HttpRequest.new(");
-        buffer.addLine(  "method: :POST,");
-        buffer.addLine(  "url: \"#{@path}/%1$s\",", getPath(methodName));
-        buffer.addLine(  "body: body,");
-        buffer.addLine(  "headers: headers,");
-        buffer.addLine(  "query: query");
-        buffer.addLine(")");
-        buffer.addLine("response = @connection.send(request)");
-        buffer.addLine("case response.code");
-        buffer.addLine("when 200");
-        buffer.addLine(  "action = check_action(response)");
-        method.parameters()
-            .filter(Parameter::isOut)
-            .findFirst()
-            .ifPresent(this::generateActionResponse);
-        buffer.addLine("else");
-        buffer.addLine(  "check_action(response)");
-        buffer.addLine("end");
-
-        // End method:
+        buffer.addLine(  "internal_action(:%1$s, %2$s, opts)", actionPath, resultArg);
         buffer.addLine("end");
         buffer.addLine();
-    }
-
-    private void generateActionResponse(Parameter parameter) {
-        buffer.addLine("return action.%1$s", rubyNames.getMemberStyleName(parameter.getName()));
     }
 
     private void generateHttpGet(Method method) {
@@ -337,6 +278,11 @@ public class ServicesGenerator implements RubyGenerator {
             .findFirst()
             .orElse(null);
 
+        // Generate the parameters spec:
+        Name methodName = method.getName();
+        String specConstant = rubyNames.getConstantStyleName(methodName);
+        generateParameterSpecs(specConstant, inParameters);
+
         // Document the method:
         buffer.addComment();
         String methodDoc = method.getDoc();
@@ -354,36 +300,16 @@ public class ServicesGenerator implements RubyGenerator {
             buffer.addComment();
         });
 
-        // Document the additional headers:
-        buffer.addYardTag("option", "opts [Hash] :headers Additional HTTP headers.");
-        buffer.addComment();
-
-        // Document the additional query parameter:
-        buffer.addYardTag("option", "opts [Hash] :query Additional URL query parameters.");
-        buffer.addComment();
+        // Document builtin parameters:
+        documentBuiltinParameters();
 
         // Document the return value:
         buffer.addYardReturn(mainParameter);
         buffer.addComment();
 
         // Generate the method declaration:
-        Name methodName = method.getName();
         buffer.addLine("def %1$s(opts = {})", rubyNames.getMemberStyleName(methodName));
-
-        // Generate the method body:
-        buffer.addLine("headers = opts[:headers] || {}");
-        buffer.addLine("query = opts[:query] || {}");
-        inParameters.forEach(this::generateUrlParameter);
-        buffer.addLine("request = HttpRequest.new(method: :GET, url: @path, headers: headers, query: query)");
-        buffer.addLine("response = @connection.send(request)");
-        buffer.addLine("case response.code");
-        buffer.addLine("when 200");
-        generateReturnResponseBody(mainParameter);
-        buffer.addLine("else");
-        buffer.addLine(  "check_fault(response)");
-        buffer.addLine("end");
-
-        // End method:
+        buffer.addLine(  "internal_get(%1$s, opts)", specConstant);
         buffer.addLine("end");
         buffer.addLine();
     }
@@ -394,13 +320,19 @@ public class ServicesGenerator implements RubyGenerator {
         Parameter primaryParameter = getPrimaryParameter(method);
         List<Parameter> secondaryParameters = getSecondaryParameters(method);
 
+        // Generate the parameters spec:
+        Name methodName = method.getName();
+        String specConstant = rubyNames.getConstantStyleName(methodName);
+        generateParameterSpecs(specConstant, secondaryParameters);
+
         // Document the method:
         Type primaryParameterType = primaryParameter.getType();
         Name primaryParameterName = primaryParameter.getName();
-        String arg = rubyNames.getMemberStyleName(primaryParameterName);
+        RubyName argType = rubyNames.getTypeName(primaryParameterType);
+        String argName = rubyNames.getMemberStyleName(primaryParameterName);
         String methodDoc = method.getDoc();
         if (methodDoc == null) {
-            methodDoc = String.format("Updates the `%1$s`.", arg);
+            methodDoc = String.format("Updates the `%1$s`.", argName);
         }
         buffer.addComment();
         buffer.addComment(methodDoc);
@@ -409,7 +341,7 @@ public class ServicesGenerator implements RubyGenerator {
         // Document the primary parameter:
         String primaryParameterDoc = primaryParameter.getDoc();
         if (primaryParameterDoc == null) {
-            primaryParameterDoc = String.format("The `%1$s` to update.", arg);
+            primaryParameterDoc = String.format("The `%1$s` to update.", argName);
         }
         buffer.addYardParam(primaryParameter, primaryParameterDoc);
 
@@ -421,100 +353,18 @@ public class ServicesGenerator implements RubyGenerator {
             buffer.addComment();
         });
 
-        // Document the additional headers:
-        buffer.addYardTag("option", "opts [Hash] :headers Additional HTTP headers.");
-        buffer.addComment();
-
-        // Document the additional query parameter:
-        buffer.addYardTag("option", "opts [Hash] :query Additional URL query parameters.");
-        buffer.addComment();
+        // Document builtin parameters:
+        documentBuiltinParameters();
 
         // Document the return value:
         buffer.addYardReturn(primaryParameter);
         buffer.addComment();
 
         // Generate the method declaration:
-        Name methodName = method.getName();
-        buffer.addLine("def %1$s(%2$s, opts = {})", rubyNames.getMemberStyleName(methodName), arg);
-
-        // Generate the method body:
-        generateConvertLiteral(primaryParameterType, arg);
-        buffer.addLine("headers = opts[:headers] || {}");
-        buffer.addLine("query = opts[:query] || {}");
-        secondaryParameters.forEach(this::generateUrlParameter);
-        buffer.addLine("request = HttpRequest.new(method: :PUT, url: @path, headers: headers, query: query)");
-        generateWriteRequestBody(primaryParameter, arg);
-        buffer.addLine("response = @connection.send(request)");
-        buffer.addLine("case response.code");
-        buffer.addLine("when 200");
-        generateReturnResponseBody(primaryParameter);
-        buffer.addLine(  "return result");
-        buffer.addLine("else");
-        buffer.addLine(  "check_fault(response)");
-        buffer.addLine("end");
-
-        // End method:
+        buffer.addLine("def update(%1$s, opts = {})", argName);
+        buffer.addLine(  "internal_update(%1$s, %2$s, %3$s, opts)", argName, argType.getClassName(), specConstant);
         buffer.addLine("end");
         buffer.addLine();
-    }
-
-    private void generateConvertLiteral(Type type, String variable) {
-        if (type instanceof StructType) {
-            buffer.addLine("if %1$s.is_a?(Hash)", variable);
-            buffer.addLine(  "%1$s = %2$s.new(%1$s)", variable, rubyNames.getTypeName(type));
-            buffer.addLine("end");
-        }
-        else if (type instanceof ListType) {
-            ListType listType = (ListType) type;
-            Type elementType = listType.getElementType();
-            buffer.addLine("if %1$s.is_a?(Array)", variable);
-            buffer.addLine(  "%1$s = List.new(%1$s)", variable);
-            buffer.addLine(  "%1$s.each_with_index do |value, index|", variable);
-            buffer.addLine(    "if value.is_a?(Hash)");
-            buffer.addLine(      "%1$s[index] = %2$s.new(value)", variable, rubyNames.getTypeName(elementType));
-            buffer.addLine(    "end");
-            buffer.addLine(  "end");
-            buffer.addLine("end");
-        }
-    }
-
-    private void generateWriteRequestBody(Parameter parameter, String variable) {
-        Type type = parameter.getType();
-        buffer.addLine("begin");
-        buffer.addLine(  "writer = XmlWriter.new(nil, true)");
-        if (type instanceof StructType) {
-            RubyName writer = rubyNames.getWriterName(type);
-            buffer.addLine("%1$s.write_one(%2$s, writer)", writer.getClassName(), variable);
-        }
-        else if (type instanceof ListType) {
-            ListType listType = (ListType) type;
-            Type elementType = listType.getElementType();
-            RubyName writer = rubyNames.getWriterName(elementType);
-            buffer.addLine("%1$s.write_many(%2$s, writer)", writer.getClassName(), variable);
-        }
-        buffer.addLine(  "request.body = writer.string");
-        buffer.addLine("ensure");
-        buffer.addLine(  "writer.close");
-        buffer.addLine("end");
-    }
-
-    private void generateReturnResponseBody(Parameter parameter) {
-        Type type = parameter.getType();
-        buffer.addLine("begin");
-        buffer.addLine(  "reader = XmlReader.new(response.body)");
-        if (type instanceof StructType) {
-            RubyName reader = rubyNames.getReaderName(type);
-            buffer.addLine("return %1$s.read_one(reader)", reader.getClassName());
-        }
-        else if (type instanceof ListType) {
-            ListType listType = (ListType) type;
-            Type elementType = listType.getElementType();
-            RubyName reader = rubyNames.getReaderName(elementType);
-            buffer.addLine("return %1$s.read_many(reader)", reader.getClassName());
-        }
-        buffer.addLine("ensure");
-        buffer.addLine(  "reader.close");
-        buffer.addLine("end");
     }
 
     private void generateHttpDelete(Method method) {
@@ -523,6 +373,11 @@ public class ServicesGenerator implements RubyGenerator {
             .filter(Parameter::isIn)
             .sorted()
             .collect(toList());
+
+        // Generate the parameters spec:
+        Name methodName = method.getName();
+        String specConstant = rubyNames.getConstantStyleName(methodName);
+        generateParameterSpecs(specConstant, inParameters);
 
         // Document the method:
         String methodDoc = method.getDoc();
@@ -538,55 +393,59 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addComment();
         inParameters.forEach(buffer::addYardOption);
 
-        // Document the additional headers:
-        buffer.addYardTag("option", "opts [Hash] :headers Additional HTTP headers.");
-        buffer.addComment();
-
-        // Document the additional query parameter:
-        buffer.addYardTag("option", "opts [Hash] :query Additional URL query parameters.");
-        buffer.addComment();
+        // Document builtin parameters:
+        documentBuiltinParameters();
 
         // Generate the method declaration:
-        Name methodName = method.getName();
-        buffer.addLine("def %1$s(opts = {})", rubyNames.getMemberStyleName(methodName));
-
-        // Generate method body:
-        buffer.addLine("headers = opts[:headers] || {}");
-        buffer.addLine("query = opts[:query] || {}");
-        inParameters.forEach(this::generateUrlParameter);
-        buffer.addLine(  "request = HttpRequest.new(method: :DELETE, url: @path, headers: headers, query: query)");
-        buffer.addLine(  "response = @connection.send(request)");
-        buffer.addLine(  "unless response.code == 200");
-        buffer.addLine(    "check_fault(response)");
-        buffer.addLine(  "end");
+        buffer.addLine("def remove(opts = {})");
+        buffer.addLine(  "internal_remove(%1$s, opts)", specConstant);
         buffer.addLine("end");
         buffer.addLine();
     }
 
-    private void generateUrlParameter(Parameter parameter) {
+    private void generateParameterSpecs(String constant, List<Parameter> parameters) {
+        buffer.addLine("%1$s = [", constant);
+        parameters.forEach(this::generateParameterSpec);
+        buffer.addLine("].freeze");
+        buffer.addLine();
+        buffer.addLine("private_constant :%1$s", constant);
+        buffer.addLine();
+    }
+
+    private void generateParameterSpec(Parameter parameter) {
         Type type = parameter.getType();
         Name name = parameter.getName();
         String symbol = rubyNames.getMemberStyleName(name);
-        String tag = schemaNames.getSchemaTagName(name);
-        buffer.addLine("value = opts[:%1$s]", symbol);
-        buffer.addLine("unless value.nil?");
+        String clazz = null;
         if (type instanceof PrimitiveType) {
             Model model = type.getModel();
-            if (type == model.getBooleanType()) {
-                buffer.addLine("value = Writer.render_boolean(value)", tag);
+            if (type == model.getStringType()) {
+                clazz = "String";
+            }
+            else if (type == model.getBooleanType()) {
+                clazz = "TrueClass";
             }
             else if (type == model.getIntegerType()) {
-                buffer.addLine("value = Writer.render_integer(value)", tag);
+                clazz = "Integer";
             }
             else if (type == model.getDecimalType()) {
-                buffer.addLine("value = Writer.render_decimal(value)", tag);
+                clazz = "Float";
             }
             else if (type == model.getDateType()) {
-                buffer.addLine("value = Writer.render_date(value)", tag);
+                clazz = "DateTime";
+            }
+            else {
+                throw new IllegalArgumentException(
+                    "Don't know how to generate the parameter spec for type \"" + type + "\""
+                );
             }
         }
-        buffer.addLine(  "query['%1$s'] = value", tag);
-        buffer.addLine("end");
+        else if (type instanceof ListType) {
+            clazz = "List";
+        }
+        if (clazz != null) {
+            buffer.addLine("[:%1$s, %2$s].freeze,", symbol, clazz);
+        }
     }
 
     private void generateToS(Service service) {
@@ -712,6 +571,20 @@ public class ServicesGenerator implements RubyGenerator {
         Service base = service.getBase();
         RubyName baseName = base != null? rubyNames.getServiceName(base): rubyNames.getBaseServiceName();
         buffer.addLine("class %1$s < %2$s", serviceName.getClassName(), baseName.getClassName());
+    }
+
+    private void documentBuiltinParameters() {
+        // Additional headers:
+        buffer.addYardTag("option", "opts [Hash] :headers ({}) Additional HTTP headers.");
+        buffer.addComment();
+
+        // Additional query parameter:
+        buffer.addYardTag("option", "opts [Hash] :query ({}) Additional URL query parameters.");
+        buffer.addComment();
+
+        // Wait flag:
+        buffer.addYardTag("option", "opts [Boolean] :wait (true) If `true` wait for the response.");
+        buffer.addComment();
     }
 
     private String getPath(Name name) {

@@ -20,6 +20,7 @@ limitations under the License.
 #include <ruby.h>
 
 #include <curl/curl.h>
+#include <stdbool.h>
 
 /* Data type and class: */
 extern rb_data_type_t ov_http_client_type;
@@ -27,8 +28,29 @@ extern VALUE ov_http_client_class;
 
 /* Content: */
 typedef struct {
-    CURL* curl;
-    VALUE log; /* Logger */
+    /* The libcurl multi handle: */
+    CURLM* handle;
+
+    /* The logger: */
+    VALUE log;
+
+    /* This hash store the transfers that are pending. The key of the hash is the request that initiated the transfer,
+       and the value is the transfer itself. */
+    VALUE pending;
+
+    /* This hash stores the completed transfers. The key of the hash is the request, and the value is either the
+       response to that request, or else the exception that was generated while trying to process it. */
+    VALUE completed;
+
+    /* Copies of the options passed to the constructor: */
+    bool compress;
+    bool debug;
+    bool insecure;
+    char* ca_file;
+    char* proxy_url;
+    char* proxy_username;
+    char* proxy_password;
+    int timeout;
 } ov_http_client_object;
 
 /* Macro to get the pointer: */

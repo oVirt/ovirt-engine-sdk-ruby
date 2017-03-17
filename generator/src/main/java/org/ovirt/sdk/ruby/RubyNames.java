@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Red Hat, Inc.
+Copyright (c) 2015-2017 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import java.util.Set;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
+import org.ovirt.api.metamodel.concepts.ListType;
 import org.ovirt.api.metamodel.concepts.Name;
 import org.ovirt.api.metamodel.concepts.NameParser;
 import org.ovirt.api.metamodel.concepts.Service;
@@ -126,6 +127,9 @@ public class RubyNames {
      * Calculates the Ruby name that corresponds to the given type.
      */
     public RubyName getTypeName(Type type) {
+        if (type instanceof ListType) {
+            return getBaseListName();
+        }
         return buildName(type.getName(), null, TYPES_DIR);
     }
 

@@ -107,6 +107,29 @@ module OvirtSDK4
     end
 
     #
+    # Converts the given value to an string, assuming that it is of the given type.
+    #
+    # @param value [Object] The value.
+    # @param type [Class] The type.
+    # @return [String] The string that represents the value.
+    #
+    def self.render(value, type)
+      if type.equal?(String)
+        value
+      elsif type.equal?(TrueClass)
+        render_boolean(value)
+      elsif type.equal?(Integer)
+        render_integer(value)
+      elsif type.equal?(Float)
+        render_decimal(value)
+      elsif type.equal?(DateTime)
+        render_date(value)
+      else
+        raise Error, "Don't know how to render value '#{value}' of type '#{type}'"
+      end
+    end
+
+    #
     # Writes an element with the given name and date value.
     #
     # @param writer [XmlWriter]
@@ -150,15 +173,18 @@ module OvirtSDK4
     #   is needed, because the list may be empty, or have different types of objects. In this case, for arrays,
     #   if the name isn't provided an exception will be raised.
     #
+    # @option opts [Boolean] :indent (false) Indicates if the output should be indented, for easier reading by humans.
+    #
     def self.write(object, opts = {})
       # Get the options:
       target = opts[:target]
       root = opts[:root]
+      indent = opts[:indent] || false
 
       # If the target is `nil` then create a temporary XML writer to write the output:
       cursor = nil
       if target.nil?
-        cursor = XmlWriter.new
+        cursor = XmlWriter.new(nil, indent)
       elsif target.is_a?(XmlWriter)
         cursor = target
       else
