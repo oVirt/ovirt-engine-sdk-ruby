@@ -30,7 +30,9 @@ describe SDK::Connection do
       it 'just works' do
         mount_xml(path: '', body: '<api/>')
         request = SDK::HttpRequest.new
-        response = @connection.send(request)
+        @connection.send(request)
+        response = @connection.wait(request)
+        expect(response).to be_a(SDK::HttpResponse)
         expect(response.code).to eql(200)
       end
     end

@@ -170,11 +170,8 @@ module OvirtSDK4
       path = opts[:path] || ''
       version = opts[:version] || '4'
 
-      # Create empty request and response objects:
+      # Create the request:
       request = HttpRequest.new
-      response = HttpResponse.new
-
-      # Set the URL:
       request.url = "https://#{@host}:#{@port}#{path}"
 
       # Set the headers:
@@ -190,9 +187,9 @@ module OvirtSDK4
       request.password = @password
 
       # Send the request and wait for the response:
-      @client.send(request, response)
-
-      # Return the response object:
+      @client.send(request)
+      response = @client.wait(request)
+      raise response if response.is_a?(Exception)
       response
     end
 

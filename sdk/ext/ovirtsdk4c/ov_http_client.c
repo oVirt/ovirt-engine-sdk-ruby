@@ -26,9 +26,11 @@ limitations under the License.
 
 #include "ov_module.h"
 #include "ov_error.h"
+#include "ov_string.h"
 #include "ov_http_client.h"
 #include "ov_http_request.h"
 #include "ov_http_response.h"
+#include "ov_http_transfer.h"
 
 /* Class: */
 VALUE ov_http_client_class;
@@ -36,17 +38,20 @@ VALUE ov_http_client_class;
 /* Symbols: */
 static VALUE CA_FILE_SYMBOL;
 static VALUE COMPRESS_SYMBOL;
+static VALUE CONNECTIONS_SYMBOL;
 static VALUE DEBUG_SYMBOL;
 static VALUE INSECURE_SYMBOL;
 static VALUE LOG_SYMBOL;
 static VALUE PASSWORD_SYMBOL;
-static VALUE TIMEOUT_SYMBOL;
-static VALUE USERNAME_SYMBOL;
+static VALUE PIPELINE_SYMBOL;
+static VALUE PROXY_PASSWORD_SYMBOL;
 static VALUE PROXY_URL_SYMBOL;
 static VALUE PROXY_USERNAME_SYMBOL;
-static VALUE PROXY_PASSWORD_SYMBOL;
+static VALUE TIMEOUT_SYMBOL;
+static VALUE USERNAME_SYMBOL;
 
 /* Method identifiers: */
+static ID COMPARE_BY_IDENTITY_ID;
 static ID DEBUG_ID;
 static ID ENCODE_WWW_FORM_ID;
 static ID INFO_ID;
@@ -70,26 +75,22 @@ const char LF = '\x0A';
 #define CURLAUTH_NEGOTIATE CURLAUTH_GSSNEGOTIATE
 #endif
 
-typedef struct {
-    ov_http_client_object* object;
-    ov_http_response_object* response;
-    VALUE in; /* IO */
-    VALUE out; /* IO */
-    bool cancel;
-    CURLcode result;
-} ov_http_client_perform_context;
+/* Before version 7.43.0 of libcurl the CURLPIPE_HTTP1 constant didn't exist, the value 1 was used
+   directly instead: */
+#ifndef CURLPIPE_HTTP1
+#define CURLPIPE_HTTP1 1
+#endif
 
 typedef struct {
-    ov_http_client_object* object;
+    VALUE io; /* IO */
     char* ptr;
     size_t size;
     size_t nmemb;
-    VALUE io; /* IO */
     size_t result;
 } ov_http_client_io_context;
 
 typedef struct {
-    ov_http_response_object* response;
+    VALUE response; /* HttpResponse */
     char* buffer;
     size_t size;
     size_t nitems;
@@ -97,14 +98,37 @@ typedef struct {
 } ov_http_client_header_context;
 
 typedef struct {
-    ov_http_client_object* object;
+    VALUE client; /* HttpClient */
     curl_infotype type;
     char* data;
     size_t size;
 } ov_http_client_debug_context;
 
+typedef struct {
+    CURLM* handle;
+    CURLcode code;
+    bool cancel;
+} ov_http_client_wait_context;
+
+
+static void ov_http_client_log_info(VALUE log, const char* format, ...) {
+    VALUE enabled;
+    VALUE message;
+    va_list args;
+
+    if (!NIL_P(log)) {
+        enabled = rb_funcall(log, INFO_Q_ID, 0);
+        if (RTEST(enabled)) {
+            va_start(args, format);
+            message = rb_vsprintf(format, args);
+            rb_funcall(log, INFO_ID, 1, message);
+            va_end(args);
+        }
+    }
+}
+
 static void ov_http_client_check_closed(ov_http_client_object* object) {
-    if (object->curl == NULL) {
+    if (object->handle == NULL) {
         rb_raise(ov_error_class, "The client is already closed");
     }
 }
@@ -114,24 +138,27 @@ static void ov_http_client_mark(void* vptr) {
 
     ptr = vptr;
     rb_gc_mark(ptr->log);
-
+    rb_gc_mark(ptr->pending);
+    rb_gc_mark(ptr->completed);
 }
 
 static void ov_http_client_free(void* vptr) {
     ov_http_client_object* ptr;
 
-    /* Get the pointer: */
+    /* Get the pointer to the object: */
     ptr = vptr;
 
-    /* Release the resources used by libcurl. The callbacks need to be cleared before cleaning the libcurl handle
-       because libcurl calls them during the cleanup, and we can't call Ruby code from this method. */
-    if (ptr->curl != NULL) {
-        curl_easy_setopt(ptr->curl, CURLOPT_DEBUGFUNCTION, NULL);
-        curl_easy_setopt(ptr->curl, CURLOPT_WRITEFUNCTION, NULL);
-        curl_easy_setopt(ptr->curl, CURLOPT_HEADERFUNCTION, NULL);
-        curl_easy_cleanup(ptr->curl);
-        ptr->curl = NULL;
+    /* Release the resources used by libcurl: */
+    if (ptr->handle != NULL) {
+        curl_multi_cleanup(ptr->handle);
+        ptr->handle = NULL;
     }
+
+    /* Free the strings: */
+    ov_string_free(ptr->ca_file);
+    ov_string_free(ptr->proxy_url);
+    ov_string_free(ptr->proxy_username);
+    ov_string_free(ptr->proxy_password);
 
     /* Free this object: */
     xfree(ptr);
@@ -156,22 +183,19 @@ static VALUE ov_http_client_alloc(VALUE klass) {
     ov_http_client_object* ptr;
 
     ptr = ALLOC(ov_http_client_object);
-    ptr->curl = NULL;
-    ptr->log  = Qnil;
     return TypedData_Wrap_Struct(klass, &ov_http_client_type, ptr);
 }
 
 static VALUE ov_http_client_close(VALUE self) {
-    ov_http_client_object* object;
+    ov_http_client_object* ptr;
 
     /* Get the pointer to the native object and check that it isn't closed: */
-    ov_http_client_ptr(self, object);
-    ov_http_client_check_closed(object);
+    ov_http_client_ptr(self, ptr);
+    ov_http_client_check_closed(ptr);
 
-    /* Release the resources used by libcurl. In this case we don't need to clear the callbacks in advance, because
-       we can safely call Ruby code from this method. */
-    curl_easy_cleanup(object->curl);
-    object->curl = NULL;
+    /* Release the resources used by libcurl: */
+    curl_multi_cleanup(ptr->handle);
+    ptr->handle = NULL;
 
     return Qnil;
 }
@@ -179,73 +203,91 @@ static VALUE ov_http_client_close(VALUE self) {
 static void* ov_http_client_read_task(void* data) {
     VALUE bytes;
     VALUE count;
-    ov_http_client_io_context* io_context = (ov_http_client_io_context*) data;
+    ov_http_client_io_context* context_ptr;
+
+    /* The passed data is a pointer to the IO context: */
+    context_ptr = (ov_http_client_io_context*) data;
 
     /* Read the data using the "read" method and write the raw bytes to the buffer provided by libcurl: */
-    count = INT2NUM(io_context->size * io_context->nmemb);
-    bytes = rb_funcall(io_context->io, READ_ID, 1, count);
+    count = INT2NUM(context_ptr->size * context_ptr->nmemb);
+    bytes = rb_funcall(context_ptr->io, READ_ID, 1, count);
     if (NIL_P(bytes)) {
-       io_context->result = 0;
+       context_ptr->result = 0;
     }
     else {
-       io_context->result = RSTRING_LEN(bytes);
-       memcpy(io_context->ptr, StringValuePtr(bytes), io_context->result);
+       context_ptr->result = RSTRING_LEN(bytes);
+       memcpy(context_ptr->ptr, StringValuePtr(bytes), context_ptr->result);
     }
 
     return NULL;
 }
 
 static size_t ov_http_client_read_function(char *ptr, size_t size, size_t nmemb, void *userdata) {
-    ov_http_client_perform_context* perform_context = (ov_http_client_perform_context*) userdata;
-    ov_http_client_io_context io_context;
+    VALUE transfer;
+    ov_http_client_io_context context;
+    ov_http_transfer_object* transfer_ptr;
+
+    /* The passed user data is the transfer: */
+    transfer = (VALUE) userdata;
+
+    /* Get the pointer to the transfer: */
+    ov_http_transfer_ptr(transfer, transfer_ptr);
 
     /* Check if the operation has been cancelled, and return immediately, this will cause the perform method to
        return an error to the caller: */
-    if (perform_context->cancel) {
+    if (transfer_ptr->cancel) {
         return CURL_READFUNC_ABORT;
     }
 
     /* Execute the read with the global interpreter lock acquired, as it needs to call Ruby methods: */
-    io_context.object = perform_context->object;
-    io_context.ptr = ptr;
-    io_context.size = size;
-    io_context.nmemb = nmemb;
-    io_context.io = perform_context->in;
-    rb_thread_call_with_gvl(ov_http_client_read_task, &io_context);
-    return io_context.result;
+    context.ptr = ptr;
+    context.size = size;
+    context.nmemb = nmemb;
+    context.io = transfer_ptr->in;
+    rb_thread_call_with_gvl(ov_http_client_read_task, &context);
+    return context.result;
 }
 
 static void* ov_http_client_write_task(void* data) {
     VALUE bytes;
     VALUE count;
-    ov_http_client_io_context* io_context = (ov_http_client_io_context*) data;
+    ov_http_client_io_context* context_ptr;
+
+    /* The passed data is a pointer to the IO context: */
+    context_ptr = (ov_http_client_io_context*) data;
 
     /* Convert the buffer to a Ruby string and write it to the IO object, using the "write" method: */
-    bytes = rb_str_new(io_context->ptr, io_context->size * io_context->nmemb);
-    count = rb_funcall(io_context->io, WRITE_ID, 1, bytes);
-    io_context->result = NUM2INT(count);
+    bytes = rb_str_new(context_ptr->ptr, context_ptr->size * context_ptr->nmemb);
+    count = rb_funcall(context_ptr->io, WRITE_ID, 1, bytes);
+    context_ptr->result = NUM2INT(count);
 
     return NULL;
 }
 
 static size_t ov_http_client_write_function(char *ptr, size_t size, size_t nmemb, void *userdata) {
-    ov_http_client_perform_context* perform_context = (ov_http_client_perform_context*) userdata;
-    ov_http_client_io_context io_context;
+    VALUE transfer;
+    ov_http_client_io_context context;
+    ov_http_transfer_object* transfer_ptr;
+
+    /* The passed user data is the transfer: */
+    transfer = (VALUE) userdata;
+
+    /* Get the pointer to the transfer: */
+    ov_http_transfer_ptr(transfer, transfer_ptr);
 
     /* Check if the operation has been cancelled, and return immediately, this will cause the perform method to
        return an error to the caller: */
-    if (perform_context->cancel) {
+    if (transfer_ptr->cancel) {
         return 0;
     }
 
     /* Execute the write with the global interpreter lock acquired, as it needs to call Ruby methods: */
-    io_context.object = perform_context->object;
-    io_context.ptr = ptr;
-    io_context.size = size;
-    io_context.nmemb = nmemb;
-    io_context.io = perform_context->out;
-    rb_thread_call_with_gvl(ov_http_client_write_task, &io_context);
-    return io_context.result;
+    context.ptr = ptr;
+    context.size = size;
+    context.nmemb = nmemb;
+    context.io = transfer_ptr->out;
+    rb_thread_call_with_gvl(ov_http_client_write_task, &context);
+    return context.result;
 }
 
 static void* ov_http_client_header_task(void* data) {
@@ -253,15 +295,22 @@ static void* ov_http_client_header_task(void* data) {
     VALUE value;
     char* buffer;
     char* pointer;
+    ov_http_client_header_context* context_ptr;
+    ov_http_response_object* response_ptr;
     size_t length;
-    ov_http_client_header_context* header_context = (ov_http_client_header_context*) data;
+
+    /* The passed data is the pointer to the context: */
+    context_ptr = (ov_http_client_header_context*) data;
+
+    /* Get the pointer to the response: */
+    ov_http_response_ptr(context_ptr->response, response_ptr);
 
     /* We should always tell the library that we processed all the data: */
-    header_context->result = header_context->size * header_context->nitems;
+    context_ptr->result = context_ptr->size * context_ptr->nitems;
 
     /* Remove trailing white space: */
-    length = header_context->result;
-    buffer = header_context->buffer;
+    length = context_ptr->result;
+    buffer = context_ptr->buffer;
     while (length > 0 && isspace(buffer[length - 1])) {
         length--;
     }
@@ -275,51 +324,65 @@ static void* ov_http_client_header_task(void* data) {
             pointer++;
         }
         value = rb_str_new(pointer, length - (pointer - buffer));
-        rb_hash_aset(header_context->response->headers, name, value);
+        rb_hash_aset(response_ptr->headers, name, value);
     }
 
     return NULL;
 }
 
 static size_t ov_http_client_header_function(char *buffer, size_t size, size_t nitems, void *userdata) {
-    ov_http_client_header_context header_context;
-    ov_http_client_perform_context* perform_context = (ov_http_client_perform_context*) userdata;
+    VALUE transfer;
+    ov_http_client_header_context context;
+    ov_http_transfer_object* transfer_ptr;
+
+    /* The passed user data is a pointer to the transfer: */
+    transfer = (VALUE) userdata;
+
+    /* Get the pointer to the transfer: */
+    ov_http_transfer_ptr(transfer, transfer_ptr);
 
     /* Check if the operation has been cancelled, and return immediately, this will cause the perform method to
        return an error to the caller: */
-    if (perform_context->cancel) {
+    if (transfer_ptr->cancel) {
         return 0;
     }
 
-    /* Parse the header with the global intepreter lock acquired, as it needs to call Ruby methods: */
-    header_context.response = perform_context->response;
-    header_context.buffer = buffer;
-    header_context.size = size;
-    header_context.nitems = nitems;
-    rb_thread_call_with_gvl(ov_http_client_header_task, &header_context);
-    return header_context.result;
+    /* Parse the header with the global interpreter lock acquired, as it needs to call Ruby methods: */
+    context.response = transfer_ptr->response;
+    context.buffer = buffer;
+    context.size = size;
+    context.nitems = nitems;
+    rb_thread_call_with_gvl(ov_http_client_header_task, &context);
+    return context.result;
 }
 
 static void* ov_http_client_debug_task(void* data) {
     VALUE line;
     VALUE log;
-    int c;
     char* text;
-    ov_http_client_debug_context* debug_context = (ov_http_client_debug_context*) data;
+    int c;
+    int s;
+    ov_http_client_debug_context* context_ptr;
+    ov_http_client_object* client_ptr;
     size_t i;
     size_t j;
     size_t size;
-    int s;
+
+    /* The passed data is a pointer to the context: */
+    context_ptr = (ov_http_client_debug_context*) data;
+
+    /* Get the pointer to the client: */
+    ov_http_client_ptr(context_ptr->client, client_ptr);
 
     /* Do nothing if there is no log: */
-    log = debug_context->object->log;
+    log = client_ptr->log;
     if (NIL_P(log)) {
         return NULL;
     }
 
     /* Split the text into lines, and send a debug message for each line: */
-    text = debug_context->data;
-    size = debug_context->size;
+    text = context_ptr->data;
+    size = context_ptr->size;
     i = 0;
     s = 0;
     for (j = 0; j <= size; j++) {
@@ -348,33 +411,34 @@ static void* ov_http_client_debug_task(void* data) {
 }
 
 static int ov_http_client_debug_function(CURL* handle, curl_infotype type, char* data, size_t size, void* userptr) {
-    ov_http_client_debug_context debug_context;
-    ov_http_client_perform_context* perform_context = (ov_http_client_perform_context*) userptr;
+    VALUE transfer;
+    ov_http_client_debug_context context;
+    ov_http_transfer_object* transfer_ptr;
+
+    /* The passed user pointer is the transfer: */
+    transfer = (VALUE) userptr;
+
+    /* Get the pointer to the transfer: */
+    ov_http_transfer_ptr(transfer, transfer_ptr);
 
     /* Execute the debug code with the global interpreter lock acquired, as it needs to call Ruby methods: */
-    debug_context.object = perform_context->object;
-    debug_context.type = type;
-    debug_context.data = data;
-    debug_context.size = size;
-    rb_thread_call_with_gvl(ov_http_client_debug_task, &debug_context);
+    context.client = transfer_ptr->client;
+    context.type = type;
+    context.data = data;
+    context.size = size;
+    rb_thread_call_with_gvl(ov_http_client_debug_task, &context);
     return 0;
 }
 
 static VALUE ov_http_client_initialize(int argc, VALUE* argv, VALUE self) {
     VALUE opt;
     VALUE opts;
-    bool compress;
-    bool debug;
-    bool insecure;
-    char* ca_file;
-    char* proxy_password;
-    char* proxy_url;
-    char* proxy_username;
-    int timeout;
-    ov_http_client_object* object;
+    long connections;
+    long pipeline;
+    ov_http_client_object* ptr;
 
     /* Get the pointer to the native object: */
-    ov_http_client_ptr(self, object);
+    ov_http_client_ptr(self, ptr);
 
     /* Check the number of arguments: */
     if (argc > 1) {
@@ -388,146 +452,96 @@ static VALUE ov_http_client_initialize(int argc, VALUE* argv, VALUE self) {
         Check_Type(opts, T_HASH);
     }
 
-    /* Get the value of the 'insecure' parameter: */
-    opt = rb_hash_aref(opts, INSECURE_SYMBOL);
-    if (NIL_P(opt)) {
-        insecure = false;
-    }
-    else {
-        insecure = RTEST(opt);
-    }
-
     /* Get the value of the 'ca_file' parameter: */
     opt = rb_hash_aref(opts, CA_FILE_SYMBOL);
-    if (NIL_P(opt)) {
-        ca_file = NULL;
-    }
-    else {
-        Check_Type(opt, T_STRING);
-        ca_file = StringValueCStr(opt);
-    }
+    ptr->ca_file = ov_string_dup(opt);
+
+    /* Get the value of the 'insecure' parameter: */
+    opt = rb_hash_aref(opts, INSECURE_SYMBOL);
+    ptr->insecure = NIL_P(opt)? false: RTEST(opt);
 
     /* Get the value of the 'debug' parameter: */
     opt = rb_hash_aref(opts, DEBUG_SYMBOL);
-    if (NIL_P(opt)) {
-        debug = false;
-    }
-    else {
-        debug = RTEST(opt);
-    }
+    ptr->debug = NIL_P(opt)? false: RTEST(opt);
 
-    /* Get the value of the 'log' parameter: */
-    opt = rb_hash_aref(opts, LOG_SYMBOL);
-    if (NIL_P(opt)) {
-        object->log = Qnil;
-    }
-    else {
-        object->log = opt;
-    }
+    /* Get the value of the 'compress' parameter: */
+    opt = rb_hash_aref(opts, COMPRESS_SYMBOL);
+    ptr->compress = NIL_P(opt)? true: RTEST(opt);
 
     /* Get the value of the 'timeout' parameter: */
     opt = rb_hash_aref(opts, TIMEOUT_SYMBOL);
     if (NIL_P(opt)) {
-        timeout = 0;
+        ptr->timeout = 0;
     }
     else {
         Check_Type(opt, T_FIXNUM);
-        timeout = NUM2INT(opt);
-    }
-
-    /* Get the value of the 'compress' parameter: */
-    opt = rb_hash_aref(opts, COMPRESS_SYMBOL);
-    if (NIL_P(opt)) {
-        compress = false;
-    }
-    else {
-        compress = RTEST(opt);
+        ptr->timeout = NUM2INT(opt);
     }
 
     /* Get the value of the 'proxy_url' parameter: */
     opt = rb_hash_aref(opts, PROXY_URL_SYMBOL);
-    if (NIL_P(opt)) {
-        proxy_url = NULL;
-    }
-    else {
-        Check_Type(opt, T_STRING);
-        proxy_url = StringValueCStr(opt);
-    }
+    ptr->proxy_url = ov_string_dup(opt);
 
     /* Get the value of the 'proxy_username' parameter: */
     opt = rb_hash_aref(opts, PROXY_USERNAME_SYMBOL);
-    if (NIL_P(opt)) {
-        proxy_username = NULL;
-    }
-    else {
-        Check_Type(opt, T_STRING);
-        proxy_username = StringValueCStr(opt);
-    }
+    ptr->proxy_username = ov_string_dup(opt);
 
     /* Get the value of the 'proxy_password' parameter: */
     opt = rb_hash_aref(opts, PROXY_PASSWORD_SYMBOL);
+    ptr->proxy_password = ov_string_dup(opt);
+
+    /* Get the value of the 'log' parameter: */
+    opt = rb_hash_aref(opts, LOG_SYMBOL);
+    ptr->log = opt;
+
+    /* Get the value of the 'pipeline' parameter: */
+    opt = rb_hash_aref(opts, PIPELINE_SYMBOL);
     if (NIL_P(opt)) {
-        proxy_password = NULL;
+        pipeline = 0;
     }
     else {
-        Check_Type(opt, T_STRING);
-        proxy_password = StringValueCStr(opt);
+        Check_Type(opt, T_FIXNUM);
+        pipeline = NUM2LONG(opt);
     }
 
-    /* Create the libcurl object: */
-    object->curl = curl_easy_init();
-    if (object->curl == NULL) {
+    /* Get the value of the 'connections' parameter: */
+    opt = rb_hash_aref(opts, CONNECTIONS_SYMBOL);
+    if (NIL_P(opt)) {
+        connections = 0;
+    }
+    else {
+        Check_Type(opt, T_FIXNUM);
+        connections = NUM2LONG(opt);
+    }
+
+    /* Create the hash that contains the transfers are pending an completed. Both use the identity of the request
+       as key. */
+    ptr->completed = rb_funcall(rb_hash_new(), COMPARE_BY_IDENTITY_ID, 0);
+    ptr->pending = rb_funcall(rb_hash_new(), COMPARE_BY_IDENTITY_ID, 0);
+
+    /* Create the libcurl multi handle: */
+    ptr->handle = curl_multi_init();
+    if (ptr->handle == NULL) {
         rb_raise(ov_error_class, "Can't create libcurl object");
     }
 
-    /* Configure TLS parameters: */
-    if (insecure) {
-        curl_easy_setopt(object->curl, CURLOPT_SSL_VERIFYPEER, 0L);
-        curl_easy_setopt(object->curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    /* Enable pipelining: */
+    if (pipeline > 0) {
+        curl_multi_setopt(ptr->handle, CURLMOPT_PIPELINING, CURLPIPE_HTTP1);
+#ifdef CURLMOPT_MAX_PIPELINE_LENGTH
+        curl_multi_setopt(ptr->handle, CURLMOPT_MAX_PIPELINE_LENGTH, pipeline);
+#endif
     }
-    if (ca_file != NULL) {
-        curl_easy_setopt(object->curl, CURLOPT_CAINFO, ca_file);
+    if (connections > 0) {
+#ifdef CURLMOPT_MAX_HOST_CONNECTIONS
+        curl_multi_setopt(ptr->handle, CURLMOPT_MAX_HOST_CONNECTIONS, connections);
+#endif
     }
-
-    /* Configure the timeout: */
-    curl_easy_setopt(object->curl, CURLOPT_TIMEOUT, timeout);
-
-    /* Configure compression of responses (setting the value to zero length string means accepting all the
-       compression types that libcurl supports): */
-    if (compress) {
-        curl_easy_setopt(object->curl, CURLOPT_ENCODING, "");
-    }
-
-    /* Configure debug mode: */
-    if (debug) {
-        curl_easy_setopt(object->curl, CURLOPT_VERBOSE, 1L);
-        curl_easy_setopt(object->curl, CURLOPT_DEBUGFUNCTION, ov_http_client_debug_function);
-    }
-
-    /* Configure the proxy: */
-    if (proxy_url != NULL) {
-        curl_easy_setopt(object->curl, CURLOPT_PROXY, proxy_url);
-        if (proxy_username != NULL && proxy_password != NULL) {
-            curl_easy_setopt(object->curl, CURLOPT_PROXYUSERNAME, proxy_username);
-            curl_easy_setopt(object->curl, CURLOPT_PROXYPASSWORD, proxy_password);
-        }
-    }
-
-    /* Configure callbacks: */
-    curl_easy_setopt(object->curl, CURLOPT_READFUNCTION, ov_http_client_read_function);
-    curl_easy_setopt(object->curl, CURLOPT_WRITEFUNCTION, ov_http_client_write_function);
-    curl_easy_setopt(object->curl, CURLOPT_HEADERFUNCTION, ov_http_client_header_function);
 
     return self;
 }
 
-static VALUE ov_http_client_build_url(VALUE self, VALUE url, VALUE query) {
-    ov_http_client_object* object;
-
-    /* Get the pointer to the native object and check that it isn't closed: */
-    ov_http_client_ptr(self, object);
-    ov_http_client_check_closed(object);
-
+static VALUE ov_http_client_build_url( VALUE url, VALUE query) {
     /* Copy the URL: */
     if (NIL_P(url)) {
         rb_raise(ov_error_class, "The 'url' parameter can't be nil");
@@ -554,52 +568,223 @@ static int ov_http_client_add_header(VALUE name, VALUE value, struct curl_slist*
     return ST_CONTINUE;
 }
 
-static void* ov_http_client_perform_task(void* data) {
-    ov_http_client_perform_context* perform_context = (ov_http_client_perform_context*) data;
+static void* ov_http_client_complete_task(void* data) {
+    CURLM* handle;
+    CURLMsg* message;
+    VALUE error;
+    VALUE transfer;
+    long code;
+    ov_http_client_object* client_ptr;
+    ov_http_response_object* response_ptr;
+    ov_http_transfer_object* transfer_ptr;
 
-    /* Call the libcurl 'perform' method, and store the result in the context: */
-    perform_context->result = curl_easy_perform(perform_context->object->curl);
+    /* The passed pointer is the libcurl message describing the completed transfer: */
+    message = (CURLMsg*) data;
+    handle = message->easy_handle;
+
+    /* The transfer is stored as the private data of the libcurl easy handle: */
+    curl_easy_getinfo(handle, CURLINFO_PRIVATE, &transfer);
+
+    /* Get the pointers to the transfer, client and response: */
+    ov_http_transfer_ptr(transfer, transfer_ptr);
+    ov_http_client_ptr(transfer_ptr->client, client_ptr);
+    ov_http_response_ptr(transfer_ptr->response, response_ptr);
+
+    /* Remove the transfer from the pending hash: */
+    rb_hash_delete(client_ptr->pending, transfer_ptr->request);
+
+    if (message->data.result == CURLE_OK) {
+        /* Copy the response code and the response body to the response object: */
+        curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &code);
+        response_ptr->code = LONG2NUM(code);
+        response_ptr->body = rb_funcall(transfer_ptr->out, STRING_ID, 0);
+
+        /* Put the request and the response in the completed transfers hash: */
+        rb_hash_aset(client_ptr->completed, transfer_ptr->request, transfer_ptr->response);
+
+        /* Send a summary of the response to the log: */
+        ov_http_client_log_info(
+            client_ptr->log,
+            "Received response code '%"PRIsVALUE"'.",
+            response_ptr->code
+        );
+    }
+    else {
+        /* Put the request and error in the completed transfers hash: */
+        error = rb_sprintf("Can't send request: %s", curl_easy_strerror(message->data.result));
+        error = rb_class_new_instance(1, &error, ov_error_class);
+        rb_hash_aset(client_ptr->completed, transfer_ptr->request, error);
+    }
+
+    /* Now that the libcurl easy handle is released, we can release the headers as well: */
+    curl_slist_free_all(transfer_ptr->headers);
 
     return NULL;
 }
 
-static void ov_http_client_perform_cancel(void* data) {
-    ov_http_client_perform_context* perform_context = (ov_http_client_perform_context*) data;
+static void* ov_http_client_wait_task(void* data) {
+    CURLMsg* message;
+    int count;
+    int pending;
+    long timeout;
+    ov_http_client_wait_context* context_ptr;
 
-    /* Set the cancel flag so that the operation will be actually aborted the next time that libcurl calls the write
-       function: */
-    perform_context->cancel = true;
-}
+    /* The passed data is the wait context: */
+    context_ptr = data;
 
-static void ov_http_client_log_info(VALUE log, const char* format, ...) {
-    VALUE enabled;
-    VALUE message;
-    va_list args;
+    /* Get the timeout preferred by libcurl, or one second by default: */
+    curl_multi_timeout(context_ptr->handle, &timeout);
+    if (timeout < 0) {
+        timeout = 1000;
+    }
 
-    if (!NIL_P(log)) {
-        enabled = rb_funcall(log, INFO_Q_ID, 0);
-        if (RTEST(enabled)) {
-            va_start(args, format);
-            message = rb_vsprintf(format, args);
-            rb_funcall(log, INFO_ID, 1, message);
-            va_end(args);
+    /* Wait till there is activity: */
+    context_ptr->code = curl_multi_wait(context_ptr->handle, NULL, 0, timeout, NULL);
+    if (context_ptr->code != CURLE_OK) {
+        return NULL;
+    }
+
+    /* Let libcurl do its work, even if no file descriptor needs attention. This is necessary because some of its
+       activities can't be monitored using file descriptors. */
+    context_ptr->code = curl_multi_perform(context_ptr->handle, &pending);
+    if (context_ptr->code != CURLE_OK) {
+        return NULL;
+    }
+
+    /* Check if there are finished transfers. For each of them call the function that completes them, with the global
+       interpreter lock acquired, as it will call Ruby code. */
+    while ((message = curl_multi_info_read(context_ptr->handle, &count)) != NULL) {
+        if (message->msg == CURLMSG_DONE) {
+            /* Call the Ruby code that completes the transfer: */
+            rb_thread_call_with_gvl(ov_http_client_complete_task, message);
+
+            /* Remove the easy handle from the multi handle and discard it: */
+            curl_multi_remove_handle(context_ptr->handle, message->easy_handle);
+            curl_easy_cleanup(message->easy_handle);
         }
     }
+
+    /* Everything worked correctly: */
+    context_ptr->code = CURLE_OK;
+    return NULL;
 }
 
-static VALUE ov_http_client_send(VALUE self, VALUE request, VALUE response) {
+static void ov_http_client_wait_cancel(void* data) {
+    ov_http_client_wait_context* context_ptr;
+
+    /* The passed data is the wait context: */
+    context_ptr = data;
+
+    /* Set the cancel flag so that the operation will be actually aborted in the next operation of the wait loop: */
+    context_ptr->cancel = true;
+}
+
+static void ov_http_client_prepare_handle(ov_http_client_object* client_ptr, ov_http_request_object* request_ptr,
+        struct curl_slist** headers, CURL* handle) {
     VALUE header;
     VALUE url;
-    long response_code;
-    ov_http_client_object* object;
-    ov_http_client_perform_context perform_context;
-    ov_http_request_object* request_object;
-    ov_http_response_object* response_object;
+
+    /* Configure TLS parameters: */
+    if (client_ptr->insecure) {
+        curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, 0L);
+        curl_easy_setopt(handle, CURLOPT_SSL_VERIFYHOST, 0L);
+    }
+    if (client_ptr->ca_file != NULL) {
+        curl_easy_setopt(handle, CURLOPT_CAINFO, client_ptr->ca_file);
+    }
+
+    /* Configure the timeout: */
+    curl_easy_setopt(handle, CURLOPT_TIMEOUT, client_ptr->timeout);
+
+    /* Configure compression of responses (setting the value to zero length string means accepting all the
+       compression types that libcurl supports): */
+    if (client_ptr->compress) {
+        curl_easy_setopt(handle, CURLOPT_ENCODING, "");
+    }
+
+    /* Configure debug mode: */
+    if (client_ptr->debug) {
+        curl_easy_setopt(handle, CURLOPT_VERBOSE, 1L);
+        curl_easy_setopt(handle, CURLOPT_DEBUGFUNCTION, ov_http_client_debug_function);
+    }
+
+    /* Configure the proxy: */
+    if (client_ptr->proxy_url != NULL) {
+        curl_easy_setopt(handle, CURLOPT_PROXY, client_ptr->proxy_url);
+        if (client_ptr->proxy_username != NULL && client_ptr->proxy_password != NULL) {
+            curl_easy_setopt(handle, CURLOPT_PROXYUSERNAME, client_ptr->proxy_username);
+            curl_easy_setopt(handle, CURLOPT_PROXYPASSWORD, client_ptr->proxy_password);
+        }
+    }
+
+    /* Configure callbacks: */
+    curl_easy_setopt(handle, CURLOPT_READFUNCTION, ov_http_client_read_function);
+    curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, ov_http_client_write_function);
+    curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, ov_http_client_header_function);
+
+    /* Build and set the URL: */
+    url = ov_http_client_build_url(request_ptr->url, request_ptr->query);
+    curl_easy_setopt(handle, CURLOPT_URL, StringValueCStr(url));
+
+    /* Set the method: */
+    if (rb_eql(request_ptr->method, POST_SYMBOL)) {
+       *headers = curl_slist_append(*headers, "Transfer-Encoding: chunked");
+       *headers = curl_slist_append(*headers, "Expect:");
+       curl_easy_setopt(handle, CURLOPT_POST, 1L);
+    }
+    else if (rb_eql(request_ptr->method, PUT_SYMBOL)) {
+       curl_easy_setopt(handle, CURLOPT_UPLOAD, 1L);
+       curl_easy_setopt(handle, CURLOPT_PUT, 1L);
+    }
+    else if (rb_eql(request_ptr->method, DELETE_SYMBOL)) {
+       curl_easy_setopt(handle, CURLOPT_HTTPGET, 1L);
+       curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "DELETE");
+    }
+    else if (rb_eql(request_ptr->method, GET_SYMBOL)) {
+       curl_easy_setopt(handle, CURLOPT_HTTPGET, 1L);
+    }
+
+    /* Set authentication details: */
+    if (!NIL_P(request_ptr->token)) {
+        header = rb_sprintf("Authorization: Bearer %"PRIsVALUE"", request_ptr->token);
+        *headers = curl_slist_append(*headers, StringValueCStr(header));
+    }
+    else if (!NIL_P(request_ptr->username) && !NIL_P(request_ptr->password)) {
+        curl_easy_setopt(handle, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        curl_easy_setopt(handle, CURLOPT_USERNAME, StringValueCStr(request_ptr->username));
+        curl_easy_setopt(handle, CURLOPT_PASSWORD, StringValueCStr(request_ptr->password));
+    }
+    else if (RTEST(request_ptr->kerberos)) {
+        curl_easy_setopt(handle, CURLOPT_HTTPAUTH, CURLAUTH_NEGOTIATE);
+    }
+
+    /* Set the headers: */
+    if (!NIL_P(request_ptr->headers)) {
+        rb_hash_foreach(request_ptr->headers, ov_http_client_add_header, (VALUE) headers);
+    }
+    curl_easy_setopt(handle, CURLOPT_HTTPHEADER, *headers);
+
+    /* Send a summary of the request to the log: */
+    ov_http_client_log_info(
+        client_ptr->log,
+        "Sending '%"PRIsVALUE"' request to URL '%"PRIsVALUE"'.",
+        request_ptr->method,
+        url
+    );
+}
+
+static VALUE ov_http_client_send(VALUE self, VALUE request) {
+    CURL* handle;
+    VALUE response;
+    VALUE transfer;
+    ov_http_client_object* ptr;
+    ov_http_request_object* request_ptr;
+    ov_http_transfer_object* transfer_ptr;
     struct curl_slist* headers;
 
     /* Get the pointer to the native object and check that it isn't closed: */
-    ov_http_client_ptr(self, object);
-    ov_http_client_check_closed(object);
+    ov_http_client_ptr(self, ptr);
+    ov_http_client_check_closed(ptr);
 
     /* Check the type of request and get the pointer to the native object: */
     if (NIL_P(request)) {
@@ -608,124 +793,87 @@ static VALUE ov_http_client_send(VALUE self, VALUE request, VALUE response) {
     if (!rb_obj_is_instance_of(request, ov_http_request_class)) {
         rb_raise(ov_error_class, "The 'request' parameter isn't an instance of class 'HttpRequest'");
     }
-    ov_http_request_ptr(request, request_object);
+    ov_http_request_ptr(request, request_ptr);
 
-    /* Check the type of response and get the pointer to the native object: */
-    if (NIL_P(response)) {
-        rb_raise(ov_error_class, "The 'response' parameter can't be nil");
+    /* Create the libcurl easy handle: */
+    handle = curl_easy_init();
+    if (ptr->handle == NULL) {
+        rb_raise(ov_error_class, "Can't create libcurl object");
     }
-    if (!rb_obj_is_instance_of(response, ov_http_response_class)) {
-        rb_raise(ov_error_class, "The 'response' parameter isn't an instance of class 'HttpResponse'");
-    }
-    ov_http_response_ptr(response, response_object);
 
-    /* Build and set the URL: */
-    url = ov_http_client_build_url(self, request_object->url, request_object->query);
-    curl_easy_setopt(object->curl, CURLOPT_URL, StringValueCStr(url));
-
-    /* Initialize the list of headers: */
+    /* The headers used by the libcurl easy handle can't be released till the handle is released itself, so we need
+       to initialize here, and add it to the context so that we can release it later: */
     headers = NULL;
 
-    /* Set the method: */
-    if (rb_eql(request_object->method, POST_SYMBOL)) {
-       headers = curl_slist_append(headers, "Transfer-Encoding: chunked");
-       headers = curl_slist_append(headers, "Expect:");
-       curl_easy_setopt(object->curl, CURLOPT_POST, 1L);
-    }
-    else if (rb_eql(request_object->method, PUT_SYMBOL)) {
-       curl_easy_setopt(object->curl, CURLOPT_UPLOAD, 1L);
-       curl_easy_setopt(object->curl, CURLOPT_PUT, 1L);
-    }
-    else if (rb_eql(request_object->method, DELETE_SYMBOL)) {
-       curl_easy_setopt(object->curl, CURLOPT_HTTPGET, 1L);
-       curl_easy_setopt(object->curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-    }
-    else if (rb_eql(request_object->method, GET_SYMBOL)) {
-       curl_easy_setopt(object->curl, CURLOPT_HTTPGET, 1L);
-    }
+    /* Configure the libcurl easy handle with the data from the client and from the request: */
+    ov_http_client_prepare_handle(ptr, request_ptr, &headers, handle);
 
-    /* Set authentication details: */
-    if (!NIL_P(request_object->token)) {
-        header = rb_sprintf("Authorization: Bearer %"PRIsVALUE"", request_object->token);
-        headers = curl_slist_append(headers, StringValueCStr(header));
-    }
-    else if (!NIL_P(request_object->username) && !NIL_P(request_object->password)) {
-        curl_easy_setopt(object->curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-        curl_easy_setopt(object->curl, CURLOPT_USERNAME, StringValueCStr(request_object->username));
-        curl_easy_setopt(object->curl, CURLOPT_PASSWORD, StringValueCStr(request_object->password));
-    }
-    else if (RTEST(request_object->kerberos)) {
-        curl_easy_setopt(object->curl, CURLOPT_HTTPAUTH, CURLAUTH_NEGOTIATE);
-    }
+    /* Allocate a ne empty response: */
+    response = rb_class_new_instance(0, NULL, ov_http_response_class);
 
-    /* Set the headers: */
-    if (!NIL_P(request_object->headers)) {
-        rb_hash_foreach(request_object->headers, ov_http_client_add_header, (VALUE) &headers);
-    }
-    curl_easy_setopt(object->curl, CURLOPT_HTTPHEADER, headers);
-
-    /* Send a summary of the request to the log: */
-    ov_http_client_log_info(
-        object->log,
-        "Sending '%"PRIsVALUE"' request to URL '%"PRIsVALUE"'.",
-        request_object->method,
-        url
-    );
-
-    /* Performing the request is a potentially lengthy and blocking operation, so we need to make sure that it runs
-       without the global interpreter lock acquired as much as possible: */
-    perform_context.object = object;
-    perform_context.response = response_object;
-    perform_context.cancel = false;
-    if (NIL_P(request_object->body)) {
-        perform_context.in = rb_class_new_instance(0, NULL, STRING_IO_CLASS);
+    /* Allocate a new empty transfer: */
+    transfer = rb_class_new_instance(0, NULL, ov_http_transfer_class);
+    ov_http_transfer_ptr(transfer, transfer_ptr);
+    transfer_ptr->client = self;
+    transfer_ptr->request = request;
+    transfer_ptr->response = response;
+    transfer_ptr->headers = headers;
+    transfer_ptr->cancel = false;
+    if (NIL_P(request_ptr->body)) {
+        transfer_ptr->in = rb_class_new_instance(0, NULL, STRING_IO_CLASS);
     }
     else {
-        perform_context.in = rb_class_new_instance(1, &request_object->body, STRING_IO_CLASS);
+        transfer_ptr->in = rb_class_new_instance(1, &request_ptr->body, STRING_IO_CLASS);
     }
-    perform_context.out = rb_class_new_instance(0, NULL, STRING_IO_CLASS);
-    curl_easy_setopt(object->curl, CURLOPT_READDATA, &perform_context);
-    curl_easy_setopt(object->curl, CURLOPT_WRITEDATA, &perform_context);
-    curl_easy_setopt(object->curl, CURLOPT_HEADERDATA, &perform_context);
-    curl_easy_setopt(object->curl, CURLOPT_DEBUGDATA, &perform_context);
-    rb_thread_call_without_gvl(
-        ov_http_client_perform_task,
-        &perform_context,
-        ov_http_client_perform_cancel,
-        &perform_context
-    );
+    transfer_ptr->out = rb_class_new_instance(0, NULL, STRING_IO_CLASS);
 
-    /* Free the headers and clear the libcurl object, regardless of the result of the request: */
-    curl_slist_free_all(headers);
-    curl_easy_setopt(object->curl, CURLOPT_URL, NULL);
-    curl_easy_setopt(object->curl, CURLOPT_READDATA, NULL);
-    curl_easy_setopt(object->curl, CURLOPT_WRITEDATA, NULL);
-    curl_easy_setopt(object->curl, CURLOPT_HEADERDATA, NULL);
-    curl_easy_setopt(object->curl, CURLOPT_DEBUGDATA, NULL);
-    curl_easy_setopt(object->curl, CURLOPT_CUSTOMREQUEST, NULL);
-    curl_easy_setopt(object->curl, CURLOPT_UPLOAD, 0L);
-    curl_easy_setopt(object->curl, CURLOPT_HTTPAUTH, 0L);
-    curl_easy_setopt(object->curl, CURLOPT_USERNAME, "");
-    curl_easy_setopt(object->curl, CURLOPT_PASSWORD, "");
+    /* Put the request and the transfer in the hash of pending transfers: */
+    rb_hash_aset(ptr->pending, request, transfer);
 
-    /* Check the result of the request: */
-    if (perform_context.result != CURLE_OK) {
-        rb_raise(ov_error_class, "Can't send request: %s", curl_easy_strerror(perform_context.result));
+    /* Set the transfer as the data for all the callbacks, so we can access it from any place where it is needed: */
+    curl_easy_setopt(handle, CURLOPT_PRIVATE, transfer);
+    curl_easy_setopt(handle, CURLOPT_READDATA, transfer);
+    curl_easy_setopt(handle, CURLOPT_WRITEDATA, transfer);
+    curl_easy_setopt(handle, CURLOPT_HEADERDATA, transfer);
+    curl_easy_setopt(handle, CURLOPT_DEBUGDATA, transfer);
+
+    /* Add the easy handle to the multi handle: */
+    curl_multi_add_handle(ptr->handle, handle);
+
+    return Qnil;
+}
+
+static VALUE ov_http_client_wait(VALUE self, VALUE request) {
+    VALUE result;
+    ov_http_client_object* ptr;
+    ov_http_client_wait_context context;
+
+    /* Get the pointer to the native object and check that it isn't closed: */
+    ov_http_client_ptr(self, ptr);
+    ov_http_client_check_closed(ptr);
+
+    /* Work till the transfer has been completed: */
+    context.handle = ptr->handle;
+    context.code = CURLE_OK;
+    context.cancel = false;
+    for (;;) {
+        result = rb_hash_delete(ptr->completed, request);
+        if (!NIL_P(result)) {
+            return result;
+        }
+        rb_thread_call_without_gvl(
+            ov_http_client_wait_task,
+            &context,
+            ov_http_client_wait_cancel,
+            &context
+        );
+        if (context.cancel) {
+            return Qnil;
+        }
+        if (context.code != CURLE_OK) {
+            rb_raise(ov_error_class, "Unexpected error while waiting: %s", curl_easy_strerror(context.code));
+        }
     }
-
-    /* Get the response code: */
-    curl_easy_getinfo(object->curl, CURLINFO_RESPONSE_CODE, &response_code);
-    response_object->code = LONG2NUM(response_code);
-
-    /* Get the response body: */
-    response_object->body = rb_funcall(perform_context.out, STRING_ID, 0);
-
-    /* Send a summary of the response to the log: */
-    ov_http_client_log_info(
-        object->log,
-        "Received response code '%"PRIsVALUE"'.",
-        response_object->code
-    );
 
     return Qnil;
 }
@@ -745,33 +893,36 @@ void ov_http_client_define(void) {
     rb_define_method(ov_http_client_class, "initialize", ov_http_client_initialize, -1);
 
     /* Define the methods: */
-    rb_define_method(ov_http_client_class, "build_url", ov_http_client_build_url, 2);
-    rb_define_method(ov_http_client_class, "close",     ov_http_client_close,     0);
-    rb_define_method(ov_http_client_class, "send",      ov_http_client_send,      2);
+    rb_define_method(ov_http_client_class, "close", ov_http_client_close, 0);
+    rb_define_method(ov_http_client_class, "send",  ov_http_client_send,  1);
+    rb_define_method(ov_http_client_class, "wait",  ov_http_client_wait,  1);
 
     /* Define the symbols: */
-    USERNAME_SYMBOL       = ID2SYM(rb_intern("username"));
-    PASSWORD_SYMBOL       = ID2SYM(rb_intern("password"));
-    INSECURE_SYMBOL       = ID2SYM(rb_intern("insecure"));
     CA_FILE_SYMBOL        = ID2SYM(rb_intern("ca_file"));
-    DEBUG_SYMBOL          = ID2SYM(rb_intern("debug"));
-    LOG_SYMBOL            = ID2SYM(rb_intern("log"));
     COMPRESS_SYMBOL       = ID2SYM(rb_intern("compress"));
-    TIMEOUT_SYMBOL        = ID2SYM(rb_intern("timeout"));
+    CONNECTIONS_SYMBOL    = ID2SYM(rb_intern("connections"));
+    DEBUG_SYMBOL          = ID2SYM(rb_intern("debug"));
+    INSECURE_SYMBOL       = ID2SYM(rb_intern("insecure"));
+    LOG_SYMBOL            = ID2SYM(rb_intern("log"));
+    PASSWORD_SYMBOL       = ID2SYM(rb_intern("password"));
+    PIPELINE_SYMBOL       = ID2SYM(rb_intern("pipeline"));
+    PROXY_PASSWORD_SYMBOL = ID2SYM(rb_intern("proxy_password"));
     PROXY_URL_SYMBOL      = ID2SYM(rb_intern("proxy_url"));
     PROXY_USERNAME_SYMBOL = ID2SYM(rb_intern("proxy_username"));
-    PROXY_PASSWORD_SYMBOL = ID2SYM(rb_intern("proxy_password"));
+    TIMEOUT_SYMBOL        = ID2SYM(rb_intern("timeout"));
+    USERNAME_SYMBOL       = ID2SYM(rb_intern("username"));
 
     /* Define the method identifiers: */
-    DEBUG_ID           = rb_intern("debug");
-    ENCODE_WWW_FORM_ID = rb_intern("encode_www_form");
-    INFO_ID            = rb_intern("info");
-    INFO_Q_ID          = rb_intern("info?");
-    READ_ID            = rb_intern("read");
-    STRING_ID          = rb_intern("string");
-    STRING_IO_ID       = rb_intern("StringIO");
-    URI_ID             = rb_intern("URI");
-    WRITE_ID           = rb_intern("write");
+    COMPARE_BY_IDENTITY_ID = rb_intern("compare_by_identity");
+    DEBUG_ID               = rb_intern("debug");
+    ENCODE_WWW_FORM_ID     = rb_intern("encode_www_form");
+    INFO_ID                = rb_intern("info");
+    INFO_Q_ID              = rb_intern("info?");
+    READ_ID                = rb_intern("read");
+    STRING_ID              = rb_intern("string");
+    STRING_IO_ID           = rb_intern("StringIO");
+    URI_ID                 = rb_intern("URI");
+    WRITE_ID               = rb_intern("write");
 
     /* Locate classes: */
     STRING_IO_CLASS = rb_const_get(rb_cObject, STRING_IO_ID);

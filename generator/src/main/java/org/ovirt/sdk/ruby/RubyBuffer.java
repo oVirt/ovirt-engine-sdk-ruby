@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Red Hat, Inc.
+Copyright (c) 2015-2017 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -129,11 +129,11 @@ public class RubyBuffer {
             line.startsWith("while ");
         boolean isEnd =
             line.equals(")") ||
-            line.equals("]") ||
             line.equals("else") ||
             line.equals("else") ||
             line.equals("end") ||
             line.equals("ensure") ||
+            line.startsWith("]") ||
             line.startsWith("when ");
 
         // Decrease the indentation if the line is the end of a block:

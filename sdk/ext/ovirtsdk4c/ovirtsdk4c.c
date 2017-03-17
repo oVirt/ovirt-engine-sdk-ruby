@@ -21,6 +21,7 @@ limitations under the License.
 #include "ov_http_client.h"
 #include "ov_http_request.h"
 #include "ov_http_response.h"
+#include "ov_http_transfer.h"
 #include "ov_xml_reader.h"
 #include "ov_xml_writer.h"
 
@@ -33,6 +34,7 @@ void Init_ovirtsdk4c(void) {
     ov_http_client_define();
     ov_http_request_define();
     ov_http_response_define();
+    ov_http_transfer_define();
     ov_xml_reader_define();
     ov_xml_writer_define();
 }

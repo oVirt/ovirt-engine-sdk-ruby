@@ -18,7 +18,7 @@ describe SDK::Service do
   describe '#check_fault' do
     context 'given a fault' do
       before(:all) do
-        @service = SDK::Service.new
+        @service = SDK::Service.new(nil, nil)
         @response = SDK::HttpResponse.new(
           code:    209,
           message: 'mymessage',
@@ -45,7 +45,7 @@ describe SDK::Service do
 
     context 'given an empty response, with blank body' do
       before(:all) do
-        @service = SDK::Service.new
+        @service = SDK::Service.new(nil, nil)
         @response = SDK::HttpResponse.new(
           code:    209,
           message: 'mymessage',
@@ -64,7 +64,7 @@ describe SDK::Service do
 
     context 'given an empty response, with nil body' do
       before(:all) do
-        @service = SDK::Service.new
+        @service = SDK::Service.new(nil, nil)
         @response = SDK::HttpResponse.new(
           code:    209,
           message: 'mymessage',
@@ -85,7 +85,7 @@ describe SDK::Service do
   describe '#check_action' do
     context 'given an empty response, with nil body' do
       it 'raises an error containing the response code' do
-        service = SDK::Service.new
+        service = SDK::Service.new(nil, nil)
         response = SDK::HttpResponse.new(code: 209, body: nil)
         expect { service.check_action(response) }.to raise_error(SDK::Error, /209/)
       end
@@ -93,7 +93,7 @@ describe SDK::Service do
 
     context 'given an empty response, with blank body' do
       it 'raises an error containing the response code' do
-        service = SDK::Service.new
+        service = SDK::Service.new(nil, nil)
         response = SDK::HttpResponse.new(code: 209, body: '')
         expect { service.check_action(response) }.to raise_error(SDK::Error, /209/)
       end
@@ -101,7 +101,7 @@ describe SDK::Service do
 
     context 'given no fault' do
       before(:all) do
-        @service = SDK::Service.new
+        @service = SDK::Service.new(nil, nil)
         @response = SDK::HttpResponse.new(
           body: '<action><status><state>mystate</state></status></action>'
         )
@@ -114,7 +114,7 @@ describe SDK::Service do
 
     context 'given a fault' do
       before(:all) do
-        @service = SDK::Service.new
+        @service = SDK::Service.new(nil, nil)
         @response = SDK::HttpResponse.new(
           body: '<action><fault><reason>myreason</reason></fault></action>'
         )
@@ -127,7 +127,7 @@ describe SDK::Service do
 
     context 'given a fault instead of an action' do
       it 'raises an error containing the fault reason' do
-        service = SDK::Service.new
+        service = SDK::Service.new(nil, nil)
         response = SDK::HttpResponse.new(
           body: '<fault><reason>myreason</reason></fault>'
         )

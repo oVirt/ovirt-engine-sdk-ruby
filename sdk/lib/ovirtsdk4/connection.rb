@@ -95,7 +95,13 @@ module OvirtSDK4
     # @option opts [Hash] :headers Custom HTTP headers to send with all requests. The keys of the hash can be
     #   strings of symbols, and they will be used as the names of the headers. The values of the hash will be used
     #   as the names of the headers. If the same header is provided here and in the `headers` parameter of a specific
-    #   method call, then the `headers` parameter of the specific method call will have precendence.
+    #   method call, then the `headers` parameter of the specific method call will have precedence.
+    #
+    # @option opts [Integer] :connections (0) The maximum number of connections to open to the host. If the value is
+    #   `0` (the default) then the number of connections will be unlimited.
+    #
+    # @option opts [Integer] :pipeline (0) The maximum number of request to put in an HTTP pipeline without waiting for
+    #   the response. If the value is `0` (the default) then pipelining is disabled.
     #
     def initialize(opts = {})
       # Get the values of the parameters and assign default values:
@@ -115,6 +121,8 @@ module OvirtSDK4
       @proxy_username = opts[:proxy_username]
       @proxy_password = opts[:proxy_password]
       @headers = opts[:headers]
+      @connections = opts[:connections] || 0
+      @pipeline = opts[:pipeline] || 0
 
       # Check that the URL has been provided:
       raise ArgumentError, "The 'url' option is mandatory" unless @url
@@ -147,7 +155,9 @@ module OvirtSDK4
         compress: @compress,
         proxy_url: @proxy_url,
         proxy_username: @proxy_username,
-        proxy_password: @proxy_password
+        proxy_password: @proxy_password,
+        connections: @connections,
+        pipeline: @pipeline
       )
     end
 
@@ -174,10 +184,9 @@ module OvirtSDK4
     end
 
     #
-    # Sends an HTTP request and waits for the response.
+    # Sends an HTTP request.
     #
     # @param request [HttpRequest] The request object containing the details of the HTTP request to send.
-    # @return [Response] A request object containing the details of the HTTP response received.
     #
     # @api private
     #
@@ -208,13 +217,19 @@ module OvirtSDK4
       @token ||= create_access_token
       request.token = @token
 
-      # Create an empty response:
-      response = HttpResponse.new
+      # Send the request:
+      @client.send(request)
+    end
 
-      # Send the request and wait for the response:
-      @client.send(request, response)
-
-      # Return the response:
+    #
+    # Waits for the response to the given request.
+    #
+    # @param request [HttpRequest] The request object whose corresponding response you want to wait for.
+    # @return [Response] A request object containing the details of the HTTP response received.
+    #
+    def wait(request)
+      response = @client.wait(request)
+      raise response if response.is_a?(Exception)
       response
     end
 
@@ -273,25 +288,23 @@ module OvirtSDK4
     #
     def get_sso_response(url, parameters)
       # Create the request:
-      request = HttpRequest.new(
-        method: :POST,
-        url: url,
-        headers: {
-          'User-Agent' => "RubySDK/#{VERSION}",
-          'Content-Type' => 'application/x-www-form-urlencoded',
-          'Accept' => 'application/json'
-        },
-        body: URI.encode_www_form(parameters)
-      )
+      request = HttpRequest.new
+      request.method = :POST
+      request.url = url
+      request.headers = {
+        'User-Agent' => "RubySDK/#{VERSION}",
+        'Content-Type' => 'application/x-www-form-urlencoded',
+        'Accept' => 'application/json'
+      }
+      request.body = URI.encode_www_form(parameters)
 
       # Add the global headers:
       request.headers.merge!(@headers) if @headers
 
-      # Create an empty response:
-      response = HttpResponse.new
-
       # Send the request and wait for the response:
-      @client.send(request, response)
+      @client.send(request)
+      response = @client.wait(request)
+      raise response if response.is_a?(Exception)
 
       # Parse and return the JSON response:
       JSON.parse(response.body)
