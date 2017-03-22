@@ -228,8 +228,20 @@ module OvirtSDK4
     # @return [Response] A request object containing the details of the HTTP response received.
     #
     def wait(request)
+      # Wait for the response:
       response = @client.wait(request)
       raise response if response.is_a?(Exception)
+
+      # If the request failed because of authentication, and it wasn't a request to the SSO service, then the
+      # most likely cause is an expired SSO token. In this case we need to request a new token, and try the original
+      # request again, but only once. It if fails again, we just return the failed response.
+      if response.code == 401 && request.token
+        @token = create_access_token
+        request.token = @token
+        @client.send(request)
+        response = @client.wait(request)
+      end
+
       response
     end
 
