@@ -59,7 +59,7 @@ original = agent.options || []
 # Create a list of modified options, containing all the original options
 # except the one with the name that we want to modify, as we will add
 # that with the right value later:
-modified = original.select { |x| x.name != name }
+modified = original.reject { |x| x.name == name }
 
 # Add the modified option to the list of modified options:
 option = OvirtSDK4::Option.new(
