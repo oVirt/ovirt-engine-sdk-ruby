@@ -27,13 +27,13 @@ require 'ovirtsdk4'
 pipeline = 40
 connections = 10
 
-# Requests are sent in bloks, and the size of each block shoul be the number of connections multipled by the size
+# Requests are sent in blocks, and the size of each block shoul be the number of connections multipled by the size
 # of the pipeline:
 block = connections * pipeline
 
-# This function takes a list of objects and creates a hash where the keys are the identifiers and the values the
-# objects. We will use it to create indexes that we can use to speed up things like finding the disks corresponding
-# to a virtual machine, given their identifiers.
+# This function takes a list of objects and creates a hash where the keys are the identifiers and the values are
+# the objects. We will use it to create indexes that we can use to speed up things like finding the disks
+# corresponding to a virtual machine, given their identifiers.
 def index(list)
   index = {}
   list.each do |item|
