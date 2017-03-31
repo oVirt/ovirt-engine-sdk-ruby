@@ -16,7 +16,6 @@
 # limitations under the License.
 #
 
-
 require 'logger'
 require 'ovirtsdk4'
 
