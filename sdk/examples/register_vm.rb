@@ -54,12 +54,12 @@ vm = vms.detect { |v| v.name == 'myvm' }
 vm_service = vms_service.vm_service(vm.id)
 
 # Register the VM into the system:
-vm = vm_service.register(
+vm_service.register(
   cluster: {
-    name: 'mycluster',
+    name: 'mycluster'
   },
   vm: {
-    name: 'exported_myvm',
+    name: 'exported_myvm'
   },
   vnic_profile_mappings: [{
     source_network_name: 'mynetwork',
