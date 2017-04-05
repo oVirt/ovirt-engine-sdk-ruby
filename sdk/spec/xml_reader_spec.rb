@@ -87,7 +87,7 @@ describe SDK::XmlReader do
     context 'given an a list with two elements' do
       it 'returns a list containing them' do
         reader = SDK::XmlReader.new('<list><item>first</item><item>second</item></list>')
-        expect(reader.read_elements).to eql(%w(first second))
+        expect(reader.read_elements).to eql(%w[first second])
       end
     end
 
