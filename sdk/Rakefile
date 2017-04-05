@@ -48,7 +48,7 @@ rescue LoadError
 end
 
 # Task to run RSpec and Rubocop:
-task test: %i(rspec rubocop)
+task test: %i[rspec rubocop]
 
 # Add the gem packaging task:
 Gem::PackageTask.new(spec) do |pkg|
