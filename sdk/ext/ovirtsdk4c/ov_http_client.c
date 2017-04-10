@@ -53,6 +53,7 @@ static VALUE USERNAME_SYMBOL;
 /* Method identifiers: */
 static ID COMPARE_BY_IDENTITY_ID;
 static ID DEBUG_ID;
+static ID DOWNCASE_ID;
 static ID ENCODE_WWW_FORM_ID;
 static ID INFO_ID;
 static ID INFO_Q_ID;
@@ -319,6 +320,7 @@ static void* ov_http_client_header_task(void* data) {
     pointer = memchr(buffer, ':', length);
     if (pointer != NULL) {
         name = rb_str_new(buffer, pointer - buffer);
+        name = rb_funcall(name, DOWNCASE_ID, 0);
         pointer++;
         while (pointer - buffer < length && isspace(*pointer)) {
             pointer++;
@@ -915,6 +917,7 @@ void ov_http_client_define(void) {
     /* Define the method identifiers: */
     COMPARE_BY_IDENTITY_ID = rb_intern("compare_by_identity");
     DEBUG_ID               = rb_intern("debug");
+    DOWNCASE_ID            = rb_intern("downcase");
     ENCODE_WWW_FORM_ID     = rb_intern("encode_www_form");
     INFO_ID                = rb_intern("info");
     INFO_Q_ID              = rb_intern("info?");
