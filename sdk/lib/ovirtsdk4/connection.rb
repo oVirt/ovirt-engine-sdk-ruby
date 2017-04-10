@@ -242,6 +242,10 @@ module OvirtSDK4
         response = @client.wait(request)
       end
 
+      # Check the returned content type:
+      content_type = response.headers['content-type']
+      check_content_type(XML_CONTENT_TYPE_RE, 'XML', content_type)
+
       response
     end
 
@@ -317,6 +321,10 @@ module OvirtSDK4
       @client.send(request)
       response = @client.wait(request)
       raise response if response.is_a?(Exception)
+
+      # Check the returned content type:
+      content_type = response.headers['content-type']
+      check_content_type(JSON_CONTENT_TYPE_RE, 'JSON', content_type)
 
       # Parse and return the JSON response:
       JSON.parse(response.body)
@@ -470,6 +478,49 @@ module OvirtSDK4
 
       # Remove the temporary file that contains the trusted CA certificates:
       @ca_store.unlink if @ca_store
+    end
+
+    private
+
+    #
+    # Regular expression used to check JSON content type.
+    #
+    # @api private
+    #
+    JSON_CONTENT_TYPE_RE = %r{^\s*(application|text)/json\s*(;.*)?$}i
+
+    #
+    # Regular expression used to check XML content type.
+    #
+    # @api private
+    #
+    XML_CONTENT_TYPE_RE = %r{^\s*(application|text)/xml\s*(;.*)?$}i
+
+    #
+    # The typical URL path, used just to generate informative error messages.
+    #
+    # @api private
+    #
+    TYPICAL_PATH = '/ovirt-engine/api'.freeze
+
+    #
+    # Checks the given content type and raises an exception if it isn't the expected one.
+    #
+    # @param expected_re [Regex] The regular expression used to check the expected content type.
+    # @param expected_name [String] The name of the expected content type.
+    # @param actual [String] The actual value of the `Content-Type` header.
+    #
+    # @api private
+    #
+    def check_content_type(expected_re, expected_name, actual)
+      return if expected_re =~ actual
+      message = "The response content type '#{actual}' isn't the expected #{expected_name}"
+      url = URI(@url)
+      if url.path != TYPICAL_PATH
+        message << ". Is the path '#{url.path}' included in the 'url' parameter correct?"
+        message << " The typical one is '#{TYPICAL_PATH}'"
+      end
+      raise Error, message
     end
   end
 end
