@@ -34,6 +34,16 @@ describe SDK::VmService do
       end
       expect { @service.get }.to raise_error(SDK::Error, /404/)
     end
+
+    it 'includes the HTTP response code in the exception raise if the VM does not exist' do
+      mount_raw(path: 'vms/123') do |_, response|
+        response.status = 404
+        response.body = ''
+      end
+      expect { @service.get }.to raise_error do |error|
+        expect(error.code).to eq(404)
+      end
+    end
   end
 
   describe '#start' do
