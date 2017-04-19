@@ -541,7 +541,11 @@ module OvirtSDK4
         message << '.'
       end
 
-      raise Error, message
+      # Create and populate the error:
+      error = Error.new(message)
+      error.code = response.code if response
+
+      raise error
     end
 
     private
