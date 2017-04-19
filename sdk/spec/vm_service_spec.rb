@@ -26,6 +26,16 @@ describe SDK::VmService do
     stop_server
   end
 
+  describe '#get' do
+    it 'raises an exception with 404 in the message if the VM does not exist' do
+      mount_raw(path: 'vms/123') do |_, response|
+        response.status = 404
+        response.body = ''
+      end
+      expect { @service.get }.to raise_error(SDK::Error, /404/)
+    end
+  end
+
   describe '#start' do
     context 'when starting a VM with the `pause` parameter' do
       it 'posts an `action` element with an inner `pause` element' do

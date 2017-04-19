@@ -66,39 +66,6 @@ module OvirtSDK4
     end
 
     #
-    # Creates and raises an error containing the details of the given HTTP response and fault.
-    #
-    # This method is intended for internal use by other components of the SDK. Refrain from using it directly, as
-    # backwards compatibility isn't guaranteed.
-    #
-    # @api private
-    #
-    def raise_error(response, fault)
-      message = ''
-      unless fault.nil?
-        unless fault.reason.nil?
-          message << ' ' unless message.empty?
-          message << "Fault reason is \"#{fault.reason}\"."
-        end
-        unless fault.detail.nil?
-          message << ' ' unless message.empty?
-          message << "Fault detail is \"#{fault.detail}\"."
-        end
-      end
-      unless response.nil?
-        unless response.code.nil?
-          message << ' ' unless message.empty?
-          message << "HTTP response code is #{response.code}."
-        end
-        unless response.message.nil?
-          message << ' ' unless message.empty?
-          message << "HTTP response message is \"#{response.message}\"."
-        end
-      end
-      raise Error, message
-    end
-
-    #
     # Reads the response body, checks if it is a fault and if so converts it to an Error and raises it.
     #
     # This method is intended for internal use by other components of the SDK. Refrain from using it directly, as
@@ -107,10 +74,8 @@ module OvirtSDK4
     # @api private
     #
     def check_fault(response)
-      body = response.body
-      raise_error(response, nil) if body.nil? || body.length.zero?
-      body = Reader.read(body)
-      raise_error(response, body) if body.is_a?(Fault)
+      body = internal_read_body(response)
+      @connection.raise_error(response, body) if body.is_a?(Fault)
       raise Error, "Expected a fault, but got '#{body.class.name.split('::').last}'"
     end
 
@@ -125,13 +90,11 @@ module OvirtSDK4
     # @api private
     #
     def check_action(response)
-      body = response.body
-      raise_error(response, nil) if body.nil? || body.length.zero?
-      body = Reader.read(body)
-      raise_error(response, body) if body.is_a?(Fault)
+      body = internal_read_body(response)
+      @connection.raise_error(response, body) if body.is_a?(Fault)
       if body.is_a?(Action)
         return body if body.fault.nil?
-        raise_error(response, body.fault)
+        @connection.raise_error(response, body.fault)
       end
       raise Error, "Expected an action or a fault, but got '#{body.class.name.split('::').last}'"
     end
@@ -166,7 +129,7 @@ module OvirtSDK4
         raise response if response.is_a?(Exception)
         case response.code
         when 200
-          Reader.read(response.body)
+          internal_read_body(response)
         else
           check_fault(response)
         end
@@ -207,7 +170,7 @@ module OvirtSDK4
         raise response if response.is_a?(Exception)
         case response.code
         when 200, 201, 202
-          Reader.read(response.body)
+          internal_read_body(response)
         else
           check_fault(response)
         end
@@ -248,7 +211,7 @@ module OvirtSDK4
         raise response if response.is_a?(Exception)
         case response.code
         when 200
-          Reader.read(response.body)
+          internal_read_body(response)
         else
           check_fault(response)
         end
@@ -324,6 +287,28 @@ module OvirtSDK4
       end
       result = result.wait if wait
       result
+    end
+
+    #
+    # Checks the content type of the given response, and if it is XML, as expected, reads the body and converts it
+    # to an object. If it isn't XML, then it raises an exception.
+    #
+    # @param response [HttpResponse] The HTTP response to check.
+    # @return [Object] The result of converting the HTTP response body from XML to an SDK object.
+    #
+    # @api private
+    #
+    def internal_read_body(response)
+      # First check if the response body is empty, as it makes no sense to check the content type if there is
+      # no body:
+      @connection.raise_error(response, nil) if response.body.nil? || response.body.length.zero?
+
+      # Check the content type, as otherwise the parsing will fail, and the resulting error message won't be explicit
+      # about the cause of the problem:
+      @connection.check_xml_content_type(response)
+
+      # Parse the XML and generate the SDK object:
+      Reader.read(response.body)
     end
   end
 end

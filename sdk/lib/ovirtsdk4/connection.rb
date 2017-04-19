@@ -242,10 +242,6 @@ module OvirtSDK4
         response = @client.wait(request)
       end
 
-      # Check the returned content type:
-      content_type = response.headers['content-type']
-      check_content_type(XML_CONTENT_TYPE_RE, 'XML', content_type)
-
       response
     end
 
@@ -323,8 +319,7 @@ module OvirtSDK4
       raise response if response.is_a?(Exception)
 
       # Check the returned content type:
-      content_type = response.headers['content-type']
-      check_content_type(JSON_CONTENT_TYPE_RE, 'JSON', content_type)
+      check_json_content_type(response)
 
       # Parse and return the JSON response:
       JSON.parse(response.body)
@@ -480,6 +475,75 @@ module OvirtSDK4
       @ca_store.unlink if @ca_store
     end
 
+    #
+    # Checks that the content type of the given response is JSON. If it is JSON then it does nothing. If it isn't
+    # JSON then it raises an exception.
+    #
+    # @param response [HttpResponse] The HTTP response to check.
+    #
+    # @api private
+    #
+    def check_json_content_type(response)
+      check_content_type(JSON_CONTENT_TYPE_RE, 'JSON', response)
+    end
+
+    #
+    # Checks that the content type of the given response is XML. If it is XML then it does nothing. If it isn't
+    # XML then it raises an exception.
+    #
+    # @param response [HttpResponse] The HTTP response to check.
+    #
+    # @api private
+    #
+    def check_xml_content_type(response)
+      check_content_type(XML_CONTENT_TYPE_RE, 'XML', response)
+    end
+
+    #
+    # Creates and raises an error containing the details of the given HTTP response.
+    #
+    # @param response [HttpResponse] The HTTP response where the details of the raised error will be taken from.
+    # @param detail [String, Fault] (nil) The detail of the error. It can be a string or a `Fault` object.
+    #
+    # @api private
+    #
+    def raise_error(response, detail = nil)
+      # Check if the detail is a fault:
+      fault = detail.is_a?(Fault) ? detail : nil
+
+      # Build the error message from the response and the fault:
+      message = ''
+      unless fault.nil?
+        unless fault.reason.nil?
+          message << ' ' unless message.empty?
+          message << "Fault reason is \"#{fault.reason}\"."
+        end
+        unless fault.detail.nil?
+          message << ' ' unless message.empty?
+          message << "Fault detail is \"#{fault.detail}\"."
+        end
+      end
+      unless response.nil?
+        unless response.code.nil?
+          message << ' ' unless message.empty?
+          message << "HTTP response code is #{response.code}."
+        end
+        unless response.message.nil?
+          message << ' ' unless message.empty?
+          message << "HTTP response message is \"#{response.message}\"."
+        end
+      end
+
+      # If the detail is a string, append it to the message:
+      if detail.is_a?(String)
+        message << ' ' unless message.empty?
+        message << detail
+        message << '.'
+      end
+
+      raise Error, message
+    end
+
     private
 
     #
@@ -504,23 +568,24 @@ module OvirtSDK4
     TYPICAL_PATH = '/ovirt-engine/api'.freeze
 
     #
-    # Checks the given content type and raises an exception if it isn't the expected one.
+    # Checks the content type of the given HTTP response and raises an exception if it isn't the expected one.
     #
     # @param expected_re [Regex] The regular expression used to check the expected content type.
     # @param expected_name [String] The name of the expected content type.
-    # @param actual [String] The actual value of the `Content-Type` header.
+    # @param response [HttpResponse] The HTTP response to check.
     #
     # @api private
     #
-    def check_content_type(expected_re, expected_name, actual)
-      return if expected_re =~ actual
-      message = "The response content type '#{actual}' isn't the expected #{expected_name}"
+    def check_content_type(expected_re, expected_name, response)
+      content_type = response.headers['content-type']
+      return if expected_re =~ content_type
+      detail = "The response content type '#{content_type}' isn't #{expected_name}"
       url = URI(@url)
       if url.path != TYPICAL_PATH
-        message << ". Is the path '#{url.path}' included in the 'url' parameter correct?"
-        message << " The typical one is '#{TYPICAL_PATH}'"
+        detail << ". Is the path '#{url.path}' included in the 'url' parameter correct?"
+        detail << " The typical one is '#{TYPICAL_PATH}'"
       end
-      raise Error, message
+      raise_error(response, detail)
     end
   end
 end
