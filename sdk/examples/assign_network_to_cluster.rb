@@ -48,7 +48,7 @@ cluster_networks_service = cluster_service.networks_service
 
 # Use the "add" method to assign network to cluster:
 cluster_networks_service.add(
-  OvirtSDK4::Network::new(
+  OvirtSDK4::Network.new(
     id: network.id,
     required: true
   )
