@@ -288,7 +288,7 @@ module OvirtSDK4
       result = Future.new(@connection, request) do |response|
         raise response if response.is_a?(Exception)
         case response.code
-        when 200
+        when 200, 201, 202
           action = check_action(response)
           action.send(member) if member
         else
