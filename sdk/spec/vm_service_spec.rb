@@ -65,13 +65,20 @@ describe SDK::VmService do
         mount_xml(
           path: 'vms/123/start',
           body:
-           '<action>' \
-             '<fault>' \
-               '<reason>myreason</reason>' \
-             '</fault>' \
-           '</action>'
+            '<action>' \
+              '<fault>' \
+                '<reason>myreason</reason>' \
+                '<detail>mydetail</detail>' \
+              '</fault>' \
+            '</action>'
         )
-        expect { @service.start }.to raise_error(SDK::Error, /myreason/)
+        expect { @service.start }.to raise_error do |error|
+          expect(error).to be_a(SDK::Error)
+          expect(error.message).to match(/myreason/)
+          expect(error.fault).to be_a(SDK::Fault)
+          expect(error.fault.reason).to eq('myreason')
+          expect(error.fault.detail).to eq('mydetail')
+        end
       end
     end
 
@@ -83,9 +90,16 @@ describe SDK::VmService do
           body:
             '<fault>' \
               '<reason>myreason</reason>' \
+              '<detail>mydetail</detail>' \
             '</fault>'
         )
-        expect { @service.start }.to raise_error(SDK::Error, /myreason/)
+        expect { @service.start }.to raise_error do |error|
+          expect(error).to be_a(SDK::Error)
+          expect(error.message).to match(/myreason/)
+          expect(error.fault).to be_a(SDK::Fault)
+          expect(error.fault.reason).to eq('myreason')
+          expect(error.fault.detail).to eq('mydetail')
+        end
       end
     end
 

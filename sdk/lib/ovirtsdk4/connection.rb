@@ -544,6 +544,7 @@ module OvirtSDK4
       # Create and populate the error:
       error = Error.new(message)
       error.code = response.code if response
+      error.fault = fault
 
       raise error
     end

@@ -27,5 +27,12 @@ module OvirtSDK4
     # @return [Integer] The HTTP error code.
     #
     attr_accessor :code
+
+    #
+    # The `Fault` object associated to the error.
+    #
+    # @return [Fault] The fault object associated to the error, if a fault was provided by the server, `nil` otherwise.
+    #
+    attr_accessor :fault
   end
 end
