@@ -389,10 +389,14 @@ module OvirtSDK4
     # `true`.
     #
     # @param raise_exception [Boolean]
+    #
+    # @param timeout [Integer] (nil) The maximun total time to wait for the test to complete, in seconds. If the value
+    #   is `nil` (the default) then the timeout set globally for the connection will be used.
+    #
     # @return [Boolean]
     #
-    def test(raise_exception = false)
-      system_service.get
+    def test(raise_exception = false, timeout = nil)
+      system_service.get(timeout: timeout)
       true
     rescue StandardError
       raise if raise_exception

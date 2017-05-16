@@ -40,6 +40,7 @@ typedef struct {
     VALUE token;    /* String */
     VALUE kerberos; /* Boolean */
     VALUE body;     /* String */
+    VALUE timeout;  /* Integer */
 } ov_http_request_object;
 
 /* Macro to get the pointer: */
