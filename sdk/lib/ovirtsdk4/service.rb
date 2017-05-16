@@ -113,6 +113,7 @@ module OvirtSDK4
     def internal_get(specs, opts)
       headers = opts[:headers] || {}
       query = opts[:query] || {}
+      timeout = opts[:timeout]
       wait = opts[:wait]
       wait = true if wait.nil?
       specs.each do |name, kind|
@@ -124,6 +125,7 @@ module OvirtSDK4
       request.url = @path
       request.headers = headers
       request.query = query
+      request.timeout = timeout
       @connection.send(request)
       result = Future.new(@connection, request) do |response|
         raise response if response.is_a?(Exception)
@@ -153,6 +155,7 @@ module OvirtSDK4
       object = type.new(object) if object.is_a?(Hash)
       headers = opts[:headers] || {}
       query = opts[:query] || {}
+      timeout = opts[:timeout]
       wait = opts[:wait]
       wait = true if wait.nil?
       specs.each do |name, kind|
@@ -165,6 +168,7 @@ module OvirtSDK4
       request.headers = headers
       request.query = query
       request.body = Writer.write(object, indent: true)
+      request.timeout = timeout
       @connection.send(request)
       result = Future.new(@connection, request) do |response|
         raise response if response.is_a?(Exception)
@@ -194,6 +198,7 @@ module OvirtSDK4
       object = type.new(object) if object.is_a?(Hash)
       headers = opts[:headers] || {}
       query = opts[:query] || {}
+      timeout = opts[:timeout]
       wait = opts[:wait]
       wait = true if wait.nil?
       specs.each do |name, kind|
@@ -206,6 +211,7 @@ module OvirtSDK4
       request.headers = headers
       request.query = query
       request.body = Writer.write(object, indent: true)
+      request.timeout = timeout
       @connection.send(request)
       result = Future.new(@connection, request) do |response|
         raise response if response.is_a?(Exception)
@@ -232,6 +238,7 @@ module OvirtSDK4
     def internal_remove(specs, opts)
       headers = opts[:headers] || {}
       query = opts[:query] || {}
+      timeout = opts[:timeout]
       wait = opts[:wait]
       wait = true if wait.nil?
       specs.each do |name, kind|
@@ -243,6 +250,7 @@ module OvirtSDK4
       request.url = @path
       request.headers = headers
       request.query = query
+      request.timeout = timeout
       @connection.send(request)
       result = Future.new(@connection, request) do |response|
         raise response if response.is_a?(exception)
@@ -265,6 +273,7 @@ module OvirtSDK4
     def internal_action(path, member, opts)
       headers = opts[:headers] || {}
       query = opts[:query] || {}
+      timeout = opts[:timeout]
       wait = opts[:wait]
       wait = true if wait.nil?
       action = Action.new(opts)
@@ -274,6 +283,7 @@ module OvirtSDK4
       request.headers = headers
       request.query = query
       request.body = Writer.write(action, indent: true)
+      request.timeout = timeout
       @connection.send(request)
       result = Future.new(@connection, request) do |response|
         raise response if response.is_a?(Exception)

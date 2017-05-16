@@ -685,6 +685,7 @@ static void ov_http_client_prepare_handle(ov_http_client_object* client_ptr, ov_
         struct curl_slist** headers, CURL* handle) {
     VALUE header;
     VALUE url;
+    int timeout;
 
     /* Configure TLS parameters: */
     if (client_ptr->insecure) {
@@ -696,7 +697,11 @@ static void ov_http_client_prepare_handle(ov_http_client_object* client_ptr, ov_
     }
 
     /* Configure the timeout: */
-    curl_easy_setopt(handle, CURLOPT_TIMEOUT, client_ptr->timeout);
+    timeout = client_ptr->timeout;
+    if (!NIL_P(request_ptr->timeout)) {
+        timeout = NUM2INT(request_ptr->timeout);
+    }
+    curl_easy_setopt(handle, CURLOPT_TIMEOUT, timeout);
 
     /* Configure compression of responses (setting the value to zero length string means accepting all the
        compression types that libcurl supports): */

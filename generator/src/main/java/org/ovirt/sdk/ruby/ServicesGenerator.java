@@ -582,6 +582,14 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addYardTag("option", "opts [Hash] :query ({}) Additional URL query parameters.");
         buffer.addComment();
 
+        // Request specific timeout:
+        buffer.addYardTag(
+            "option",
+            "opts [Integer] :timeout (nil) The timeout for this request, in seconds. If no value is explicitly \n" +
+            "given then the timeout set globally for the connection will be used."
+        );
+        buffer.addComment();
+
         // Wait flag:
         buffer.addYardTag("option", "opts [Boolean] :wait (true) If `true` wait for the response.");
         buffer.addComment();

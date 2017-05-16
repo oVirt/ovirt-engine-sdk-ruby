@@ -17,28 +17,105 @@
 describe SDK::Connection do
   before(:all) do
     start_server
-    @connection = SDK::Connection.new(
-      url:      test_url,
-      username: test_user,
-      password: test_password,
-      ca_file:  test_ca_file,
-      timeout:  1,
-      debug:    test_debug,
-      log:      test_log
-    )
-    @service = @connection.system_service.vms_service
   end
 
   after(:all) do
-    @connection.close
     stop_server
   end
 
   describe '#send' do
-    context 'when timeout is set' do
-      it 'the request fails when the timeout expires' do
+    context 'when global timeout is set and request timeout is not set' do
+      before(:each) do
+        @connection = SDK::Connection.new(
+          url:      test_url,
+          username: test_user,
+          password: test_password,
+          ca_file:  test_ca_file,
+          timeout:  1,
+          debug:    test_debug,
+          log:      test_log
+        )
+        @service = @connection.system_service.vms_service
+      end
+
+      after(:each) do
+        @connection.close
+      end
+
+      it 'fails when the global timeout expires' do
         mount_xml(path: 'vms', body: '<vms/>', delay: 2)
         expect { @service.list }.to raise_error(/timeout/i)
+      end
+    end
+
+    context 'when global timeout is lower than request timeout' do
+      before(:each) do
+        @connection = SDK::Connection.new(
+          url:      test_url,
+          username: test_user,
+          password: test_password,
+          ca_file:  test_ca_file,
+          timeout:  1,
+          debug:    test_debug,
+          log:      test_log
+        )
+        @service = @connection.system_service.vms_service
+      end
+
+      after(:each) do
+        @connection.close
+      end
+
+      it 'fails when the global timeout expires' do
+        mount_xml(path: 'vms', body: '<vms/>', delay: 3)
+        expect { @service.list(timeout: 2) }.to raise_error(/timeout/i)
+      end
+    end
+
+    context 'when global timeout is greater than request timeout' do
+      before(:each) do
+        @connection = SDK::Connection.new(
+          url:      test_url,
+          username: test_user,
+          password: test_password,
+          ca_file:  test_ca_file,
+          timeout:  3,
+          debug:    test_debug,
+          log:      test_log
+        )
+        @service = @connection.system_service.vms_service
+      end
+
+      after(:each) do
+        @connection.close
+      end
+
+      it 'fails when the request timeout expires' do
+        mount_xml(path: 'vms', body: '<vms/>', delay: 2)
+        expect { @service.list(timeout: 1) }.to raise_error(/timeout/i)
+      end
+    end
+
+    context 'when no global timeout is set but request timeout is set' do
+      before(:each) do
+        @connection = SDK::Connection.new(
+          url:      test_url,
+          username: test_user,
+          password: test_password,
+          ca_file:  test_ca_file,
+          debug:    test_debug,
+          log:      test_log
+        )
+        @service = @connection.system_service.vms_service
+      end
+
+      after(:each) do
+        @connection.close
+      end
+
+      it 'fails when the request timeout expires' do
+        mount_xml(path: 'vms', body: '<vms/>', delay: 2)
+        expect { @service.list(timeout: 1) }.to raise_error(/timeout/i)
       end
     end
   end
