@@ -2,6 +2,43 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.1.6 / May 31 2017
+
+Update to model 4.1.35:
+
+* Replace generic assigned networks services with services specific to
+  the type of object that they are assigned to, in particular data
+  centers and clusters.
+
+* Add `driver` attribute to `HostDevice` type.
+
+* Add common concepts document.
+
+* Add appendix containing changes from version 3 to version 4 of
+  the API.
+
+* Add `readOnly` attribute to the `DiskAttachment` type.
+
+* Fix the type of the `Host.nics` link. It should be of type
+  `HostNic[]`, not `Nic[]`.
+
+New features:
+
+* Add support for asynchronous requests.
+
+* Automatically replace bad tokens
+  https://bugzilla.redhat.com/1434831[#1434831].
+
+* Improve error message for wrong content type
+  https://bugzilla.redhat.com/1440292[#1440292].
+
+* Add `Error.code`
+  https://bugzilla.redhat.com/1443420[#1443420].
+
+* Add `Error.fault`.
+
+* Add support for request timeout.
+
 == 4.1.5 / Mar 15 2017
 
 Update to model 4.1.33:
