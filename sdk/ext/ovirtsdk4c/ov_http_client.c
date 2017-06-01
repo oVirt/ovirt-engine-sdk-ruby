@@ -23,6 +23,8 @@ limitations under the License.
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
+#include <sys/select.h>
 
 #include "ov_module.h"
 #include "ov_error.h"
@@ -630,21 +632,43 @@ static void* ov_http_client_wait_task(void* data) {
     int pending;
     long timeout;
     ov_http_client_wait_context* context_ptr;
+#if LIBCURL_VERSION_NUM < 0x071c00
+    fd_set fd_read;
+    fd_set fd_write;
+    fd_set fd_error;
+    int fd_count;
+    struct timeval tv;
+#endif
 
     /* The passed data is the wait context: */
     context_ptr = data;
 
-    /* Get the timeout preferred by libcurl, or one second by default: */
+    /* Get the timeout preferred by libcurl, or one 100 ms by default: */
     curl_multi_timeout(context_ptr->handle, &timeout);
     if (timeout < 0) {
-        timeout = 1000;
+        timeout = 100;
     }
 
+#if LIBCURL_VERSION_NUM >= 0x071c00
     /* Wait till there is activity: */
     context_ptr->code = curl_multi_wait(context_ptr->handle, NULL, 0, timeout, NULL);
     if (context_ptr->code != CURLE_OK) {
         return NULL;
     }
+#else
+    /* Versions of libcurl older than 7.28.0 don't provide the 'curl_multi_wait' function, so we need to get the file
+       descriptors used by libcurl, and explicitly use the 'select' system call: */
+    FD_ZERO(&fd_read);
+    FD_ZERO(&fd_write);
+    FD_ZERO(&fd_error);
+    context_ptr->code = curl_multi_fdset(context_ptr->handle, &fd_read, &fd_write, &fd_error, &fd_count);
+    if (context_ptr->code != CURLE_OK) {
+        return NULL;
+    }
+    tv.tv_sec = timeout / 1000;
+    tv.tv_usec = (timeout % 1000) * 1000;
+    select(fd_count + 1, &fd_read, &fd_write, &fd_error, &tv);
+#endif
 
     /* Let libcurl do its work, even if no file descriptor needs attention. This is necessary because some of its
        activities can't be monitored using file descriptors. */
