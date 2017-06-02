@@ -2,6 +2,13 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.1.7 / Jun 2 2017
+
+Bug fixes:
+
+* Fix missing `curl_multi_wait` symbol when using libcurl older
+  than 7.28.0.
+
 == 4.1.6 / May 31 2017
 
 Update to model 4.1.35:
