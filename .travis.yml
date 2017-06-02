@@ -1,7 +1,10 @@
 language: java
 
-before_install:
-  - gem install bundler
-
 os:
-  - osx
+- linux
+- osx
+
+before_install:
+- if [ "${TRAVIS_OS_NAME}" == "linux" ]; then jdk_switcher use oraclejdk8; fi
+- rvm install 2.3.4
+- gem install bundler
