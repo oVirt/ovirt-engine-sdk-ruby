@@ -168,6 +168,7 @@ limitations under the License.
                   <goal>exec</goal>
                 </goals>
                 <configuration>
+                  <skip>${skipTests}</skip>
                   <executable>bundle</executable>
                   <arguments>
                     <argument>exec</argument>
@@ -234,6 +235,7 @@ limitations under the License.
                   <goal>exec</goal>
                 </goals>
                 <configuration>
+                  <skip>${skipTests}</skip>
                   <executable>rake</executable>
                   <arguments>
                     <argument>test</argument>
