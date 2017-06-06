@@ -2,6 +2,150 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.1.7 / Jun 2 2017
+
+Bug fixes:
+
+* Fix missing `curl_multi_wait` symbol when using libcurl older
+  than 7.28.0.
+
+== 4.1.6 / May 31 2017
+
+Update to model 4.1.35:
+
+* Replace generic assigned networks services with services specific to
+  the type of object that they are assigned to, in particular data
+  centers and clusters.
+
+* Add `driver` attribute to `HostDevice` type.
+
+* Add common concepts document.
+
+* Add appendix containing changes from version 3 to version 4 of
+  the API.
+
+* Add `readOnly` attribute to the `DiskAttachment` type.
+
+* Fix the type of the `Host.nics` link. It should be of type
+  `HostNic[]`, not `Nic[]`.
+
+New features:
+
+* Add support for asynchronous requests.
+
+* Automatically replace bad tokens
+  https://bugzilla.redhat.com/1434831[#1434831].
+
+* Improve error message for wrong content type
+  https://bugzilla.redhat.com/1440292[#1440292].
+
+* Add `Error.code`
+  https://bugzilla.redhat.com/1443420[#1443420].
+
+* Add `Error.fault`.
+
+* Add support for request timeout.
+
+== 4.1.5 / Mar 15 2017
+
+Update to model 4.1.33:
+
+* Replace the `Seal` operation of the service that manages a template
+  with a new `seal` parameter in the operation that adds a template
+  https://bugzilla.redhat.com/1335642[#1335642].
+
+* Add `unregistered` parameter for the operations to list disks,
+  virtual machines, and templates in storage domains
+  https://bugzilla.redhat.com/1428159[#1428159].
+
+* Fix the direction of the `statistic` parameter of the `Statistic`
+  service, must be out only.
+
+* Revert the addition of the operation to update disks.
+
+== 4.1.4 / Mar 3 2017
+
+Bug fixes:
+
+* Don't avoid reserved words in enum values text.
+
+* Red correctly attributes with enum values
+  https://bugzilla.redhat.com/1428642[#1428642].
+
+== 4.1.3 / Mar 2 2017
+
+Update to model 4.1.31:
+
+* Add `auto_storage_select` attribute to the `VmPool` type.
+
+* Move `vnic_profile_mappings` and `reassign_bad_macs` from
+  the `import` operation to the `register` operation
+
+* Add IPv6 details to the `NicConfiguration` type.
+
+* Add NFS 4.2 support.
+
+New features:
+
+* Add support for custom headers and query parameters.
+
+* Ignore unsupported enum values.
+
+* Check that URL has been provided.
+
+* Send INFO log messages with summaries of requests and responses.
+
+Bug fixes:
+
+* Fix writing of lists of structs.
+
+== 4.1.2 / Feb 9 2017
+
+Bug fixes:
+
+* Use `curl-config` to detect `libcurl`, if possible.
+
+== 4.1.1 / Feb 1 2017
+
+Bug fixes:
+
+* Don't require `json` 1.8, as it makes the SDK incompatible with
+  applications that need version 2.0 or newer.
+
+== 4.1.0 / Jan 31 2017
+
+This release is mostly identical to `4.1.0-alpha3`, the only difference
+is that it fixes a test failure in Ruby 2.4.0, due to the unification of
+integer types.
+
+== 4.1.0-alpha3 / Jan 27 2017
+
+Update to model 4.1.29:
+
+* Add `execution_host` link to the `Step` type.
+
+* Add new `lease` attribute to virtual machines and templates.
+
+New features:
+
+* Accept CA files and strings.
+
+== 4.1.0-alpha2 / Jan 12 2017
+
+Update to model 4.1.26:
+
+* Add `succeeded` parameter to the operation that end an external job.
+
+* Add `initial_size` attribute to the `Disk` type.
+
+Bug fixes:
+
+* Fix writing 'id' attribute for enum values.
+  https://bugzilla.redhat.com/1408839[#1408839].
+
+* Enable installation in Vagrant with embedded Ruby
+  https://bugzilla.redhat.com/1411594[#1411594].
+
 == 4.1.0-alpha1 / Dec 19 2016
 
 Update to model 4.1.24:
