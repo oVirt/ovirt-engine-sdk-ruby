@@ -2,6 +2,12 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.2.0-alpha1 / Jun 6 2017
+
+Bug fixes:
+
+* Handle correctly actions that return HTTP 201 and 202 response codes.
+
 == 4.1.7 / Jun 2 2017
 
 Bug fixes:
