@@ -311,9 +311,17 @@ static void* ov_http_client_header_task(void* data) {
     /* We should always tell the library that we processed all the data: */
     context_ptr->result = context_ptr->size * context_ptr->nitems;
 
-    /* Remove trailing white space: */
+    /* The library provides the headers for all the responses it receives, including the responses for intermediate
+       requests used for authentication negotation. We are interested only in the headers of the last response, so
+       if the given data is the begin of a new response, we clear the headers hash. */
     length = context_ptr->result;
     buffer = context_ptr->buffer;
+    if (length >= 5 && strncmp("HTTP/", buffer, 5) == 0) {
+        rb_hash_clear(response_ptr->headers);
+        return NULL;
+    }
+
+    /* Remove trailing white space: */
     while (length > 0 && isspace(buffer[length - 1])) {
         length--;
     }
