@@ -67,6 +67,44 @@ module OvirtSDK4
       end
     end
 
+    ENGINE_CERTIFICATE_PATH = '/ovirt-engine/services/pki-resource?resource=engine-certificate&format=OPENSSH-PUBKEY'
+
+    #
+    # This class method receives a set of options that define the server to probe and returns a boolean value that represents
+    # whether an oVirt instance was detected.
+    #
+    # @param opts [Hash] The options used to create the probe.
+    #
+    # @option opts [String] :host The name or IP address of the host to probe.
+    #
+    # @option opts [Integer] :port (443) The port number to probe.
+    #
+    # @option opts [String] :log The logger where the log messages will be written.
+    #
+    # @option opts [Boolean] :debug (false) A boolean flag indicating if debug output should be generated. If the
+    #   values is `true` and the `log` parameter isn't `nil` then the data sent to and received from the server will
+    #   be written to the log. Be aware that user names and passwords will also be written, so handle with care.
+    #
+    # @option opts [String] :proxy_url A string containing the protocol, address and port number of the proxy server
+    #   to use to connect to the server. For example, in order to use the HTTP proxy `proxy.example.com` that is
+    #   listening on port `3128` the value should be `http://proxy.example.com:3128`. This is optional, and if not
+    #   given the connection will go directly to the server specified in the `url` parameter.
+    #
+    # @option opts [Integer] :timeout (0) Set a connection timeout, in seconds. If the value is 0 no timeout is set.
+    #
+    # @return [Boolean] Boolean value, `true` if an oVirt instance was detected.
+    #
+    def self.exists?(opts)
+      probe = nil
+      begin
+        opts.merge!(:insecure => true)
+        probe = Probe.new(opts)
+        probe.exists?
+      ensure
+        probe.close if probe
+      end
+    end
+
     #
     # Creates a new probe.
     #
@@ -117,6 +155,7 @@ module OvirtSDK4
       @proxy_url      = opts[:proxy_url]
       @proxy_username = opts[:proxy_username]
       @proxy_password = opts[:proxy_password]
+      @timeout        = opts[:timeout]
 
       # Create the HTTP client:
       @client = HttpClient.new(
@@ -128,7 +167,8 @@ module OvirtSDK4
         debug:          @debug,
         proxy_url:      @proxy_url,
         proxy_username: @proxy_username,
-        proxy_password: @proxy_password
+        proxy_password: @proxy_password,
+        timeout:        @timeout
       )
     end
 
@@ -143,6 +183,18 @@ module OvirtSDK4
       path = detect_path
       raise Error, 'API path not found' unless path
       detect_version(path).map { |version| ProbeResult.new(version: version) }
+    end
+
+    #
+    # Probes the server to detect if it has an ovirt instance running on it
+    #
+    # @return [Boolean] `true` if oVirt instance was detected, false otherwise
+    #
+    # @api private
+    #
+    def exists?
+      response = send(:path => ENGINE_CERTIFICATE_PATH)
+      response.code == 200
     end
 
     #
@@ -184,8 +236,9 @@ module OvirtSDK4
 
       # Set authentication:
       request.username = @username
-      request.password = @password
 
+
+      request.password = @password
       # Send the request and wait for the response:
       @client.send(request)
       response = @client.wait(request)
