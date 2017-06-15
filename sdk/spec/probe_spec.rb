@@ -29,6 +29,13 @@ def set_support_only_api_v4
   end
 end
 
+def set_ssh_certificates_exists
+  mount_raw(path: SDK::Probe::ENGINE_CERTIFICATE_PATH.split('?')[0]) do |request, response|
+    query_for_certificate = SDK::Probe::ENGINE_CERTIFICATE_PATH.split('?')[1]
+    response.status = request.meta_vars["QUERY_STRING"] == query_for_certificate ? 200 : 404
+  end
+end
+
 def set_support_for_api_v3_and_v4
   mount_raw(path: '/ovirt-engine/api') do |request, response|
     version = request['Version']
@@ -44,6 +51,47 @@ def set_support_for_api_v3_and_v4
 end
 
 describe SDK::Probe do
+  context '#exists?' do
+    let(:probe_params) do
+      {
+        host:     test_host,
+        port:     test_port,
+        insecure: true,
+        log:      test_log,
+        debug:    true
+      }
+    end
+
+    context "engine certificate exists" do
+      before(:all) do
+        start_server
+        set_ssh_certificates_exists
+      end
+
+      after(:all) do
+        stop_server
+      end
+
+      it 'returns true when server exists' do
+        expect(described_class.exists?(probe_params)).to eq(true)
+      end
+    end
+
+    context "engine certificate is missing" do
+      before(:all) do
+        start_server
+      end
+
+      after(:all) do
+        stop_server
+      end
+
+      it 'returns false when server is missing' do
+        expect(described_class.exists?(probe_params)).to eq(false)
+      end
+    end
+  end
+
   context '#probe' do
     let(:probe_params) do
       {
