@@ -133,7 +133,7 @@ limitations under the License.
                   <goal>exec</goal>
                 </goals>
                 <configuration>
-                  <executable>bundle</executable>
+                  <executable>bundler</executable>
                   <arguments>
                     <argument>install</argument>
                   </arguments>
@@ -148,7 +148,7 @@ limitations under the License.
                   <goal>exec</goal>
                 </goals>
                 <configuration>
-                  <executable>bundle</executable>
+                  <executable>bundler</executable>
                   <arguments>
                     <argument>exec</argument>
                     <argument>rake</argument>
@@ -166,7 +166,7 @@ limitations under the License.
                 </goals>
                 <configuration>
                   <skip>${skipTests}</skip>
-                  <executable>bundle</executable>
+                  <executable>bundler</executable>
                   <arguments>
                     <argument>exec</argument>
                     <argument>rake</argument>
@@ -183,7 +183,7 @@ limitations under the License.
                   <goal>exec</goal>
                 </goals>
                 <configuration>
-                  <executable>bundle</executable>
+                  <executable>bundler</executable>
                   <arguments>
                     <argument>exec</argument>
                     <argument>rake</argument>
