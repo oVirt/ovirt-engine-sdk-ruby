@@ -32,7 +32,7 @@ end
 def set_ssh_certificates_exists
   mount_raw(path: SDK::Probe::ENGINE_CERTIFICATE_PATH.split('?')[0]) do |request, response|
     query_for_certificate = SDK::Probe::ENGINE_CERTIFICATE_PATH.split('?')[1]
-    response.status = request.meta_vars["QUERY_STRING"] == query_for_certificate ? 200 : 404
+    response.status = request.meta_vars['QUERY_STRING'] == query_for_certificate ? 200 : 404
   end
 end
 
@@ -62,7 +62,7 @@ describe SDK::Probe do
       }
     end
 
-    context "engine certificate exists" do
+    context 'engine certificate exists' do
       before(:all) do
         start_server
         set_ssh_certificates_exists
@@ -77,7 +77,7 @@ describe SDK::Probe do
       end
     end
 
-    context "engine certificate is missing" do
+    context 'engine certificate is missing' do
       before(:all) do
         start_server
       end

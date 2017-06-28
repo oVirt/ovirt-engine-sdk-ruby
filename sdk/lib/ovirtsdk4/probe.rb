@@ -67,11 +67,12 @@ module OvirtSDK4
       end
     end
 
-    ENGINE_CERTIFICATE_PATH = '/ovirt-engine/services/pki-resource?resource=engine-certificate&format=OPENSSH-PUBKEY'
+    ENGINE_CERTIFICATE_PATH =
+      '/ovirt-engine/services/pki-resource?resource=engine-certificate&format=OPENSSH-PUBKEY'.freeze
 
     #
-    # This class method receives a set of options that define the server to probe and returns a boolean value that represents
-    # whether an oVirt instance was detected.
+    # This class method receives a set of options that define the server to probe and returns a boolean value
+    # that represents whether an oVirt instance was detected.
     #
     # @param opts [Hash] The options used to create the probe.
     #
@@ -97,7 +98,7 @@ module OvirtSDK4
     def self.exists?(opts)
       probe = nil
       begin
-        opts.merge!(:insecure => true)
+        opts[:insecure] = true
         probe = Probe.new(opts)
         probe.exists?
       ensure
@@ -193,7 +194,7 @@ module OvirtSDK4
     # @api private
     #
     def exists?
-      response = send(:path => ENGINE_CERTIFICATE_PATH)
+      response = send(path: ENGINE_CERTIFICATE_PATH)
       response.code == 200
     end
 
@@ -236,7 +237,6 @@ module OvirtSDK4
 
       # Set authentication:
       request.username = @username
-
 
       request.password = @password
       # Send the request and wait for the response:
