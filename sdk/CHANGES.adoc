@@ -2,6 +2,20 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.2.0-alpha2 / Jul 21 2017
+
+New features:
+
+* Add a method to Probe to check whether an ovirt instance exists.
+
+Bug fixes:
+
+* Changing 'bundler' executable instead of 'bundle'
+  https://bugzilla.redhat.com/1462664[1462664].
+
+* Ignore unrelated responses from server
+  https://bugzilla.redhat.com/1459254[1459254].
+
 == 4.2.0-alpha1 / Jun 6 2017
 
 Bug fixes:
