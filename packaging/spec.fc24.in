@@ -14,10 +14,6 @@ BuildRequires: gcc
 BuildRequires: libcurl-devel
 BuildRequires: libxml2-devel
 BuildRequires: ruby-devel
-BuildRequires: rubygem-rake
-BuildRequires: rubygem-rake-compiler
-BuildRequires: rubygem-rspec
-BuildRequires: rubygems-devel
 
 %description
 This package contains the oVirt Engine Ruby Software Develpment Kit.
