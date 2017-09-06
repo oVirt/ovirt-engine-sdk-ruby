@@ -456,7 +456,7 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addYardTag("return", "[String]");
         buffer.addComment();
         buffer.addLine("def to_s");
-        buffer.addLine(  "\"#<#{%1$s}:#{@path}>\"", serviceName.getClassName());
+        buffer.addLine(  "\"#<#{%1$s}:#{absolute_path}>\"", serviceName.getClassName());
         buffer.addLine("end");
         buffer.addLine();
     }
@@ -488,7 +488,7 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addYardTag("return", "[%1$s] A reference to the `%2$s` service.", serviceName.getClassName(), methodName);
         buffer.addComment();
         buffer.addLine("def %1$s_service(%2$s)", methodName, argName);
-        buffer.addLine(  "%1$s.new(@connection, \"#{@path}/#{%2$s}\")", serviceName.getClassName(), argName);
+        buffer.addLine(  "%1$s.new(self, %2$s)", serviceName.getClassName(), argName);
         buffer.addLine("end");
         buffer.addLine();
     }
@@ -507,7 +507,7 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addYardTag("return", "[%1$s] A reference to `%2$s` service.", serviceName.getClassName(), methodName);
         buffer.addComment();
         buffer.addLine("def %1$s_service", methodName);
-        buffer.addLine(  "%1$s.new(@connection, \"#{@path}/%2$s\")", serviceName.getClassName(), urlSegment);
+        buffer.addLine(  "%1$s.new(self, '%2$s')", serviceName.getClassName(), urlSegment);
         buffer.addLine("end");
         buffer.addLine();
     }

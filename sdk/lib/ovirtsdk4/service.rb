@@ -22,15 +22,15 @@ module OvirtSDK4
     #
     # Creates a new future result.
     #
-    # @param connection [Connection] The connection to be used by this future.
+    # @param service [Service] The service that created this future.
     # @param request [HttpRequest] The request that this future will wait for when the `wait` method is called.
     # @param block [Block] The block that will be executed to check the response, and to convert its body into the
     #   right type of object.
     #
     # @api private
     #
-    def initialize(connection, request, &block)
-      @connection = connection
+    def initialize(service, request, &block)
+      @service = service
       @request = request
       @block = block
     end
@@ -41,7 +41,7 @@ module OvirtSDK4
     # @return [Object] The result of the operation that created this future.
     #
     def wait
-      response = @connection.wait(@request)
+      response = @service.connection.wait(@request)
       raise response if response.is_a?(Exception)
       @block.call(response)
     end
@@ -54,14 +54,18 @@ module OvirtSDK4
     #
     # Creates a new implementation of the service.
     #
-    # @param connection [Connection] The connection to be used by this service.
+    # @param parent [Service, Connection] The parent of this service. For most services the parent will be another
+    #   service. For example, for the `vm` service that manages virtual machine `123` the parent will be the `vms`
+    #   service that manages the collection of virtual machines. For the root of the services tree the parent will
+    #   be the connection.
     #
-    # @param path [String] The relative path of this service, for example `vms/123/disks`.
+    # @param path [String] The path of this service, relative to its parent. For example, the path of the `vm`
+    #   service that manages virtual machine `123` will be `vm/123`.
     #
     # @api private
     #
-    def initialize(connection, path)
-      @connection = connection
+    def initialize(parent, path)
+      @parent = parent
       @path = path
     end
 
@@ -75,7 +79,7 @@ module OvirtSDK4
     #
     def check_fault(response)
       body = internal_read_body(response)
-      @connection.raise_error(response, body) if body.is_a?(Fault)
+      connection.raise_error(response, body) if body.is_a?(Fault)
       raise Error, "Expected a fault, but got '#{body.class.name.split('::').last}'"
     end
 
@@ -91,12 +95,27 @@ module OvirtSDK4
     #
     def check_action(response)
       body = internal_read_body(response)
-      @connection.raise_error(response, body) if body.is_a?(Fault)
+      connection.raise_error(response, body) if body.is_a?(Fault)
       if body.is_a?(Action)
         return body if body.fault.nil?
-        @connection.raise_error(response, body.fault)
+        connection.raise_error(response, body.fault)
       end
       raise Error, "Expected an action or a fault, but got '#{body.class.name.split('::').last}'"
+    end
+
+    #
+    # Returns the connection used by this service.
+    #
+    # This method is intended for internal use by other components of the SDK. Refrain from using it directly, as
+    # backwards compatibility isn't guaranteed.
+    #
+    # @return [Connection] The connection used by this service.
+    #
+    # @api private
+    #
+    def connection
+      return @parent if @parent.is_a? Connection
+      @parent.connection
     end
 
     protected
@@ -122,12 +141,12 @@ module OvirtSDK4
       end
       request = HttpRequest.new
       request.method = :GET
-      request.url = @path
+      request.url = absolute_path
       request.headers = headers
       request.query = query
       request.timeout = timeout
-      @connection.send(request)
-      result = Future.new(@connection, request) do |response|
+      connection.send(request)
+      result = Future.new(self, request) do |response|
         raise response if response.is_a?(Exception)
         case response.code
         when 200
@@ -164,13 +183,13 @@ module OvirtSDK4
       end
       request = HttpRequest.new
       request.method = :POST
-      request.url = @path
+      request.url = absolute_path
       request.headers = headers
       request.query = query
       request.body = Writer.write(object, indent: true)
       request.timeout = timeout
-      @connection.send(request)
-      result = Future.new(@connection, request) do |response|
+      connection.send(request)
+      result = Future.new(self, request) do |response|
         raise response if response.is_a?(Exception)
         case response.code
         when 200, 201, 202
@@ -207,13 +226,13 @@ module OvirtSDK4
       end
       request = HttpRequest.new
       request.method = :PUT
-      request.url = @path
+      request.url = absolute_path
       request.headers = headers
       request.query = query
       request.body = Writer.write(object, indent: true)
       request.timeout = timeout
-      @connection.send(request)
-      result = Future.new(@connection, request) do |response|
+      connection.send(request)
+      result = Future.new(self, request) do |response|
         raise response if response.is_a?(Exception)
         case response.code
         when 200
@@ -247,12 +266,12 @@ module OvirtSDK4
       end
       request = HttpRequest.new
       request.method = :DELETE
-      request.url = @path
+      request.url = absolute_path
       request.headers = headers
       request.query = query
       request.timeout = timeout
-      @connection.send(request)
-      result = Future.new(@connection, request) do |response|
+      connection.send(request)
+      result = Future.new(self, request) do |response|
         raise response if response.is_a?(exception)
         check_fault(response) unless response.code == 200
       end
@@ -263,14 +282,14 @@ module OvirtSDK4
     #
     # Executes an action method.
     #
-    # @param path [Symbol] The relative path of the action, for example `:start`.
+    # @param name [Symbol] The name of the action, for example `:start`.
     # @param member [Symbol] The name of the action member that contains the result. For example `:is_attached`. Can
     #   be `nil` if the action doesn't return any value.
     # @param opts [Hash] The hash containing the parameters of the action.
     #
     # @api private
     #
-    def internal_action(path, member, opts)
+    def internal_action(name, member, opts)
       headers = opts[:headers] || {}
       query = opts[:query] || {}
       timeout = opts[:timeout]
@@ -279,13 +298,13 @@ module OvirtSDK4
       action = Action.new(opts)
       request = HttpRequest.new
       request.method = :POST
-      request.url = "#{@path}/#{path}"
+      request.url = "#{absolute_path}/#{name}"
       request.headers = headers
       request.query = query
       request.body = Writer.write(action, indent: true)
       request.timeout = timeout
-      @connection.send(request)
-      result = Future.new(@connection, request) do |response|
+      connection.send(request)
+      result = Future.new(self, request) do |response|
         raise response if response.is_a?(Exception)
         case response.code
         when 200, 201, 202
@@ -311,14 +330,40 @@ module OvirtSDK4
     def internal_read_body(response)
       # First check if the response body is empty, as it makes no sense to check the content type if there is
       # no body:
-      @connection.raise_error(response, nil) if response.body.nil? || response.body.length.zero?
+      connection.raise_error(response, nil) if response.body.nil? || response.body.length.zero?
 
       # Check the content type, as otherwise the parsing will fail, and the resulting error message won't be explicit
       # about the cause of the problem:
-      @connection.check_xml_content_type(response)
+      connection.check_xml_content_type(response)
 
       # Parse the XML and generate the SDK object:
       Reader.read(response.body)
+    end
+
+    #
+    # Returns the relative path of this service.
+    #
+    # @return [String] The path of this service, relative to its parent. For example, the path of the `vm`
+    #   service that manages virtual machine `123` will be `123`.
+    #
+    # @api private
+    #
+    def relative_path
+      @path
+    end
+
+    #
+    # Returns the absolute path of this service.
+    #
+    # @return [String] The absolute path of this service. For example, the path of the `vm` service that manages
+    #   virtual machine `123` will be `vms/123`. Note that this absolute path doesn't include the `/ovirt-engine/api/'
+    #   prefix.
+    #
+    # @api private
+    #
+    def absolute_path
+      return @path if @parent.is_a? Connection
+      "#{@parent.relative_path}/#{@path}"
     end
   end
 end
