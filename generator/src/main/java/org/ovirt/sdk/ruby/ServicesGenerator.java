@@ -507,7 +507,7 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addYardTag("return", "[%1$s] A reference to `%2$s` service.", serviceName.getClassName(), methodName);
         buffer.addComment();
         buffer.addLine("def %1$s_service", methodName);
-        buffer.addLine(  "%1$s.new(self, '%2$s')", serviceName.getClassName(), urlSegment);
+        buffer.addLine(  "@%1$s_service ||= %2$s.new(self, '%3$s')", methodName, serviceName.getClassName(), urlSegment);
         buffer.addLine("end");
         buffer.addLine();
     }
