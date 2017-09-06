@@ -192,7 +192,7 @@ module OvirtSDK4
     #
     def send(request)
       # Add the base URL to the request:
-      request.url = request.url.nil? ? request.url = @url : "#{@url}#{request.url}"
+      request.url = request.url.nil? ? request.url = @url : "#{@url}/#{request.url}"
 
       # Set the headers common to all requests:
       request.headers.merge!(
