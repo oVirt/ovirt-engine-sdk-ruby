@@ -24,6 +24,29 @@ Metrics/PerceivedComplexity:
   Enabled: false
 
 #
+# The preferred way to indent long chains of method calls in this
+# project is the following:
+#
+#   @connection.system_service
+#     .vms_service
+#     .vm_service(123)
+#     .disk_attachments_service
+#     .attachment_service(456)
+#
+# But Rubocop by default wants this:
+#
+#   @connection.system_service
+#              .vms_service
+#              .vm_service(123)
+#              .disk_attachments_service
+#              .attachment_service(456)
+#
+# This parameter adjusts it to the policy of the project.
+#
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+
+#
 # The spec for types includes some apparently stupid tests, like
 # checking that the result of `==` is `true` when an object is compared
 # to itself. Rubocop doesn't like these tests, but we want them anyhow,
