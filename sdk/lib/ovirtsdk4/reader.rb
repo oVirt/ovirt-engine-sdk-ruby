@@ -92,7 +92,7 @@ module OvirtSDK4
       return nil if text.nil?
       begin
         return Integer(text, 10)
-      rescue
+      rescue ArgumentError
         raise Error, "The text '#{text}' isn't a valid integer value."
       end
     end
@@ -127,7 +127,7 @@ module OvirtSDK4
       return nil if text.nil?
       begin
         return Float(text)
-      rescue
+      rescue ArgumentError
         raise Error, "The text '#{text}' isn't a valid decimal value."
       end
     end
@@ -163,7 +163,7 @@ module OvirtSDK4
       return nil if text.nil?
       begin
         return DateTime.xmlschema(text)
-      rescue
+      rescue ArgumentError
         raise Error, "The text '#{text}' isn't a valid date."
       end
     end

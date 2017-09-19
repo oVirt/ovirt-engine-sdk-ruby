@@ -48,8 +48,8 @@ cluster = cluster_service.list(search: 'name=mycluster')[0]
 
 # Get the VMs service for the export storage domain
 vms_service = sds_service
-              .storage_domain_service(export_sd.id)
-              .vms_service
+  .storage_domain_service(export_sd.id)
+  .vms_service
 
 # Get the first exported VM, assuming we have one
 exported_vm = vms_service.list[0]
