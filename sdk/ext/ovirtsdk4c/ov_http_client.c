@@ -587,6 +587,7 @@ static void* ov_http_client_complete_task(void* data) {
     VALUE transfer;
     long code;
     ov_http_client_object* client_ptr;
+    ov_http_request_object* request_ptr;
     ov_http_response_object* response_ptr;
     ov_http_transfer_object* transfer_ptr;
 
@@ -600,6 +601,7 @@ static void* ov_http_client_complete_task(void* data) {
     /* Get the pointers to the transfer, client and response: */
     ov_http_transfer_ptr(transfer, transfer_ptr);
     ov_http_client_ptr(transfer_ptr->client, client_ptr);
+    ov_http_request_ptr(transfer_ptr->request, request_ptr);
     ov_http_response_ptr(transfer_ptr->response, response_ptr);
 
     /* Remove the transfer from the pending hash: */
@@ -617,8 +619,10 @@ static void* ov_http_client_complete_task(void* data) {
         /* Send a summary of the response to the log: */
         ov_http_client_log_info(
             client_ptr->log,
-            "Received response code '%"PRIsVALUE"'.",
-            response_ptr->code
+            "Received response code %"PRIsVALUE" for %"PRIsVALUE" request to URL '%"PRIsVALUE"'.",
+            response_ptr->code,
+            request_ptr->method,
+            request_ptr->url
         );
     }
     else {
@@ -806,7 +810,7 @@ static void ov_http_client_prepare_handle(ov_http_client_object* client_ptr, ov_
     /* Send a summary of the request to the log: */
     ov_http_client_log_info(
         client_ptr->log,
-        "Sending '%"PRIsVALUE"' request to URL '%"PRIsVALUE"'.",
+        "Sending %"PRIsVALUE" request to URL '%"PRIsVALUE"'.",
         request_ptr->method,
         url
     );
