@@ -341,18 +341,6 @@ module OvirtSDK4
     end
 
     #
-    # Returns the relative path of this service.
-    #
-    # @return [String] The path of this service, relative to its parent. For example, the path of the `vm`
-    #   service that manages virtual machine `123` will be `123`.
-    #
-    # @api private
-    #
-    def relative_path
-      @path
-    end
-
-    #
     # Returns the absolute path of this service.
     #
     # @return [String] The absolute path of this service. For example, the path of the `vm` service that manages
@@ -363,7 +351,9 @@ module OvirtSDK4
     #
     def absolute_path
       return @path if @parent.is_a? Connection
-      "#{@parent.relative_path}/#{@path}"
+      prefix = @parent.absolute_path
+      return @path if prefix.empty?
+      "#{prefix}/#{@path}"
     end
   end
 end
