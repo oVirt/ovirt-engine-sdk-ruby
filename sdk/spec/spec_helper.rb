@@ -42,6 +42,7 @@ end
 
 # This module contains utility functions to be used in all the examples.
 module Helpers
+  attr_reader :last_request_path
   attr_reader :last_request_query
   attr_reader :last_request_method
   attr_reader :last_request_body
@@ -356,6 +357,7 @@ module Helpers
     # Mount the block:
     @server.mount_proc path do |request, response|
       # Save the request details:
+      @last_request_path = request.path
       @last_request_method = request.request_method
       @last_request_body = request.body
       @last_request_headers = request.header
