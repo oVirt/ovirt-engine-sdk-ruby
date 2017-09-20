@@ -246,144 +246,6 @@ module OvirtSDK4
     end
 
     #
-    # Obtains the access token from SSO to be used for bearer authentication.
-    #
-    # @return [String] The access token.
-    #
-    # @api private
-    #
-    def create_access_token
-      # Build the URL and parameters required for the request:
-      url, parameters = build_sso_auth_request
-
-      # Send the request and wait for the request:
-      response = get_sso_response(url, parameters)
-      response = response[0] if response.is_a?(Array)
-
-      # Check the response and raise an error if it contains an error code:
-      code = response['error_code']
-      error = response['error']
-      raise AuthError, "Error during SSO authentication: #{code}: #{error}" if error
-
-      response['access_token']
-    end
-
-    #
-    # Revoke the SSO access token.
-    #
-    # @api private
-    #
-    def revoke_access_token
-      # Build the URL and parameters required for the request:
-      url, parameters = build_sso_revoke_request
-
-      # Send the request and wait for the response:
-      response = get_sso_response(url, parameters)
-      response = response[0] if response.is_a?(Array)
-
-      # Check the response and raise an error if it contains an error code:
-      code = response['error_code']
-      error = response['error']
-      raise Error, "Error during SSO revoke: #{code}: #{error}" if error
-    end
-
-    #
-    # Execute a get request to the SSO server and return the response.
-    #
-    # @param url [String] The URL of the SSO server.
-    #
-    # @param parameters [Hash] The parameters to send to the SSO server.
-    #
-    # @return [Hash] The JSON response.
-    #
-    # @api private
-    #
-    def get_sso_response(url, parameters)
-      # Create the request:
-      request = HttpRequest.new
-      request.method = :POST
-      request.url = url
-      request.headers = {
-        'User-Agent' => "RubySDK/#{VERSION}",
-        'Content-Type' => 'application/x-www-form-urlencoded',
-        'Accept' => 'application/json'
-      }
-      request.body = URI.encode_www_form(parameters)
-
-      # Add the global headers:
-      request.headers.merge!(@headers) if @headers
-
-      # Send the request and wait for the response:
-      @client.send(request)
-      response = @client.wait(request)
-      raise response if response.is_a?(Exception)
-
-      # Check the returned content type:
-      check_json_content_type(response)
-
-      # Parse and return the JSON response:
-      JSON.parse(response.body)
-    end
-
-    #
-    # Builds a the URL and parameters to acquire the access token from SSO.
-    #
-    # @return [Array] An array containing two elements, the first is the URL of the SSO service and the second is a hash
-    #   containing the parameters required to perform authentication.
-    #
-    # @api private
-    #
-    def build_sso_auth_request
-      # Compute the entry point and the parameters:
-      parameters = {
-        scope: 'ovirt-app-api'
-      }
-      if @kerberos
-        entry_point = 'token-http-auth'
-        parameters[:grant_type] = 'urn:ovirt:params:oauth:grant-type:http'
-      else
-        entry_point = 'token'
-        parameters.merge!(
-          grant_type: 'password',
-          username: @username,
-          password: @password
-        )
-      end
-
-      # Compute the URL:
-      url = URI(@url.to_s)
-      url.path = "/ovirt-engine/sso/oauth/#{entry_point}"
-      url = url.to_s
-
-      # Return the pair containing the URL and the parameters:
-      [url, parameters]
-    end
-
-    #
-    # Builds a the URL and parameters to revoke the SSO access token
-    #
-    # @return [Array] An array containing two elements, the first is the URL of the SSO service and the second is a hash
-    #   containing the parameters required to perform the revoke.
-    #
-    # @api private
-    #
-    def build_sso_revoke_request
-      # Compute the parameters:
-      parameters = {
-        scope: '',
-        token: @token
-      }
-
-      # Compute the URL:
-      url = URI(@url.to_s)
-      url.path = '/ovirt-engine/services/sso-logout'
-      url = url.to_s
-
-      # Return the pair containing the URL and the parameters:
-      [url, parameters]
-    end
-
-    #
     # Tests the connectivity with the server. If connectivity works correctly it returns `true`. If there is any
     # connectivity problem it will either return `false` or raise an exception if the `raise_exception` parameter is
     # `true`.
@@ -604,6 +466,144 @@ module OvirtSDK4
         detail << " The typical one is '#{TYPICAL_PATH}'"
       end
       raise_error(response, detail)
+    end
+
+    #
+    # Obtains the access token from SSO to be used for bearer authentication.
+    #
+    # @return [String] The access token.
+    #
+    # @api private
+    #
+    def create_access_token
+      # Build the URL and parameters required for the request:
+      url, parameters = build_sso_auth_request
+
+      # Send the request and wait for the request:
+      response = get_sso_response(url, parameters)
+      response = response[0] if response.is_a?(Array)
+
+      # Check the response and raise an error if it contains an error code:
+      code = response['error_code']
+      error = response['error']
+      raise AuthError, "Error during SSO authentication: #{code}: #{error}" if error
+
+      response['access_token']
+    end
+
+    #
+    # Revoke the SSO access token.
+    #
+    # @api private
+    #
+    def revoke_access_token
+      # Build the URL and parameters required for the request:
+      url, parameters = build_sso_revoke_request
+
+      # Send the request and wait for the response:
+      response = get_sso_response(url, parameters)
+      response = response[0] if response.is_a?(Array)
+
+      # Check the response and raise an error if it contains an error code:
+      code = response['error_code']
+      error = response['error']
+      raise Error, "Error during SSO revoke: #{code}: #{error}" if error
+    end
+
+    #
+    # Execute a get request to the SSO server and return the response.
+    #
+    # @param url [String] The URL of the SSO server.
+    #
+    # @param parameters [Hash] The parameters to send to the SSO server.
+    #
+    # @return [Hash] The JSON response.
+    #
+    # @api private
+    #
+    def get_sso_response(url, parameters)
+      # Create the request:
+      request = HttpRequest.new
+      request.method = :POST
+      request.url = url
+      request.headers = {
+        'User-Agent' => "RubySDK/#{VERSION}",
+        'Content-Type' => 'application/x-www-form-urlencoded',
+        'Accept' => 'application/json'
+      }
+      request.body = URI.encode_www_form(parameters)
+
+      # Add the global headers:
+      request.headers.merge!(@headers) if @headers
+
+      # Send the request and wait for the response:
+      @client.send(request)
+      response = @client.wait(request)
+      raise response if response.is_a?(Exception)
+
+      # Check the returned content type:
+      check_json_content_type(response)
+
+      # Parse and return the JSON response:
+      JSON.parse(response.body)
+    end
+
+    #
+    # Builds a the URL and parameters to acquire the access token from SSO.
+    #
+    # @return [Array] An array containing two elements, the first is the URL of the SSO service and the second is a hash
+    #   containing the parameters required to perform authentication.
+    #
+    # @api private
+    #
+    def build_sso_auth_request
+      # Compute the entry point and the parameters:
+      parameters = {
+        scope: 'ovirt-app-api'
+      }
+      if @kerberos
+        entry_point = 'token-http-auth'
+        parameters[:grant_type] = 'urn:ovirt:params:oauth:grant-type:http'
+      else
+        entry_point = 'token'
+        parameters.merge!(
+          grant_type: 'password',
+          username: @username,
+          password: @password
+        )
+      end
+
+      # Compute the URL:
+      url = URI(@url.to_s)
+      url.path = "/ovirt-engine/sso/oauth/#{entry_point}"
+      url = url.to_s
+
+      # Return the pair containing the URL and the parameters:
+      [url, parameters]
+    end
+
+    #
+    # Builds a the URL and parameters to revoke the SSO access token
+    #
+    # @return [Array] An array containing two elements, the first is the URL of the SSO service and the second is a hash
+    #   containing the parameters required to perform the revoke.
+    #
+    # @api private
+    #
+    def build_sso_revoke_request
+      # Compute the parameters:
+      parameters = {
+        scope: '',
+        token: @token
+      }
+
+      # Compute the URL:
+      url = URI(@url.to_s)
+      url.path = '/ovirt-engine/services/sso-logout'
+      url = url.to_s
+
+      # Return the pair containing the URL and the parameters:
+      [url, parameters]
     end
   end
 end
