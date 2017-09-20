@@ -106,7 +106,7 @@ locators_ and _service methods_ (described later) may change in the
 future.
 
 There are other classes, like HTTP client classes, readers and writers.
-These are used to implement the HTTP communication, and to for XML
+These are used to implement the HTTP communication, and for XML
 parsing and rendering. Refrain from using them, as they are internal
 implementation details that may change in the future: backwards
 compatibility isn't guaranteed.
@@ -127,6 +127,9 @@ connection = OvirtSDK4::Connection.new(
   password: '...',
   ca_file: 'ca.pem',
 )
+
+# Get the reference to the root of the tree of services:
+system_service = connection.system_service
 ----
 
 The connection holds expensive resources, including a pool of HTTP
@@ -139,7 +142,8 @@ important to free these resources when they are no longer in use:
 connection.close
 ----
 
-Once a connection is closed it can't be reused.
+The connection and all the services that have been obtained from it
+can't be used after the connection has been closed.
 
 The `ca.pem` file is required when connecting to a server protected
 with TLS. In an usual oVirt installation it will be in
@@ -156,9 +160,9 @@ The type classes are pure data containers, they don't have any logic or
 operations. Instances can be created and modified at will.
 
 Creating or modifying one of this instances does *not* have any effect
-in the server side, unless one they are explicitly passed to a call to
-one of the service methods described below. Changes in the server side
-are *not* automatically reflected in the instances that already exist in
+in the server side, unless they are explicitly passed to a call to one
+of the service methods described below. Changes in the server side are
+*not* automatically reflected in the instances that already exist in
 memory.
 
 The constructors of these classes have multiple optional arguments, one
@@ -181,6 +185,28 @@ vm = OvirtSDK4::Vm.new(
 )
 ----
 
+The hashes passed to these constructors are processed recursively. For
+example, in the above code instead of explicitly calling the constructor
+for the `Cluster` and `Template` classes it is also possible to use
+plain hashes:
+
+[source,ruby]
+----
+vm = OvirtSDK4::Vm.new(
+  name: 'myvm',
+  cluster: {
+    name: 'mycluster'
+  },
+  template: {
+    name: 'mytemplate'
+  },
+  memory: 1073741824
+)
+----
+
+The SDK will internally convert those hashes to the required classes, so
+the result will be exactly the same.
+
 Using the constructors in this way is recommended, but not mandatory.
 You can also create the instance with no arguments in the call to the
 constructor, and then populate the object step by step, using the
@@ -192,7 +218,7 @@ vm = OvirtSDK4::Vm.new
 vm.name = 'myvm'
 vm.cluster = OvirtSDK4::Cluster.new(name: 'mycluster')
 vm.template = OvirtSDK4::Template.new(name: 'mytemplate')
-vm.memory=1073741824
+vm.memory = 1073741824
 ----
 
 Attributes that are defined as lists of objects in the specification of
@@ -299,7 +325,7 @@ manages the collection of virtual machines of the system lives in
 
 In the SDK the root of that tree of services is implemented by the
 _system service_. It is obtained calling the
-{rererence}/Connection#system_service-instance_method[system_service]
+{reference}/Connection#system_service-instance_method[system_service]
 method of the connection:
 
 [source,ruby]
@@ -352,7 +378,8 @@ The services that manage a single object usually have the `get`,
 
 Both kinds of services can also have additional _action methods_, which
 perform actions other than retrieving, creating, updating or removing.
-Most frequently they available in services that manage a single object.
+Most frequently they are available in services that manage a single
+object.
 
 ==== Using the _get_ methods
 
@@ -427,7 +454,7 @@ vms_service = system_service.vms_service
 vms = vms_service.list
 ----
 
-The result will be a Ruby array containing the instances of
+The result will be a Ruby array containing the instances of the
 corresponding types. For example, in this case, the result will be a
 list of instances of the Ruby class {reference}/Vm[Vm].
 
@@ -456,8 +483,8 @@ of the failure.
 
 ==== Using the _add_ methods
 
-These service methods add new elements to the collection. They receive
-an instance of the relevant type describing the object to add, send the
+These service methods add new elements to collections. They receive an
+instance of the relevant type describing the object to add, send the
 request to add it, and return an instance of the type describing the
 added object.
 
@@ -469,12 +496,12 @@ For example, to add a new virtual machine named `myvm`:
 vm = vms_service.add(
   OvirtSDK4::Vm.new(
     name: 'myvm',
-    cluster: OvirtSDK4::Cluster.new(
+    cluster: {
       name: 'mycluster'
-    ),
-    template: OvirtSDK4::Template.new(
+    },
+    template: {
       name: 'mytemplate'
-    )
+    }
   )
 )
 ----
@@ -539,10 +566,10 @@ updated.
 
 ==== Using the _update_ methods
 
-These service methods update existing objects. They receive
-an instance of the relevant type describing the update to perform, send
-the request to update it, and return an instance of the type describing
-the updated object.
+These service methods update existing objects. They receive an instance
+of the relevant type describing the update to perform, send the request
+to update it, and return an instance of the type describing the updated
+object.
 
 For example, to update the name of a virtual machine from `myvm` to
 `newvm`:
@@ -569,7 +596,7 @@ update. For example, try to *avoid* this:
 [source,ruby]
 ----
 # Retrieve the current representation:
-vm = vm_service.get()
+vm = vm_service.get
 
 # Update the representation, in memory, no request sent
 # to the server:
