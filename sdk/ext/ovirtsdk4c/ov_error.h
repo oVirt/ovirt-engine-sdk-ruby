@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015-2016 Red Hat, Inc.
+Copyright (c) 2015-2017 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ limitations under the License.
 
 // Classes:
 extern VALUE ov_error_class;
+extern VALUE ov_connection_error_class;
+extern VALUE ov_timeout_error_class;
 
 // Initialization function:
 extern void ov_error_define(void);

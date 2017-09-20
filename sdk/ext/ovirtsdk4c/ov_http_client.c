@@ -583,7 +583,8 @@ static int ov_http_client_add_header(VALUE name, VALUE value, struct curl_slist*
 static void* ov_http_client_complete_task(void* data) {
     CURLM* handle;
     CURLMsg* message;
-    VALUE error;
+    VALUE error_class;
+    VALUE error_instance;
     VALUE transfer;
     long code;
     ov_http_client_object* client_ptr;
@@ -626,10 +627,24 @@ static void* ov_http_client_complete_task(void* data) {
         );
     }
     else {
+        /* Select the error class according to the kind of error returned by libcurl: */
+        switch (message->data.result) {
+        case CURLE_COULDNT_CONNECT:
+        case CURLE_COULDNT_RESOLVE_HOST:
+        case CURLE_COULDNT_RESOLVE_PROXY:
+            error_class = ov_connection_error_class;
+            break;
+        case CURLE_OPERATION_TIMEDOUT:
+            error_class = ov_timeout_error_class;
+            break;
+        default:
+            error_class = ov_error_class;
+        }
+
         /* Put the request and error in the completed transfers hash: */
-        error = rb_sprintf("Can't send request: %s", curl_easy_strerror(message->data.result));
-        error = rb_class_new_instance(1, &error, ov_error_class);
-        rb_hash_aset(client_ptr->completed, transfer_ptr->request, error);
+        error_instance = rb_sprintf("Can't send request: %s", curl_easy_strerror(message->data.result));
+        error_instance = rb_class_new_instance(1, &error_instance, error_class);
+        rb_hash_aset(client_ptr->completed, transfer_ptr->request, error_instance);
     }
 
     /* Now that the libcurl easy handle is released, we can release the headers as well: */

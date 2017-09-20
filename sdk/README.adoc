@@ -68,10 +68,26 @@ The {reference}/Connection[Connection] class, as is the mechanism to
 connect to the server and to get the reference to the root of the
 services tree.
 
-Error::
+Errors::
 
-The {reference}/Error[Error] class is the exception that the SDK will
-raise when it needs to report any error.
+The {reference}/Error[Error] class is the base exception class that the
+SDK will raise when it needs to report any error.
++
+For certain kinds of errors there are specific error classes, extending
+the base error class:
++
+* {reference}/AuthError[AuthError] - Raised when authentication or
+authorization fail.
++
+* {reference}/ConnectionError[ConnectionError] - Raised when the name of
+the server can't be resolved, and when the server is down or
+unreachable.
++
+* {reference}/NotFoundError[NotFoundError] - Raised when the requested
+object doesn't exist.
++
+* {reference}/TimeoutError[TimeoutError] - Raised when an operation times
+out.
 
 Types::
 

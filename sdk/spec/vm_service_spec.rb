@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016 Red Hat, Inc.
+# Copyright (c) 2016-2017 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ describe SDK::VmService do
         response.status = 404
         response.body = ''
       end
-      expect { @service.get }.to raise_error(SDK::Error, /404/)
+      expect { @service.get }.to raise_error(SDK::NotFoundError, /404/)
     end
 
     it 'includes the HTTP response code in the exception raise if the VM does not exist' do

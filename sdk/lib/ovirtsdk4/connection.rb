@@ -263,7 +263,7 @@ module OvirtSDK4
       # Check the response and raise an error if it contains an error code:
       code = response['error_code']
       error = response['error']
-      raise Error, "Error during SSO authentication: #{code}: #{error}" if error
+      raise AuthError, "Error during SSO authentication: #{code}: #{error}" if error
 
       response['access_token']
     end
@@ -546,7 +546,16 @@ module OvirtSDK4
       end
 
       # Create and populate the error:
-      error = Error.new(message)
+      klass = Error
+      unless response.nil?
+        case response.code
+        when 401, 403
+          klass = AuthError
+        when 404
+          klass = NotFoundError
+        end
+      end
+      error = klass.new(message)
       error.code = response.code if response
       error.fault = fault
 

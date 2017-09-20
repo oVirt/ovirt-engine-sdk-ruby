@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2016 Red Hat, Inc.
+# Copyright (c) 2015-2017 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ require 'ovirtsdk4c'
 # Own requirements.
 #
 require 'ovirtsdk4/version.rb'
-require 'ovirtsdk4/error.rb'
+require 'ovirtsdk4/errors.rb'
 require 'ovirtsdk4/connection.rb'
 require 'ovirtsdk4/type.rb'
 require 'ovirtsdk4/types.rb'

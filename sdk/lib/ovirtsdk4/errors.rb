@@ -16,7 +16,7 @@
 
 module OvirtSDK4
   #
-  # The class for all errors raised by the SDK.
+  # The base class for all errors raised by the SDK.
   #
   class Error
     #
@@ -34,5 +34,37 @@ module OvirtSDK4
     # @return [Fault] The fault object associated to the error, if a fault was provided by the server, `nil` otherwise.
     #
     attr_accessor :fault
+  end
+
+  #
+  # This class of error indicates that an authentiation or authorization problem happenend, like incorrect user name,
+  # incorrect password, or missing permissions.
+  #
+  class AuthError < Error
+  end
+
+  #
+  # This class of error indicates that the name of the server or the name of the proxy can't be resolved to an IP
+  # address, or that the connection can't be stablished because the server is down or unreachable.
+  #
+  # Note that for this class of error the `code` and `fault` attributes will always be empty, as no response from the
+  # server will be available to populate them.
+  #
+  class ConnectionError < Error
+  end
+
+  #
+  # This class of error indicates that an object can't be found.
+  #
+  class NotFoundError < Error
+  end
+
+  #
+  # This class of error indicates that an operation timed out.
+  #
+  # Note that for this class of error the `code` and `fault` attributes will always be empty, as no response from the
+  # server will be available to populate them.
+  #
+  class TimeoutError < Error
   end
 end

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2016 Red Hat, Inc.
+# Copyright (c) 2015-2017 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ describe SDK::Connection do
 
       it 'fails when the global timeout expires' do
         mount_xml(path: 'vms', body: '<vms/>', delay: 2)
-        expect { @service.list }.to raise_error(/timeout/i)
+        expect { @service.list }.to raise_error(SDK::TimeoutError, /timeout/i)
       end
     end
 
@@ -68,7 +68,7 @@ describe SDK::Connection do
 
       it 'fails when the global timeout expires' do
         mount_xml(path: 'vms', body: '<vms/>', delay: 3)
-        expect { @service.list(timeout: 2) }.to raise_error(/timeout/i)
+        expect { @service.list(timeout: 2) }.to raise_error(SDK::TimeoutError, /timeout/i)
       end
     end
 
@@ -92,7 +92,7 @@ describe SDK::Connection do
 
       it 'fails when the request timeout expires' do
         mount_xml(path: 'vms', body: '<vms/>', delay: 2)
-        expect { @service.list(timeout: 1) }.to raise_error(/timeout/i)
+        expect { @service.list(timeout: 1) }.to raise_error(SDK::TimeoutError, /timeout/i)
       end
     end
 
@@ -115,7 +115,7 @@ describe SDK::Connection do
 
       it 'fails when the request timeout expires' do
         mount_xml(path: 'vms', body: '<vms/>', delay: 2)
-        expect { @service.list(timeout: 1) }.to raise_error(/timeout/i)
+        expect { @service.list(timeout: 1) }.to raise_error(SDK::TimeoutError, /timeout/i)
       end
     end
   end

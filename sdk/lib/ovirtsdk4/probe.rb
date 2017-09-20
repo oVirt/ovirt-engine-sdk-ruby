@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016 Red Hat, Inc.
+# Copyright (c) 2016-2017 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -251,7 +251,7 @@ module OvirtSDK4
         begin
           response = send(path: path)
           return path if response.code == 200
-          raise Error, 'Unauthorized' if response.code == 401
+          raise AuthError, 'Unauthorized' if response.code == 401
         end
       end
       nil

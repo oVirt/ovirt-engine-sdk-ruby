@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2016 Red Hat, Inc.
+# Copyright (c) 2015-2017 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -210,6 +210,19 @@ module Helpers
     @server.mount_proc '/ovirt-engine/sso/oauth/token' do |request, response|
       # Check basic properties of the request:
       next unless check_sso_request(request, response)
+
+      # Check that the user name is correct:
+      expected_user = test_user
+      actual_user = request.query['username']
+      unless actual_user == expected_user
+        response.status = 401
+        response.content_type = APPLICATION_JSON
+        response.body = JSON.generate(
+          error_code: 0,
+          error: "The user name should be '#{expected_user}', but it is '#{actual_user}'"
+        )
+        next
+      end
 
       # Check that the password is correct:
       expected_password = test_password
