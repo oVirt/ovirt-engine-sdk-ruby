@@ -39,6 +39,7 @@ import org.ovirt.api.metamodel.concepts.NameParser;
 import org.ovirt.api.metamodel.concepts.Parameter;
 import org.ovirt.api.metamodel.concepts.PrimitiveType;
 import org.ovirt.api.metamodel.concepts.Service;
+import org.ovirt.api.metamodel.concepts.StructType;
 import org.ovirt.api.metamodel.concepts.Type;
 import org.ovirt.api.metamodel.tool.SchemaNames;
 
@@ -223,6 +224,12 @@ public class ServicesGenerator implements RubyGenerator {
     }
 
     private void generateActionHttpPost(Method method) {
+        // Get the input parameters:
+        List<Parameter> inputParameters = method.parameters()
+            .filter(Parameter::isIn)
+            .sorted()
+            .collect(toList());
+
         // Get the name of output parameter:
         String resultName = method.parameters()
             .filter(Parameter::isOut)
@@ -231,8 +238,12 @@ public class ServicesGenerator implements RubyGenerator {
             .map(rubyNames::getMemberStyleName)
             .orElse(null);
 
-        // Document the method:
+        // Generate the parameter specs:
         Name methodName = method.getName();
+        String specConstant = rubyNames.getConstantStyleName(methodName);
+        generateParameterSpecs(specConstant, inputParameters);
+
+        // Document the method:
         String actionName = rubyNames.getMemberStyleName(methodName);
         String methodDoc = method.getDoc();
         if (methodDoc == null) {
@@ -257,7 +268,7 @@ public class ServicesGenerator implements RubyGenerator {
         String actionPath = getPath(methodName);
         String resultArg = resultName != null? ":" + resultName: "nil";
         buffer.addLine("def %1$s(opts = {})", actionName);
-        buffer.addLine(  "internal_action(:%1$s, %2$s, opts)", actionPath, resultArg);
+        buffer.addLine(  "internal_action(:%1$s, %2$s, %3$s, opts)", actionPath, resultArg, specConstant);
         buffer.addLine("end");
         buffer.addLine();
     }
@@ -439,6 +450,9 @@ public class ServicesGenerator implements RubyGenerator {
                     "Don't know how to generate the parameter spec for type \"" + type + "\""
                 );
             }
+        }
+        else if (type instanceof StructType) {
+            clazz = rubyNames.getTypeName(type).getClassName();
         }
         else if (type instanceof ListType) {
             clazz = "List";

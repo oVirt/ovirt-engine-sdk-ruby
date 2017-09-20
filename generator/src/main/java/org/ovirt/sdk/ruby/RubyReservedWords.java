@@ -74,6 +74,7 @@ public class RubyReservedWords {
         words.add("when");
         words.add("while");
         words.add("yield");
+        words.add("END");
 
         // Wrap the set so that it is unmodifiable:
         words = Collections.unmodifiableSet(words);

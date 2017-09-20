@@ -47,6 +47,12 @@ Layout/MultilineMethodCallIndentation:
   EnforcedStyle: indented
 
 #
+# We don't like to use conditional assigments.
+#
+Style/ConditionalAssignment:
+  Enabled: false
+
+#
 # The spec for types includes some apparently stupid tests, like
 # checking that the result of `==` is `true` when an object is compared
 # to itself. Rubocop doesn't like these tests, but we want them anyhow,

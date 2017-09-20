@@ -30,8 +30,8 @@ import org.ovirt.api.metamodel.concepts.Name;
 import org.ovirt.api.metamodel.concepts.NameParser;
 import org.ovirt.api.metamodel.concepts.Service;
 import org.ovirt.api.metamodel.concepts.Type;
+import org.ovirt.api.metamodel.tool.Names;
 import org.ovirt.api.metamodel.tool.ReservedWords;
-import org.ovirt.api.metamodel.tool.Words;
 
 /**
  * This class contains the rules used to calculate the names of generated Java concepts.
@@ -54,7 +54,7 @@ public class RubyNames {
     public static final Name WRITERS_DIR = NameParser.parseUsingCase("Writers");
 
     // Reference to the object used to do computations with words.
-    @Inject private Words words;
+    @Inject private Names names;
 
     // We need the Ruby reserved words in order to avoid producing names that aren't legal in Java:
     @Inject
@@ -247,32 +247,35 @@ public class RubyNames {
      * Returns a representation of the given name using the capitalization style typically used for Ruby classes.
      */
     public String getClassStyleName(Name name) {
-        return name.words().map(words::capitalize).collect(joining());
+        return avoidReservedWord(names.getCapitalized(name));
     }
 
     /**
      * Returns a representation of the given name using the capitalization style typically used for Ruby members.
      */
     public String getMemberStyleName(Name name) {
-        String result = name.words().map(String::toLowerCase).collect(joining("_"));
-        if (reservedWords.contains(result)) {
-            result += "_";
-        }
-        return result;
+        return avoidReservedWord(names.getLowerJoined(name, "_"));
     }
 
     /**
      * Returns a representation of the given name using the capitalization style typically used for Ruby constants.
      */
     public String getConstantStyleName(Name name) {
-        return name.words().map(String::toUpperCase).collect(joining("_"));
+        return avoidReservedWord(names.getUpperJoined(name, "_"));
     }
 
     /**
      * Returns a representation of the given name using the capitalization style typically used for Ruby files.
      */
     public String getFileStyleName(Name name) {
-        return name.words().map(String::toLowerCase).collect(joining("_"));
+        return names.getLowerJoined(name, "_");
+    }
+
+    private String avoidReservedWord(String word) {
+        if (reservedWords.contains(word)) {
+            word += "_";
+        }
+        return word;
     }
 }
 

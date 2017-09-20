@@ -123,22 +123,29 @@ module OvirtSDK4
     #
     # Executes a `get` method.
     #
-    # @param specs [Array<Array<Symbol, Symbol, Class>>] An array of arrays containing the names, tags and types of the
-    #   parameters.
+    # @param specs [Array<Array<Symbol, Class>>] An array of arrays containing the names and types of the parameters.
     # @param opts [Hash] The hash containing the values of the parameters.
     #
     # @api private
     #
     def internal_get(specs, opts)
-      headers = opts[:headers] || {}
-      query = opts[:query] || {}
-      timeout = opts[:timeout]
-      wait = opts[:wait]
+      # Get the values of the built-in options:
+      headers = opts.delete(:headers) || {}
+      query = opts.delete(:query) || {}
+      timeout = opts.delete(:timeout)
+      wait = opts.delete(:wait)
       wait = true if wait.nil?
+
+      # Get the values of the options specific to this operation:
       specs.each do |name, kind|
-        value = opts[name]
+        value = opts.delete(name)
         query[name] = Writer.render(value, kind) if value
       end
+
+      # Check the remaining options:
+      check_bad_opts(specs, opts)
+
+      # Create and send the request:
       request = HttpRequest.new
       request.method = :GET
       request.url = absolute_path
@@ -164,23 +171,30 @@ module OvirtSDK4
     #
     # @param object [Object] The added object.
     # @param type [Class] Type type of the added object.
-    # @param specs [Array<Array<Symbol, Symbol, Class>>] An array of arrays containing the names, tags and types of the
-    #   parameters.
+    # @param specs [Array<Array<Symbol, Class>>] An array of arrays containing the names and types of the parameters.
     # @param opts [Hash] The hash containing the values of the parameters.
     #
     # @api private
     #
     def internal_add(object, type, specs, opts)
+      # Get the values of the built-in options:
       object = type.new(object) if object.is_a?(Hash)
-      headers = opts[:headers] || {}
-      query = opts[:query] || {}
-      timeout = opts[:timeout]
-      wait = opts[:wait]
+      headers = opts.delete(:headers) || {}
+      query = opts.delete(:query) || {}
+      timeout = opts.delete(:timeout)
+      wait = opts.delete(:wait)
       wait = true if wait.nil?
+
+      # Get the values of the options specific to this operation:
       specs.each do |name, kind|
-        value = opts[name]
+        value = opts.delete(name)
         query[name] = Writer.render(value, kind) if value
       end
+
+      # Check the remaining options:
+      check_bad_opts(specs, opts)
+
+      # Create and send the request:
       request = HttpRequest.new
       request.method = :POST
       request.url = absolute_path
@@ -207,23 +221,30 @@ module OvirtSDK4
     #
     # @param object [Object] The updated object.
     # @param type [Class] Type type of the updated object.
-    # @param specs [Array<(Symbol, Symbol, Class)>] An array of tuples containing the names, tags and types of the
-    #   parameters.
+    # @param specs [Array<Array<Symbol, Class>>] An array of tuples containing the names and types of the parameters.
     # @param opts [Hash] The hash containing the values of the parameters.
     #
     # @api private
     #
     def internal_update(object, type, specs, opts)
+      # get the values of the built-in options:
       object = type.new(object) if object.is_a?(Hash)
-      headers = opts[:headers] || {}
-      query = opts[:query] || {}
-      timeout = opts[:timeout]
-      wait = opts[:wait]
+      headers = opts.delete(:headers) || {}
+      query = opts.delete(:query) || {}
+      timeout = opts.delete(:timeout)
+      wait = opts.delete(:wait)
       wait = true if wait.nil?
+
+      # Get the values of the options specific to this operation:
       specs.each do |name, kind|
-        value = opts[name]
+        value = opts.delete(name)
         query[name] = Writer.render(value, kind) if value
       end
+
+      # Check the remaining options:
+      check_bad_opts(specs, opts)
+
+      # Create and send the request:
       request = HttpRequest.new
       request.method = :PUT
       request.url = absolute_path
@@ -248,22 +269,29 @@ module OvirtSDK4
     #
     # Executes a `remove` method.
     #
-    # @param specs [Array<(Symbol, Symbol, Class)>] An array of tuples containing the names, tags and types of the
-    #   parameters.
+    # @param specs [Array<Array<Symbol, Class>>] An array of tuples containing the names and types of the  parameters.
     # @param opts [Hash] The hash containing the values of the parameters.
     #
     # @api private
     #
     def internal_remove(specs, opts)
-      headers = opts[:headers] || {}
-      query = opts[:query] || {}
-      timeout = opts[:timeout]
-      wait = opts[:wait]
+      # Get the values of the built-in options:
+      headers = opts.delete(:headers) || {}
+      query = opts.delete(:query) || {}
+      timeout = opts.delete(:timeout)
+      wait = opts.delete(:wait)
       wait = true if wait.nil?
+
+      # Get the values of the options specific to this operation:
       specs.each do |name, kind|
-        value = opts[name]
+        value = opts.delete(name)
         query[name] = Writer.render(value, kind) if value
       end
+
+      # Check the remaining options:
+      check_bad_opts(specs, opts)
+
+      # Create and send the request:
       request = HttpRequest.new
       request.method = :DELETE
       request.url = absolute_path
@@ -272,7 +300,7 @@ module OvirtSDK4
       request.timeout = timeout
       connection.send(request)
       result = Future.new(self, request) do |response|
-        raise response if response.is_a?(exception)
+        raise response if response.is_a?(Exception)
         check_fault(response) unless response.code == 200
       end
       result = result.wait if wait
@@ -285,17 +313,30 @@ module OvirtSDK4
     # @param name [Symbol] The name of the action, for example `:start`.
     # @param member [Symbol] The name of the action member that contains the result. For example `:is_attached`. Can
     #   be `nil` if the action doesn't return any value.
+    # @param specs [Array<Array<Symbol, Class>>] An array of tuples containing the names and types of the parameters.
     # @param opts [Hash] The hash containing the parameters of the action.
     #
     # @api private
     #
-    def internal_action(name, member, opts)
-      headers = opts[:headers] || {}
-      query = opts[:query] || {}
-      timeout = opts[:timeout]
-      wait = opts[:wait]
+    def internal_action(name, member, specs, opts)
+      # Get the values of the built-in options:
+      headers = opts.delete(:headers) || {}
+      query = opts.delete(:query) || {}
+      timeout = opts.delete(:timeout)
+      wait = opts.delete(:wait)
       wait = true if wait.nil?
+
+      # Create the action:
       action = Action.new(opts)
+
+      # The constructor of the action doesn't remove the options that it uses, so we need to remove them explicitly
+      # before checking for bad options.
+      specs.each_entry do |key, _|
+        opts.delete(key)
+      end
+      check_bad_opts(specs, opts)
+
+      # Create and send the request:
       request = HttpRequest.new
       request.method = :POST
       request.url = "#{absolute_path}/#{name}"
@@ -354,6 +395,53 @@ module OvirtSDK4
       prefix = @parent.absolute_path
       return @path if prefix.empty?
       "#{prefix}/#{@path}"
+    end
+
+    private
+
+    #
+    # Checks if the given hash contains any value, and if it does raises an exception indicating that they are not
+    # supported.
+    #
+    # @param specs [Array<Array<Symbol, Class>>] An array of tuples containing the names and types of the parameters.
+    # @param opts [Hash] The hash containing the values of the parameters.
+    #
+    def check_bad_opts(specs, opts)
+      return if opts.empty?
+      bad_names = opts.keys
+      bad_text = nice_list(bad_names)
+      if bad_names.length > 1
+        message = "The options #{bad_text} aren't supported."
+      else
+        message = "The option #{bad_text} isn't supported."
+      end
+      good_names = specs.map(&:first)
+      unless good_names.empty?
+        good_text = nice_list(good_names)
+        if good_names.length > 1
+          message << " The supported options are #{good_text}."
+        else
+          message << " The only supported option is #{good_text}."
+        end
+      end
+      raise Error, message
+    end
+
+    #
+    # Generates a human readable list containing the names of the given symbols.
+    #
+    # @param items [Array<Symbol>]
+    # @return [String] An string containing the names of the symbols, sorted, quoted, and in a gramatically correct
+    #   format.
+    #
+    def nice_list(items)
+      return nil if items.empty?
+      items = items.sort
+      items = items.map { |item| "'#{item}'" }
+      return items.first if items.length == 1
+      head = items[0, items.length - 1].join(', ')
+      tail = items.last
+      "#{head} and #{tail}"
     end
   end
 end
