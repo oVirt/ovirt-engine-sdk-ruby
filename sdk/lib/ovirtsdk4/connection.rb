@@ -227,6 +227,8 @@ module OvirtSDK4
     # @param request [HttpRequest] The request object whose corresponding response you want to wait for.
     # @return [Response] A request object containing the details of the HTTP response received.
     #
+    # @api private
+    #
     def wait(request)
       # Wait for the response:
       response = @client.wait(request)
