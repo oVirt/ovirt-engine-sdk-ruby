@@ -486,9 +486,8 @@ module OvirtSDK4
       response = response[0] if response.is_a?(Array)
 
       # Check the response and raise an error if it contains an error code:
-      code = response['error_code']
-      error = response['error']
-      raise AuthError, "Error during SSO authentication: #{code}: #{error}" if error
+      error = get_sso_error_message(response)
+      raise AuthError, "Error during SSO authentication: #{error}" if error
 
       response['access_token']
     end
@@ -507,9 +506,8 @@ module OvirtSDK4
       response = response[0] if response.is_a?(Array)
 
       # Check the response and raise an error if it contains an error code:
-      code = response['error_code']
-      error = response['error']
-      raise Error, "Error during SSO revoke: #{code}: #{error}" if error
+      error = get_sso_error_message(response)
+      raise AuthError, "Error during SSO revoke: #{error}" if error
     end
 
     #
@@ -606,6 +604,26 @@ module OvirtSDK4
 
       # Return the pair containing the URL and the parameters:
       [url, parameters]
+    end
+
+    #
+    # Extrats the error message from the given SSO response.
+    #
+    # @param response [Hash] The result of parsing the JSON document returned by the SSO server.
+    # @return [String] The error message, or `nil` if there was no error.
+    #
+    def get_sso_error_message(response)
+      # OAuth uses the 'error_code' attribute for the error code, and 'error' for the error description. But OpenID uses
+      # 'error' for the error code and 'error_description' for the description. So we need to check if the
+      # 'error_description' attribute is present, and extract the code and description accordingly.
+      description = response['error_description']
+      if description.nil?
+        code = response['error_code']
+        description = response['error']
+      else
+        code = response['error']
+      end
+      "#{code}: #{description}" if code
     end
   end
 end
