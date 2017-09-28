@@ -16,6 +16,7 @@
 
 require 'json'
 require 'tempfile'
+require 'thread'
 require 'uri'
 
 module OvirtSDK4
@@ -145,6 +146,9 @@ module OvirtSDK4
         @ca_store.close
       end
 
+      # Create the mutex that will be used to prevents simultaneous access to the same HTTP client by multiple threads:
+      @mutex = Mutex.new
+
       # Create the HTTP client:
       @client = HttpClient.new(
         insecure: @insecure,
@@ -184,67 +188,26 @@ module OvirtSDK4
     end
 
     #
-    # Sends an HTTP request.
+    # Sends an HTTP request, making sure that multiple threads are coordinated correctly.
     #
     # @param request [HttpRequest] The request object containing the details of the HTTP request to send.
     #
     # @api private
     #
     def send(request)
-      # Add the base URL to the request:
-      request.url = request.url.nil? ? request.url = @url : "#{@url}/#{request.url}"
-
-      # Set the headers common to all requests:
-      request.headers.merge!(
-        'User-Agent'   => "RubySDK/#{VERSION}",
-        'Version'      => '4',
-        'Content-Type' => 'application/xml',
-        'Accept'       => 'application/xml'
-      )
-
-      # Older versions of the engine (before 4.1) required the 'all_content' as an HTTP header instead of a query
-      # parameter. In order to better support those older versions of the engine we need to check if this parameter is
-      # included in the request, and add the corresponding header.
-      unless request.query.nil?
-        all_content = request.query['all_content']
-        request.headers['All-Content'] = all_content unless all_content.nil?
-      end
-
-      # Add the global headers, but without replacing the values that may already exist:
-      request.headers.merge!(@headers) { |_name, local, _global| local } if @headers
-
-      # Set the authentication token:
-      @token ||= create_access_token
-      request.token = @token
-
-      # Send the request:
-      @client.send(request)
+      @mutex.synchronize { internal_send(request) }
     end
 
     #
-    # Waits for the response to the given request.
+    # Waits for the response to the given request, making sure that multiple threads are coordinated correctly.
     #
     # @param request [HttpRequest] The request object whose corresponding response you want to wait for.
-    # @return [Response] A request object containing the details of the HTTP response received.
+    # @return [HttpResponse] A request object containing the details of the HTTP response received.
     #
     # @api private
     #
     def wait(request)
-      # Wait for the response:
-      response = @client.wait(request)
-      raise response if response.is_a?(Exception)
-
-      # If the request failed because of authentication, and it wasn't a request to the SSO service, then the
-      # most likely cause is an expired SSO token. In this case we need to request a new token, and try the original
-      # request again, but only once. It if fails again, we just return the failed response.
-      if response.code == 401 && request.token
-        @token = create_access_token
-        request.token = @token
-        @client.send(request)
-        response = @client.wait(request)
-      end
-
-      response
+      @mutex.synchronize { internal_wait(request) }
     end
 
     #
@@ -330,17 +293,10 @@ module OvirtSDK4
     end
 
     #
-    # Releases the resources used by this connection.
+    # Releases the resources used by this connection, making sure that multiple threads are coordinated correctly.
     #
     def close
-      # Revoke the SSO access token:
-      revoke_access_token if @token
-
-      # Close the HTTP client:
-      @client.close if @client
-
-      # Remove the temporary file that contains the trusted CA certificates:
-      @ca_store.unlink if @ca_store
+      @mutex.synchronize { internal_close }
     end
 
     #
@@ -624,6 +580,86 @@ module OvirtSDK4
         code = response['error']
       end
       "#{code}: #{description}" if code
+    end
+
+    #
+    # Sends an HTTP request.
+    #
+    # @param request [HttpRequest] The request object containing the details of the HTTP request to send.
+    #
+    # @api private
+    #
+    def internal_send(request)
+      # Add the base URL to the request:
+      request.url = request.url.nil? ? request.url = @url : "#{@url}/#{request.url}"
+
+      # Set the headers common to all requests:
+      request.headers.merge!(
+        'User-Agent'   => "RubySDK/#{VERSION}",
+        'Version'      => '4',
+        'Content-Type' => 'application/xml',
+        'Accept'       => 'application/xml'
+      )
+
+      # Older versions of the engine (before 4.1) required the 'all_content' as an HTTP header instead of a query
+      # parameter. In order to better support those older versions of the engine we need to check if this parameter is
+      # included in the request, and add the corresponding header.
+      unless request.query.nil?
+        all_content = request.query['all_content']
+        request.headers['All-Content'] = all_content unless all_content.nil?
+      end
+
+      # Add the global headers, but without replacing the values that may already exist:
+      request.headers.merge!(@headers) { |_name, local, _global| local } if @headers
+
+      # Set the authentication token:
+      @token ||= create_access_token
+      request.token = @token
+
+      # Send the request:
+      @client.send(request)
+    end
+
+    #
+    # Waits for the response to the given request.
+    #
+    # @param request [HttpRequest] The request object whose corresponding response you want to wait for.
+    # @return [Response] A request object containing the details of the HTTP response received.
+    #
+    # @api private
+    #
+    def internal_wait(request)
+      # Wait for the response:
+      response = @client.wait(request)
+      raise response if response.is_a?(Exception)
+
+      # If the request failed because of authentication, and it wasn't a request to the SSO service, then the
+      # most likely cause is an expired SSO token. In this case we need to request a new token, and try the original
+      # request again, but only once. It if fails again, we just return the failed response.
+      if response.code == 401 && request.token
+        @token = create_access_token
+        request.token = @token
+        @client.send(request)
+        response = @client.wait(request)
+      end
+
+      response
+    end
+
+    #
+    # Releases the resources used by this connection.
+    #
+    # @api private
+    #
+    def internal_close
+      # Revoke the SSO access token:
+      revoke_access_token if @token
+
+      # Close the HTTP client:
+      @client.close if @client
+
+      # Remove the temporary file that contains the trusted CA certificates:
+      @ca_store.unlink if @ca_store
     end
   end
 end
