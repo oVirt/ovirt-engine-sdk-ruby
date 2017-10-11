@@ -1,0 +1,85 @@
+%global gem_name ovirt-engine-sdk
+%global gem_version 4.0.0.alpha0
+
+Name: rubygem-ovirt-engine-sdk4
+Summary: oVirt Engine Ruby SDK
+Version: 4.0.0
+Release: 1%{?dist}
+Group: Development/Languages
+License: ASL 2.0
+URL: http://ovirt.org
+Source: https://rubygems.org/downloads/%{gem_name}-%{gem_version}.gem
+
+BuildRequires: gcc
+BuildRequires: libcurl-devel
+BuildRequires: libxml2-devel
+BuildRequires: ruby-devel
+
+%description
+This package contains the oVirt Engine Ruby Software Develpment Kit.
+
+%package doc
+Summary: Documentation for %{name}
+Group: Documentation
+Requires: %{name} = %{version}-%{release}
+
+%description doc
+This package contains documentation for %{name}.
+
+%prep
+
+# Unpack the gem:
+gem unpack %{SOURCE0}
+%setup -q -D -T -n %{gem_name}-%{gem_version}
+
+# Extract the specification of the gem:
+gem spec %{SOURCE0} -l --ruby > %{gem_name}.gemspec
+
+# Replace the version of the gem with the version of the package. This is
+# needed because the "gem_build" macro assumes that the name of the .gem file
+# is "ovirt-engine-sdk-4.0.0.gem", but it actually is
+# "ovirt-engine-sdk-4.0.0.alpha0".
+sed -i 's/"%{gem_version}"/"%{version}"/' %{gem_name}.gemspec
+
+%build
+
+# Create again the .gem file from the potentially modified sources and
+# specification:
+gem build %{gem_name}.gemspec
+
+# Compile the extensions and install the gem files:
+%gem_install
+
+%install
+
+# Install the files:
+mkdir -p %{buildroot}%{gem_dir}
+mv .%{gem_dir}/* %{buildroot}%{gem_dir}
+
+# Install the extensions:
+mkdir -p %{buildroot}%{gem_extdir_mri}
+mv .%{gem_extdir_mri}/*.so %{buildroot}%{gem_extdir_mri}
+
+%files
+%dir %{gem_instdir}
+%doc %{gem_instdir}/CHANGES.adoc
+%doc %{gem_instdir}/README.adoc
+%exclude %{gem_cache}
+%exclude %{gem_docdir}
+%exclude %{gem_instdir}/.yardopts
+%exclude %{gem_instdir}/Rakefile
+%exclude %{gem_instdir}/ext
+%license %{gem_instdir}/LICENSE.txt
+%{gem_extdir_mri}
+%{gem_libdir}
+%{gem_spec}
+
+%files doc
+%doc %{gem_instdir}/CHANGES.adoc
+%doc %{gem_instdir}/README.adoc
+%license %{gem_instdir}/LICENSE.txt
+%{gem_docdir}
+
+%changelog
+* Fri Jan 8 2016 Juan Hernandez <juan.hernandez@redhat.com> - 4.0.0
+- Initial packaging.
