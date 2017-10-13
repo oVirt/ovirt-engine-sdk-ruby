@@ -2,6 +2,27 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.1.9 / Oct 13 2017
+
+Update to model 4.1.39:
+
+* Add a `refresh` parameter to `FilesService.list`.
+    
+* Add support for Link Layer Discovery Protocol (LLDP).
+    
+* Add support for listing cluster level features, and enabling/disabing
+  them for clusters.
+
+New features:
+
+* Improve log messages so that in addition to the response codes they
+  also contain the request method and URL.
+
+Bug fixes:
+
+* Add support for multiple threads
+  https://bugzilla.redhat.com/1496846[#1496846].
+
 == 4.1.8 / Jul 17 2017
 
 Update to model 4.1.37:
