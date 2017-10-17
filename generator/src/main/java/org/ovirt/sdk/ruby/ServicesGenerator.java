@@ -137,9 +137,19 @@ public class ServicesGenerator implements RubyGenerator {
         generateClassDeclaration(service);
         buffer.addLine();
 
-        // Generate the methods and locators:
-        service.methods().sorted().forEach(this::generateMethod);
-        service.locators().sorted().forEach(this::generateLocator);
+        // Generate the service methods, but exclude specialized signatures, as the infrastructure of the SDK isn't yet
+        // prepared for that.
+        service.methods()
+            .filter(method -> method.getBase() == null)
+            .sorted()
+            .forEach(this::generateMethod);
+
+        // Generate the locator methods:
+        service.locators()
+            .sorted()
+            .forEach(this::generateLocator);
+
+        // Generate the path locator:
         generatePathLocator(service);
 
         // Generate other methods that don't correspond to model methods or locators:
