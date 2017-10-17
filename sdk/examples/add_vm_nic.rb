@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 
 #
-# Copyright (c) 2016 Red Hat, Inc.
+# Copyright (c) 2016-2017 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,8 +19,7 @@
 require 'logger'
 require 'ovirtsdk4'
 
-# This example will connect to the server and add a network interface
-# card to an existing virtual machine.
+# This example show how to add a network interface card to an existing virtual machine.
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
@@ -32,35 +31,39 @@ connection = OvirtSDK4::Connection.new(
   log: Logger.new('example.log')
 )
 
-# Locate the virtual machines service and use it to find the virtual
-# machine:
-vms_service = connection.system_service.vms_service
-vm = vms_service.list(search: 'name=myvm')[0]
+# Find the root of the tree of services:
+system_service = connection.system_service
 
-# In order to specify the network that the new interface will be
-# connected to we need to specify the identifier of the virtual network
-# interface profile, so we need to find it:
-profiles_service = connection.system_service.vnic_profiles_service
-profile_id = nil
-profiles_service.list.each do |profile|
-  if profile.name == 'mynetwork'
-    profile_id = profile.id
-    break
-  end
-end
+# Find the virtual machine:
+vms_service = system_service.vms_service
+vm = vms_service.list(search: 'name=myvm').first
 
-# Locate the service that manages the network interface cards of the
-# virtual machine:
+# In order to specify the network that the new NIC will be connected to, we need to specify the
+# identifier of the virtual NIC profile. But there may be multiple profiles with the same name, for
+# different data centers, for example. So first we need to find the the networks that are available
+# in the cluster that the virtual machine belongs to.
+cluster = connection.follow_link(vm.cluster)
+networks = connection.follow_link(cluster.networks)
+network_ids = networks.map(&:id)
+
+# Now that we know what networks are available in the cluster, we can select a virtual NIC profile
+# that corresponds to one of those networks, and has the name that we want to use. Note that the
+# system automatically creates a virtual NIC profile for each network, with the same name than the
+# network, so usually this name will be name of the network.
+profiles_service = system_service.vnic_profiles_service
+profiles = profiles_service.list
+profile = profiles.detect { |p| network_ids.include?(p.network.id) && p.name == 'myprofile' }
+
+# Locate the service that manages the collection network interface cards of the virtual machine:
 nics_service = vms_service.vm_service(vm.id).nics_service
 
-# Use the "add" method of the network interface cards service to add the
-# new network interface card:
+# Add the new network interface card:
 nics_service.add(
   OvirtSDK4::Nic.new(
     name: 'mynic',
     description: 'My network interface card',
     vnic_profile: {
-      id: profile_id
+      id: profile.id
     }
   )
 )
