@@ -50,7 +50,6 @@ static VALUE PROXY_PASSWORD_SYMBOL;
 static VALUE PROXY_URL_SYMBOL;
 static VALUE PROXY_USERNAME_SYMBOL;
 static VALUE TIMEOUT_SYMBOL;
-static VALUE USERNAME_SYMBOL;
 static VALUE COOKIES_SYMBOL;
 
 /* Method identifiers: */
@@ -986,7 +985,6 @@ void ov_http_client_define(void) {
     PROXY_URL_SYMBOL      = ID2SYM(rb_intern("proxy_url"));
     PROXY_USERNAME_SYMBOL = ID2SYM(rb_intern("proxy_username"));
     TIMEOUT_SYMBOL        = ID2SYM(rb_intern("timeout"));
-    USERNAME_SYMBOL       = ID2SYM(rb_intern("username"));
     COOKIES_SYMBOL        = ID2SYM(rb_intern("cookies"));
 
     /* Define the method identifiers: */
