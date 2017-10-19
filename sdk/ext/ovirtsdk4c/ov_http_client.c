@@ -51,6 +51,7 @@ static VALUE PROXY_URL_SYMBOL;
 static VALUE PROXY_USERNAME_SYMBOL;
 static VALUE TIMEOUT_SYMBOL;
 static VALUE USERNAME_SYMBOL;
+static VALUE COOKIES_SYMBOL;
 
 /* Method identifiers: */
 static ID COMPARE_BY_IDENTITY_ID;
@@ -154,6 +155,7 @@ static void ov_http_client_free(void* vptr) {
     /* Release the resources used by libcurl: */
     if (ptr->handle != NULL) {
         curl_multi_cleanup(ptr->handle);
+        curl_share_cleanup(ptr->share);
         ptr->handle = NULL;
     }
 
@@ -162,6 +164,7 @@ static void ov_http_client_free(void* vptr) {
     ov_string_free(ptr->proxy_url);
     ov_string_free(ptr->proxy_username);
     ov_string_free(ptr->proxy_password);
+    ov_string_free(ptr->cookies);
 
     /* Free this object: */
     xfree(ptr);
@@ -526,6 +529,20 @@ static VALUE ov_http_client_initialize(int argc, VALUE* argv, VALUE self) {
         connections = NUM2LONG(opt);
     }
 
+   /* Get the value of the 'cookies' parameter. If it is a string it will be used as the path of the file where the
+      cookies will be stored. If it is any other thing it will be treated as a boolean flag indicating if cookies
+      should be enabled but not loaded/saved from/to any file. */
+    opt = rb_hash_aref(opts, COOKIES_SYMBOL);
+    if (TYPE(opt) == T_STRING) {
+        ptr->cookies = ov_string_dup(opt);
+    }
+    else if (RTEST(opt)) {
+        ptr->cookies = ov_string_dup(rb_str_new2(""));
+    }
+    else {
+        ptr->cookies = NULL;
+    }
+
     /* Create the hash that contains the transfers are pending an completed. Both use the identity of the request
        as key. */
     ptr->completed = rb_funcall(rb_hash_new(), COMPARE_BY_IDENTITY_ID, 0);
@@ -534,7 +551,16 @@ static VALUE ov_http_client_initialize(int argc, VALUE* argv, VALUE self) {
     /* Create the libcurl multi handle: */
     ptr->handle = curl_multi_init();
     if (ptr->handle == NULL) {
-        rb_raise(ov_error_class, "Can't create libcurl object");
+        rb_raise(ov_error_class, "Can't create libcurl multi object");
+    }
+
+    /* Create the libcurl share handle in order to share cookie data: */
+    ptr->share = curl_share_init();
+    if (ptr->share == NULL) {
+        rb_raise(ov_error_class, "Can't create libcurl share object");
+    }
+    if (ptr->cookies != NULL) {
+        curl_share_setopt(ptr->share, CURLSHOPT_SHARE, CURL_LOCK_DATA_COOKIE);
     }
 
     /* Enable pipelining: */
@@ -737,6 +763,13 @@ static void ov_http_client_prepare_handle(ov_http_client_object* client_ptr, ov_
     VALUE header;
     VALUE url;
     int timeout;
+
+    /* Configure sharing of cookies with other handlers created by the client: */
+    curl_easy_setopt(handle, CURLOPT_SHARE, client_ptr->share);
+    if (client_ptr->cookies != NULL && strlen(client_ptr->cookies) > 0) {
+        curl_easy_setopt(handle, CURLOPT_COOKIEFILE, client_ptr->cookies);
+        curl_easy_setopt(handle, CURLOPT_COOKIEJAR, client_ptr->cookies);
+    }
 
     /* Configure TLS parameters: */
     if (client_ptr->insecure) {
@@ -969,6 +1002,7 @@ void ov_http_client_define(void) {
     PROXY_USERNAME_SYMBOL = ID2SYM(rb_intern("proxy_username"));
     TIMEOUT_SYMBOL        = ID2SYM(rb_intern("timeout"));
     USERNAME_SYMBOL       = ID2SYM(rb_intern("username"));
+    COOKIES_SYMBOL        = ID2SYM(rb_intern("cookies"));
 
     /* Define the method identifiers: */
     COMPARE_BY_IDENTITY_ID = rb_intern("compare_by_identity");
