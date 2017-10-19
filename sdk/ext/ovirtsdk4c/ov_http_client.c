@@ -188,6 +188,20 @@ static VALUE ov_http_client_alloc(VALUE klass) {
     ov_http_client_object* ptr;
 
     ptr = ALLOC(ov_http_client_object);
+    ptr->handle = NULL;
+    ptr->share = NULL;
+    ptr->log = Qnil;
+    ptr->pending = Qnil;
+    ptr->completed = Qnil;
+    ptr->compress = false;
+    ptr->debug = false;
+    ptr->insecure = false;
+    ptr->ca_file = NULL;
+    ptr->proxy_url = NULL;
+    ptr->proxy_username = NULL;
+    ptr->proxy_password = NULL;
+    ptr->timeout = 0;
+    ptr->cookies = NULL;
     return TypedData_Wrap_Struct(klass, &ov_http_client_type, ptr);
 }
 
@@ -468,7 +482,13 @@ static VALUE ov_http_client_initialize(int argc, VALUE* argv, VALUE self) {
 
     /* Get the value of the 'ca_file' parameter: */
     opt = rb_hash_aref(opts, CA_FILE_SYMBOL);
-    ptr->ca_file = ov_string_dup(opt);
+    if (NIL_P(opt)) {
+        ptr->ca_file = NULL;
+    }
+    else {
+        Check_Type(opt, T_STRING);
+        ptr->ca_file = ov_string_dup(opt);
+    }
 
     /* Get the value of the 'insecure' parameter: */
     opt = rb_hash_aref(opts, INSECURE_SYMBOL);
@@ -494,15 +514,33 @@ static VALUE ov_http_client_initialize(int argc, VALUE* argv, VALUE self) {
 
     /* Get the value of the 'proxy_url' parameter: */
     opt = rb_hash_aref(opts, PROXY_URL_SYMBOL);
-    ptr->proxy_url = ov_string_dup(opt);
+    if (NIL_P(opt)) {
+        ptr->proxy_url = NULL;
+    }
+    else {
+        Check_Type(opt, T_STRING);
+        ptr->proxy_url = ov_string_dup(opt);
+    }
 
     /* Get the value of the 'proxy_username' parameter: */
     opt = rb_hash_aref(opts, PROXY_USERNAME_SYMBOL);
-    ptr->proxy_username = ov_string_dup(opt);
+    if (NIL_P(opt)) {
+        ptr->proxy_username = NULL;
+    }
+    else {
+        Check_Type(opt, T_STRING);
+        ptr->proxy_username = ov_string_dup(opt);
+    }
 
     /* Get the value of the 'proxy_password' parameter: */
     opt = rb_hash_aref(opts, PROXY_PASSWORD_SYMBOL);
-    ptr->proxy_password = ov_string_dup(opt);
+    if (NIL_P(opt)) {
+        ptr->proxy_password = NULL;
+    }
+    else {
+        Check_Type(opt, T_STRING);
+        ptr->proxy_password = ov_string_dup(opt);
+    }
 
     /* Get the value of the 'log' parameter: */
     opt = rb_hash_aref(opts, LOG_SYMBOL);
