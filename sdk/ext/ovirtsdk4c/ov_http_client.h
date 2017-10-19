@@ -28,8 +28,11 @@ extern VALUE ov_http_client_class;
 
 /* Content: */
 typedef struct {
-    /* The libcurl multi handle: */
+    /* The libcurl multi handle, used to implement multiple simultaneous requests: */
     CURLM* handle;
+
+    /* The libcurl share handle, used to share cookie data between multiple requests: */
+    CURLSH* share;
 
     /* The logger: */
     VALUE log;
@@ -51,6 +54,7 @@ typedef struct {
     char* proxy_username;
     char* proxy_password;
     int timeout;
+    char* cookies;
 } ov_http_client_object;
 
 /* Macro to get the pointer: */
