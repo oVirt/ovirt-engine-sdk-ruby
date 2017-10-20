@@ -48,7 +48,7 @@ profiles_service.add(
   OvirtSDK4::VnicProfile.new(
     name: 'myprofile',
     pass_through: {
-      mode: OvirtSDK4::VnicPassThroughMode::DISABLED,
+      mode: OvirtSDK4::VnicPassThroughMode::DISABLED
     },
     port_mirroring: false,
     network: {

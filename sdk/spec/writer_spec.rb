@@ -202,8 +202,8 @@ describe SDK::Writer do
   describe '.render_date' do
     context 'given a date' do
       it 'writes the expected string' do
-        date = DateTime.new(2015, 12, 10, 22, 0, 30, '+1')
-        expect(SDK::Writer.render_integer(date)).to eql('2015-12-10T22:00:30+01:00')
+        date = Time.new(2015, 12, 10, 22, 0, 30, '+01:00')
+        expect(SDK::Writer.render_date(date)).to eql('2015-12-10T22:00:30+01:00')
       end
     end
   end
@@ -212,7 +212,7 @@ describe SDK::Writer do
     context 'given a date' do
       it 'writes the expected XML' do
         writer = SDK::XmlWriter.new
-        date = DateTime.new(2015, 12, 10, 22, 0, 30, '+1')
+        date = Time.new(2015, 12, 10, 22, 0, 30, '+01:00')
         SDK::Writer.write_date(writer, 'value', date)
         expect(writer.string).to eql('<value>2015-12-10T22:00:30+01:00</value>')
         writer.close
