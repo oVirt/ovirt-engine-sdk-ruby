@@ -192,7 +192,7 @@ describe SDK::Reader do
     context 'given a valid date' do
       it 'returns that date' do
         reader = SDK::XmlReader.new('<value>2015-12-10T22:00:30+01:00</value>')
-        date = DateTime.new(2015, 12, 10, 22, 0, 30, '+1')
+        date = Time.new(2015, 12, 10, 22, 0, 30, '+01:00')
         expect(SDK::Reader.read_date(reader)).to eql(date)
       end
     end
@@ -228,7 +228,7 @@ describe SDK::Reader do
           '</list>'
         )
         dates = [
-          DateTime.new(2015, 12, 10, 22, 0, 30, '+1')
+          Time.new(2015, 12, 10, 22, 0, 30, '+01:00')
         ]
         expect(SDK::Reader.read_dates(reader)).to eql(dates)
       end
@@ -243,8 +243,8 @@ describe SDK::Reader do
           '</list>'
         )
         dates = [
-          DateTime.new(2015, 12, 10, 22, 0, 30, '+1'),
-          DateTime.new(2016, 12, 10, 22, 0, 30, '+1')
+          Time.new(2015, 12, 10, 22, 0, 30, '+01:00'),
+          Time.new(2016, 12, 10, 22, 0, 30, '+01:00')
         ]
         expect(SDK::Reader.read_dates(reader)).to eql(dates)
       end

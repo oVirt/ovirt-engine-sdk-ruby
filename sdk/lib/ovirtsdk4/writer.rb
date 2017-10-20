@@ -99,7 +99,7 @@ module OvirtSDK4
     #
     # Converts the given date value to an string.
     #
-    # @param value [DateTime]
+    # @param value [Time]
     # @return [String]
     #
     def self.render_date(value)
@@ -122,7 +122,7 @@ module OvirtSDK4
         render_integer(value)
       elsif type.equal?(Float)
         render_decimal(value)
-      elsif type.equal?(DateTime)
+      elsif type.equal?(Time)
         render_date(value)
       else
         raise Error, "Don't know how to render value '#{value}' of type '#{type}'"
@@ -134,7 +134,7 @@ module OvirtSDK4
     #
     # @param writer [XmlWriter]
     # @param name [String]
-    # @param value [DateTime]
+    # @param value [Time]
     #
     def self.write_date(writer, name, value)
       writer.write_element(name, Writer.render_date(value))
