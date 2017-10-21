@@ -53,6 +53,13 @@ Style/ConditionalAssignment:
   Enabled: false
 
 #
+# We need to use `DateTime` instead of `Date` or `Time` because we use
+# the `xmlschema` method, which is only included in `DateTime`.
+#
+Style/DateTime:
+  Enabled: false
+
+#
 # The spec for types includes some apparently stupid tests, like
 # checking that the result of `==` is `true` when an object is compared
 # to itself. Rubocop doesn't like these tests, but we want them anyhow,
