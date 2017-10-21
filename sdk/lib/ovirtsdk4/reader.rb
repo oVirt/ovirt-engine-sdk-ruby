@@ -157,12 +157,12 @@ module OvirtSDK4
     # Converts the given text to a date value.
     #
     # @param text [String]
-    # @return [Time]
+    # @return [DateTime]
     #
     def self.parse_date(text)
       return nil if text.nil?
       begin
-        return Time.xmlschema(text)
+        return DateTime.xmlschema(text)
       rescue ArgumentError
         raise Error, "The text '#{text}' isn't a valid date."
       end
@@ -172,7 +172,7 @@ module OvirtSDK4
     # Reads a date value, assuming that the cursor is positioned at the start element that contains the value.
     #
     # @param reader [XmlReader]
-    # @return [Time]
+    # @return [DateTime]
     #
     def self.read_date(reader)
       Reader.parse_date(reader.read_element)
@@ -183,7 +183,7 @@ module OvirtSDK4
     # values.
     #
     # @param reader [XmlReader]
-    # @return [Array<Time>]
+    # @return [Array<DateTime>]
     #
     def self.read_dates(reader)
       reader.read_elements.map { |text| Reader.parse_date(text) }
