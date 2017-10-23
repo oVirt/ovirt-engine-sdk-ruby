@@ -2,6 +2,51 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.2.0-alpha4 / Oct 23 2017
+
+Update to model 4.2.23:
+
+* Add new services and types to enable automatic provisioning of
+  external network providers during host installation.
+
+* Explicitly indicate that CPU type is mandtory when adding a cluster.
+
+* Add `image` parameter to `HostService.upgrade`
+  https://bugzilla.redhat.com/1488434[#1488434].
+
+* Add `storageErrorResumeBehaviour` to virtual machines, templates and
+  instance types https://bugzilla.redhat.com/1317450[#1317450].
+
+* Don't require name or identifier for adding SSH public key
+  https://bugzilla.redhat.com/1497641[#1497641].
+
+* Add `reboot` parameter to the `upgrade` method of the service that
+  manages a host.
+
+* Add `registrationConfiguration` parameter to the operations that
+  register virtual machines and templates.
+
+* Add documentation explaining how to add snapshots with disk
+  attachments.
+
+* Add documentation explaining how to add a template with disks in
+  specific storage domains https://bugzilla.redhat.com/1492614[#1492614].
+
+* Add `vnicProfileMappings` parameter to the operation that registers a
+  template.
+
+New features:
+
+* Check types of service method parameters
+  https://bugzilla.redhat.com/1378113[#1378113].
+
+* Add support for multiple threads
+  https://bugzilla.redhat.com/1496846[#1496846].
+
+Bug fixes:
+
+* Check types of HTTP client constructor parameters.
+
 == 4.2.0-alpha3 / Sep 25 2017
 
 Update to model 4.2.19:
