@@ -24,12 +24,19 @@ need to do the following:
   gcc \
   libcurl-devel \
   libxml2-devel \
+  redhat-rpm-config \
   ruby \
   ruby-devel \
   rubygems \
   rubygems-devel
 
-If you are the `apt-get` tool, in distributions like Debian, or Ubuntu:
+NOTE: The installation of the `ruby`, `ruby-devel`, `rubygems` and
+`rubygems-devel` packages is necessary if you are going to use the Ruby
+version included in your distribution. If you are using tools like
+`rbenv` or `rvm` then this is not necessary.
+
+If you are using the `apt-get` tool, in distributions like Debian, or
+Ubuntu:
 
   # apt-get --assume-yes install \
   gcc \
@@ -37,6 +44,11 @@ If you are the `apt-get` tool, in distributions like Debian, or Ubuntu:
   libxml2-dev \
   ruby \
   ruby-dev
+
+NOTE: The installation of the `ruby`, and `ruby-dev` packages is
+necessary if you are going to use the Ruby version included in your
+distribution. If you are using tools like `rbenv` or `rvm` then this is
+not necessary.
 
 Some Linux distributions, like Debian and Ubuntu, provide multiple
 versions of `libcurl`, compiled with support for different TLS
