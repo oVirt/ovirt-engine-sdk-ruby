@@ -7,6 +7,7 @@ libxml2-devel
 maven
 python
 python-lxml
+redhat-rpm-config
 rpm-build
 rpmdevtools
 ruby
