@@ -50,6 +50,7 @@ static VALUE PROXY_PASSWORD_SYMBOL;
 static VALUE PROXY_URL_SYMBOL;
 static VALUE PROXY_USERNAME_SYMBOL;
 static VALUE TIMEOUT_SYMBOL;
+static VALUE CONNECT_TIMEOUT_SYMBOL;
 static VALUE COOKIES_SYMBOL;
 
 /* Method identifiers: */
@@ -201,6 +202,7 @@ static VALUE ov_http_client_alloc(VALUE klass) {
     ptr->proxy_username = NULL;
     ptr->proxy_password = NULL;
     ptr->timeout = 0;
+    ptr->connect_timeout = 0;
     ptr->cookies = NULL;
     return TypedData_Wrap_Struct(klass, &ov_http_client_type, ptr);
 }
@@ -512,6 +514,16 @@ static VALUE ov_http_client_initialize(int argc, VALUE* argv, VALUE self) {
         ptr->timeout = NUM2INT(opt);
     }
 
+    /* Get the value of the 'connect_timeout' parameter: */
+    opt = rb_hash_aref(opts, CONNECT_TIMEOUT_SYMBOL);
+    if (NIL_P(opt)) {
+        ptr->connect_timeout = 0;
+    }
+    else {
+        Check_Type(opt, T_FIXNUM);
+        ptr->connect_timeout = NUM2INT(opt);
+    }
+
     /* Get the value of the 'proxy_url' parameter: */
     opt = rb_hash_aref(opts, PROXY_URL_SYMBOL);
     if (NIL_P(opt)) {
@@ -785,6 +797,7 @@ static void ov_http_client_prepare_handle(ov_http_client_object* client_ptr, ov_
     VALUE header;
     VALUE url;
     int timeout;
+    int connect_timeout;
 
     /* Configure sharing of cookies with other handlers created by the client: */
     curl_easy_setopt(handle, CURLOPT_SHARE, client_ptr->share);
@@ -802,12 +815,19 @@ static void ov_http_client_prepare_handle(ov_http_client_object* client_ptr, ov_
         curl_easy_setopt(handle, CURLOPT_CAINFO, client_ptr->ca_file);
     }
 
-    /* Configure the timeout: */
+    /* Configure the total timeout: */
     timeout = client_ptr->timeout;
     if (!NIL_P(request_ptr->timeout)) {
         timeout = NUM2INT(request_ptr->timeout);
     }
     curl_easy_setopt(handle, CURLOPT_TIMEOUT, timeout);
+
+    /* Configure the connect timeout: */
+    connect_timeout = client_ptr->connect_timeout;
+    if (!NIL_P(request_ptr->connect_timeout)) {
+        connect_timeout = NUM2INT(request_ptr->connect_timeout);
+    }
+    curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, connect_timeout);
 
     /* Configure compression of responses (setting the value to zero length string means accepting all the
        compression types that libcurl supports): */
@@ -1011,19 +1031,20 @@ void ov_http_client_define(void) {
     rb_define_method(ov_http_client_class, "wait",  ov_http_client_wait,  1);
 
     /* Define the symbols: */
-    CA_FILE_SYMBOL        = ID2SYM(rb_intern("ca_file"));
-    COMPRESS_SYMBOL       = ID2SYM(rb_intern("compress"));
-    CONNECTIONS_SYMBOL    = ID2SYM(rb_intern("connections"));
-    DEBUG_SYMBOL          = ID2SYM(rb_intern("debug"));
-    INSECURE_SYMBOL       = ID2SYM(rb_intern("insecure"));
-    LOG_SYMBOL            = ID2SYM(rb_intern("log"));
-    PASSWORD_SYMBOL       = ID2SYM(rb_intern("password"));
-    PIPELINE_SYMBOL       = ID2SYM(rb_intern("pipeline"));
-    PROXY_PASSWORD_SYMBOL = ID2SYM(rb_intern("proxy_password"));
-    PROXY_URL_SYMBOL      = ID2SYM(rb_intern("proxy_url"));
-    PROXY_USERNAME_SYMBOL = ID2SYM(rb_intern("proxy_username"));
-    TIMEOUT_SYMBOL        = ID2SYM(rb_intern("timeout"));
-    COOKIES_SYMBOL        = ID2SYM(rb_intern("cookies"));
+    CA_FILE_SYMBOL         = ID2SYM(rb_intern("ca_file"));
+    COMPRESS_SYMBOL        = ID2SYM(rb_intern("compress"));
+    CONNECTIONS_SYMBOL     = ID2SYM(rb_intern("connections"));
+    DEBUG_SYMBOL           = ID2SYM(rb_intern("debug"));
+    INSECURE_SYMBOL        = ID2SYM(rb_intern("insecure"));
+    LOG_SYMBOL             = ID2SYM(rb_intern("log"));
+    PASSWORD_SYMBOL        = ID2SYM(rb_intern("password"));
+    PIPELINE_SYMBOL        = ID2SYM(rb_intern("pipeline"));
+    PROXY_PASSWORD_SYMBOL  = ID2SYM(rb_intern("proxy_password"));
+    PROXY_URL_SYMBOL       = ID2SYM(rb_intern("proxy_url"));
+    PROXY_USERNAME_SYMBOL  = ID2SYM(rb_intern("proxy_username"));
+    TIMEOUT_SYMBOL         = ID2SYM(rb_intern("timeout"));
+    CONNECT_TIMEOUT_SYMBOL = ID2SYM(rb_intern("connect_timeout"));
+    COOKIES_SYMBOL         = ID2SYM(rb_intern("cookies"));
 
     /* Define the method identifiers: */
     COMPARE_BY_IDENTITY_ID = rb_intern("compare_by_identity");

@@ -54,6 +54,7 @@ typedef struct {
     char* proxy_username;
     char* proxy_password;
     int timeout;
+    int connect_timeout;
     char* cookies;
 } ov_http_client_object;
 
