@@ -31,16 +31,17 @@ extern VALUE DELETE_SYMBOL;
 
 /* Content: */
 typedef struct {
-    VALUE method;   /* Symbol */
-    VALUE url;      /* String */
-    VALUE query;    /* Hash<String, String> */
-    VALUE headers;  /* Hash<String, String> */
-    VALUE username; /* String */
-    VALUE password; /* String */
-    VALUE token;    /* String */
-    VALUE kerberos; /* Boolean */
-    VALUE body;     /* String */
-    VALUE timeout;  /* Integer */
+    VALUE method;          /* Symbol */
+    VALUE url;             /* String */
+    VALUE query;           /* Hash<String, String> */
+    VALUE headers;         /* Hash<String, String> */
+    VALUE username;        /* String */
+    VALUE password;        /* String */
+    VALUE token;           /* String */
+    VALUE kerberos;        /* Boolean */
+    VALUE body;            /* String */
+    VALUE timeout;         /* Integer */
+    VALUE connect_timeout; /* Integer */
 } ov_http_request_object;
 
 /* Macro to get the pointer: */

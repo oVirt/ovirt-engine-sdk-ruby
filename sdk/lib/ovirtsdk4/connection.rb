@@ -75,8 +75,11 @@ module OvirtSDK4
     #   instead of user name and password to obtain the OAuth token.
     #
     # @option opts [Integer] :timeout (0) The maximun total time to wait for the response, in seconds. A value of zero
-    #   (the default) means wait for ever. If the timeout expires before the response is received an exception will be
-    #   raised.
+    #   (the default) means wait for ever. If the timeout expires before the response is received a `TimeoutError`
+    #   exception will be raised.
+    #
+    # @option opts [Integer] :connect_timeout (300) The maximun time to wait for connection establishment, in seconds.
+    #   If the timeout expires before the connection is established a `TimeoutError` exception will be raised.
     #
     # @option opts [Boolean] :compress (true) A boolean flag indicating if the SDK should ask the server to send
     #   compressed responses. Note that this is a hint for the server, and that it may return uncompressed data even
@@ -117,6 +120,7 @@ module OvirtSDK4
       @log = opts[:log]
       @kerberos = opts[:kerberos] || false
       @timeout = opts[:timeout] || 0
+      @connect_timeout = opts[:connect_timeout] || 0
       @compress = opts[:compress] || true
       @proxy_url = opts[:proxy_url]
       @proxy_username = opts[:proxy_username]
@@ -156,6 +160,7 @@ module OvirtSDK4
         debug: @debug,
         log: @log,
         timeout: @timeout,
+        connect_timeout: @connect_timeout,
         compress: @compress,
         proxy_url: @proxy_url,
         proxy_username: @proxy_username,

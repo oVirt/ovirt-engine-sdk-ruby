@@ -40,6 +40,7 @@ static VALUE TOKEN_SYMBOL;
 static VALUE KERBEROS_SYMBOL;
 static VALUE BODY_SYMBOL;
 static VALUE TIMEOUT_SYMBOL;
+static VALUE CONNECT_TIMEOUT_SYMBOL;
 
 static void ov_http_request_mark(void* vptr) {
     ov_http_request_object* ptr;
@@ -55,6 +56,7 @@ static void ov_http_request_mark(void* vptr) {
     rb_gc_mark(ptr->kerberos);
     rb_gc_mark(ptr->body);
     rb_gc_mark(ptr->timeout);
+    rb_gc_mark(ptr->connect_timeout);
 }
 
 static void ov_http_request_free(void* vptr) {
@@ -83,16 +85,17 @@ static VALUE ov_http_request_alloc(VALUE klass) {
     ov_http_request_object* ptr;
 
     ptr = ALLOC(ov_http_request_object);
-    ptr->method   = Qnil;
-    ptr->url      = Qnil;
-    ptr->query    = Qnil;
-    ptr->headers  = Qnil;
-    ptr->username = Qnil;
-    ptr->password = Qnil;
-    ptr->token    = Qnil;
-    ptr->kerberos = Qnil;
-    ptr->body     = Qnil;
-    ptr->timeout  = Qnil;
+    ptr->method          = Qnil;
+    ptr->url             = Qnil;
+    ptr->query           = Qnil;
+    ptr->headers         = Qnil;
+    ptr->username        = Qnil;
+    ptr->password        = Qnil;
+    ptr->token           = Qnil;
+    ptr->kerberos        = Qnil;
+    ptr->body            = Qnil;
+    ptr->timeout         = Qnil;
+    ptr->connect_timeout = Qnil;
     return TypedData_Wrap_Struct(klass, &ov_http_request_type, ptr);
 }
 
@@ -279,6 +282,24 @@ static VALUE ov_http_request_set_timeout(VALUE self, VALUE value) {
     return Qnil;
 }
 
+static VALUE ov_http_request_get_connect_timeout(VALUE self) {
+    ov_http_request_object* ptr;
+
+    ov_http_request_ptr(self, ptr);
+    return ptr->connect_timeout;
+}
+
+static VALUE ov_http_request_set_connect_timeout(VALUE self, VALUE value) {
+    ov_http_request_object* ptr;
+
+    ov_http_request_ptr(self, ptr);
+    if (!NIL_P(value)) {
+        Check_Type(value, T_FIXNUM);
+    }
+    ptr->connect_timeout = value;
+    return Qnil;
+}
+
 static VALUE ov_http_request_initialize(int argc, VALUE* argv, VALUE self) {
     VALUE opts;
 
@@ -304,6 +325,7 @@ static VALUE ov_http_request_initialize(int argc, VALUE* argv, VALUE self) {
     ov_http_request_set_token(self, rb_hash_aref(opts, TOKEN_SYMBOL));
     ov_http_request_set_body(self, rb_hash_aref(opts, BODY_SYMBOL));
     ov_http_request_set_timeout(self, rb_hash_aref(opts, TIMEOUT_SYMBOL));
+    ov_http_request_set_connect_timeout(self, rb_hash_aref(opts, CONNECT_TIMEOUT_SYMBOL));
 
     return self;
 }
@@ -317,38 +339,41 @@ void ov_http_request_define(void) {
     rb_define_method(ov_http_request_class, "initialize", ov_http_request_initialize, -1);
 
     /* Define the methods: */
-    rb_define_method(ov_http_request_class, "method",    ov_http_request_get_method,   0);
-    rb_define_method(ov_http_request_class, "method=",   ov_http_request_set_method,   1);
-    rb_define_method(ov_http_request_class, "url",       ov_http_request_get_url,      0);
-    rb_define_method(ov_http_request_class, "url=",      ov_http_request_set_url,      1);
-    rb_define_method(ov_http_request_class, "query",     ov_http_request_get_query,    0);
-    rb_define_method(ov_http_request_class, "query=",    ov_http_request_set_query,    1);
-    rb_define_method(ov_http_request_class, "headers",   ov_http_request_get_headers,  0);
-    rb_define_method(ov_http_request_class, "headers=",  ov_http_request_set_headers,  1);
-    rb_define_method(ov_http_request_class, "username",  ov_http_request_get_username, 0);
-    rb_define_method(ov_http_request_class, "username=", ov_http_request_set_username, 1);
-    rb_define_method(ov_http_request_class, "password",  ov_http_request_get_password, 0);
-    rb_define_method(ov_http_request_class, "password=", ov_http_request_set_password, 1);
-    rb_define_method(ov_http_request_class, "token",     ov_http_request_get_token,    0);
-    rb_define_method(ov_http_request_class, "token=",    ov_http_request_set_token,    1);
-    rb_define_method(ov_http_request_class, "kerberos",  ov_http_request_get_kerberos, 0);
-    rb_define_method(ov_http_request_class, "kerberos=", ov_http_request_set_kerberos, 1);
-    rb_define_method(ov_http_request_class, "body",      ov_http_request_get_body,     0);
-    rb_define_method(ov_http_request_class, "body=",     ov_http_request_set_body,     1);
-    rb_define_method(ov_http_request_class, "timeout",   ov_http_request_get_timeout,  0);
-    rb_define_method(ov_http_request_class, "timeout=",  ov_http_request_set_timeout,  1);
+    rb_define_method(ov_http_request_class, "method",           ov_http_request_get_method,          0);
+    rb_define_method(ov_http_request_class, "method=",          ov_http_request_set_method,          1);
+    rb_define_method(ov_http_request_class, "url",              ov_http_request_get_url,             0);
+    rb_define_method(ov_http_request_class, "url=",             ov_http_request_set_url,             1);
+    rb_define_method(ov_http_request_class, "query",            ov_http_request_get_query,           0);
+    rb_define_method(ov_http_request_class, "query=",           ov_http_request_set_query,           1);
+    rb_define_method(ov_http_request_class, "headers",          ov_http_request_get_headers,         0);
+    rb_define_method(ov_http_request_class, "headers=",         ov_http_request_set_headers,         1);
+    rb_define_method(ov_http_request_class, "username",         ov_http_request_get_username,        0);
+    rb_define_method(ov_http_request_class, "username=",        ov_http_request_set_username,        1);
+    rb_define_method(ov_http_request_class, "password",         ov_http_request_get_password,        0);
+    rb_define_method(ov_http_request_class, "password=",        ov_http_request_set_password,        1);
+    rb_define_method(ov_http_request_class, "token",            ov_http_request_get_token,           0);
+    rb_define_method(ov_http_request_class, "token=",           ov_http_request_set_token,           1);
+    rb_define_method(ov_http_request_class, "kerberos",         ov_http_request_get_kerberos,        0);
+    rb_define_method(ov_http_request_class, "kerberos=",        ov_http_request_set_kerberos,        1);
+    rb_define_method(ov_http_request_class, "body",             ov_http_request_get_body,            0);
+    rb_define_method(ov_http_request_class, "body=",            ov_http_request_set_body,            1);
+    rb_define_method(ov_http_request_class, "timeout",          ov_http_request_get_timeout,         0);
+    rb_define_method(ov_http_request_class, "timeout=",         ov_http_request_set_timeout,         1);
+    rb_define_method(ov_http_request_class, "connect_timeout",  ov_http_request_get_connect_timeout, 0);
+    rb_define_method(ov_http_request_class, "connect_timeout=", ov_http_request_set_connect_timeout, 1);
 
     /* Define the symbols for the attributes: */
-    URL_SYMBOL      = ID2SYM(rb_intern("url"));
-    METHOD_SYMBOL   = ID2SYM(rb_intern("method"));
-    QUERY_SYMBOL    = ID2SYM(rb_intern("query"));
-    HEADERS_SYMBOL  = ID2SYM(rb_intern("headers"));
-    USERNAME_SYMBOL = ID2SYM(rb_intern("username"));
-    PASSWORD_SYMBOL = ID2SYM(rb_intern("password"));
-    TOKEN_SYMBOL    = ID2SYM(rb_intern("token"));
-    KERBEROS_SYMBOL = ID2SYM(rb_intern("kerberos"));
-    BODY_SYMBOL     = ID2SYM(rb_intern("body"));
-    TIMEOUT_SYMBOL  = ID2SYM(rb_intern("timeout"));
+    URL_SYMBOL             = ID2SYM(rb_intern("url"));
+    METHOD_SYMBOL          = ID2SYM(rb_intern("method"));
+    QUERY_SYMBOL           = ID2SYM(rb_intern("query"));
+    HEADERS_SYMBOL         = ID2SYM(rb_intern("headers"));
+    USERNAME_SYMBOL        = ID2SYM(rb_intern("username"));
+    PASSWORD_SYMBOL        = ID2SYM(rb_intern("password"));
+    TOKEN_SYMBOL           = ID2SYM(rb_intern("token"));
+    KERBEROS_SYMBOL        = ID2SYM(rb_intern("kerberos"));
+    BODY_SYMBOL            = ID2SYM(rb_intern("body"));
+    TIMEOUT_SYMBOL         = ID2SYM(rb_intern("timeout"));
+    CONNECT_TIMEOUT_SYMBOL = ID2SYM(rb_intern("connect_timeout"));
 
     /* Define the symbols for the HTTP methods: */
     GET_SYMBOL    = ID2SYM(rb_intern("GET"));
