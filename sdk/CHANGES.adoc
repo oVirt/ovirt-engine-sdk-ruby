@@ -2,6 +2,27 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.1.10 / Nov 3 2017
+
+Update to model 4.1.40:
+
+* Add `image` parameter to `HostService.upgrade`
+  https://bugzilla.redhat.com/1488434[#1488434].
+
+New features:
+
+* Add support for cookies.
+
+* Add `connect_timeout` parameter
+  https://bugzilla.redhat.com/1508944[#1508944].
+
+Bug fixes:
+
+* Check the types of the `HttpClient` constructor parameters.
+
+* Require `redhat-rpm-config` for building
+  https://bugzilla.redhat.com/1505427[#1505427].
+
 == 4.1.9 / Oct 13 2017
 
 Update to model 4.1.39:
