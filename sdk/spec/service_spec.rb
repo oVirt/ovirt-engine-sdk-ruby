@@ -71,6 +71,10 @@ describe SDK::Service do
       it 'raises an exception containing the message' do
         expect { @service.check_fault(@response) }.to raise_error(SDK::Error, /mymessage/)
       end
+
+      it 'raises an exception explaining that the body is empty' do
+        expect { @service.check_fault(@response) }.to raise_error(SDK::Error, /body.*empty/)
+      end
     end
 
     context 'given an empty response, with nil body' do
@@ -89,6 +93,10 @@ describe SDK::Service do
 
       it 'raises an exception containing the message' do
         expect { @service.check_fault(@response) }.to raise_error(SDK::Error, /mymessage/)
+      end
+
+      it 'raises an exception explaining that the body is empty' do
+        expect { @service.check_fault(@response) }.to raise_error(SDK::Error, /body.*empty/)
       end
     end
   end
