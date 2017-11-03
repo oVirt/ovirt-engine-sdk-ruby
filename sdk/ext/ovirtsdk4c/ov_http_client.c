@@ -866,6 +866,7 @@ static void ov_http_client_prepare_handle(ov_http_client_object* client_ptr, ov_
        curl_easy_setopt(handle, CURLOPT_POST, 1L);
     }
     else if (rb_eql(request_ptr->method, PUT_SYMBOL)) {
+       *headers = curl_slist_append(*headers, "Expect:");
        curl_easy_setopt(handle, CURLOPT_UPLOAD, 1L);
        curl_easy_setopt(handle, CURLOPT_PUT, 1L);
     }
