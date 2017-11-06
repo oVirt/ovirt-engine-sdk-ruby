@@ -2,6 +2,13 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.1.12 / Nov 6 2017
+
+Bug fixes:
+
+* Virtual machine remove fails due to spelling mistake
+  https://bugzilla.redhat.com/1509020[#1509020].
+
 == 4.1.11 / Nov 6 2017
 
 Bug fixes:
