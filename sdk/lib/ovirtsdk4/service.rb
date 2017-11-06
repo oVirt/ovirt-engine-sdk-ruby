@@ -272,7 +272,7 @@ module OvirtSDK4
       request.timeout = timeout
       connection.send(request)
       result = Future.new(self, request) do |response|
-        raise response if response.is_a?(exception)
+        raise response if response.is_a?(Exception)
         check_fault(response) unless response.code == 200
       end
       result = result.wait if wait
