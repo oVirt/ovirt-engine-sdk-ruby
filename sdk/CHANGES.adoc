@@ -2,6 +2,16 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.1.11 / Nov 6 2017
+
+Bug fixes:
+
+* Improve error message for empty response body
+  https://bugzilla.redhat.com/1509020[#1509020].
+
+* Don't send `Expect: 100-continue`
+  https://bugzilla.redhat.com/1509910[#1509910].
+
 == 4.1.10 / Nov 3 2017
 
 Update to model 4.1.40:
