@@ -2,6 +2,41 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.2.0-alpha5 / Nov 8 2017
+
+Update to model 4.2.24:
+
+* Add the `follow` parameter to all the `Get` and `List` operations.
+
+* Add the `force` parameter to the operation that puts a storage domain
+  into maintenance mode https://bugzilla.redhat.com/1321585[#1321585].
+
+* Deprecate the _OpenStack_ network provider `pluginType` attribute,
+  replacing it with `externalPluginType`.
+
+* Add `quota` and `diskProfile` parameters to the operations that move
+  and copy disks https://bugzilla.redhat.com/1496704[#1496704].
+
+* Add `authenticatedUser` and `effectiveUser` links to the `Api` type
+  https://bugzilla.redhat.com/1472418[#1472418].
+
+New features:
+
+* Add support for cookies.
+
+* Add `connect_timeout` parameter
+  https://bugzilla.redhat.com/1508944[#1508944].
+
+Bug fixes:
+
+* Check the types of the `HttpClient` constructor parameters.
+
+* Require `redhat-rpm-config` for building
+  https://bugzilla.redhat.com/1505427[#1505427].
+
+* Don't send `Expect: 100-continue`
+  https://bugzilla.redhat.com/1509910[#1509910].
+
 == 4.2.0-alpha4 / Oct 23 2017
 
 Update to model 4.2.23:
