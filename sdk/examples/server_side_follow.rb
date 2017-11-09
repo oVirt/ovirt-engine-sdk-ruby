@@ -19,9 +19,10 @@
 require 'logger'
 require 'ovirtsdk4'
 
-# This example shows how to use the `follow` parameter to retrieve a virtual machines with its disks
+# This example shows how to use the `follow` parameter to retrieve a virtual machine with its disks
 # and network interface cards using a single request. Note that this `follow` parameter is only
-# available since version 4.2 of the server.
+# available since version 4.2 of the server. If the `follow` parameter is passed to a version of the
+# server older than 4.2, it will silently ignore it.
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
@@ -36,8 +37,8 @@ connection = OvirtSDK4::Connection.new(
 # Get the reference to the service that manages the collection of virtual machines:
 vms_service = connection.system_service.vms_service
 
-# Find the virtual machine, using the `follow` parameter to request also the disks and the network
-# interface cards:
+# Find the virtual machine. By using the `follow` parameter we request the server to return the
+# disks and network interface cards as part of the response.
 vm = vms_service.list(
   search: 'name=myvm',
   follow: 'disk_attachments.disk,nics'
