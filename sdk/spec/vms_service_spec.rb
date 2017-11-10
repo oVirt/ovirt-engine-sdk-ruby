@@ -103,6 +103,83 @@ describe SDK::VmsService do
     end
   end
 
+  describe '#add_from_scratch' do
+    context 'when adding a VM with the `clone` parameter' do
+      it 'send a POST request with a `clone` query parameter' do
+        mount_xml(path: 'vms', status: 201, body: '<vm/>')
+        vm = SDK::Vm.new
+        @service.add_from_scratch(vm, clone: true)
+        expect(last_request_query).to eql('clone=true')
+      end
+    end
+
+    context 'when adding a VM with the `clone` and `clone_permissions` parameters' do
+      it 'send a POST request with a `clone` and `clone_permissions` query parameters' do
+        mount_xml(path: 'vms', status: 201, body: '<vm/>')
+        vm = SDK::Vm.new
+        @service.add_from_scratch(vm, clone: true, clone_permissions: true)
+        expect(last_request_query).to eql('clone=true&clone_permissions=true')
+      end
+    end
+
+    context 'when adding a VM with one custom query parameter' do
+      it 'sends a request with a that query parameter' do
+        mount_xml(path: 'vms', body: '<vm/>')
+        @service.add_from_scratch(SDK::Vm.new, query: { my: 'value' })
+        expect(last_request_query).to eql('my=value')
+      end
+    end
+
+    context 'when adding a VM with two custom query parameters' do
+      it 'sends a request with those query parameters' do
+        mount_xml(path: 'vms', body: '<vm/>')
+        @service.add_from_scratch(SDK::Vm.new, query: { my: 'value', your: 'value' })
+        expect(last_request_query).to eql('my=value&your=value')
+      end
+    end
+
+    context 'when adding a VM with one custom header' do
+      it 'sends a request with a that header' do
+        mount_xml(path: 'vms', body: '<vm/>')
+        @service.add_from_scratch(SDK::Vm.new, headers: { my: 'value' })
+        expect(last_request_headers['my']).to eql(['value'])
+      end
+    end
+
+    context 'when adding a VM with two custom headers' do
+      it 'sends a request with those headers' do
+        mount_xml(path: 'vms', body: '<vm/>')
+        @service.add_from_scratch(SDK::Vm.new, headers: { my: 'value', your: 'value' })
+        expect(last_request_headers['my']).to eql(['value'])
+        expect(last_request_headers['your']).to eql(['value'])
+      end
+    end
+
+    context 'when the server returns a 200 code' do
+      it 'raises no exception' do
+        mount_xml(path: 'vms', status: 200, body: '<vm/>')
+        vm = SDK::Vm.new
+        @service.add_from_scratch(vm)
+      end
+    end
+
+    context 'when the server returns a 201 code' do
+      it 'raises no exception' do
+        mount_xml(path: 'vms', status: 201, body: '<vm/>')
+        vm = SDK::Vm.new
+        @service.add_from_scratch(vm)
+      end
+    end
+
+    context 'when the server returns a 202 code' do
+      it 'raises no exception' do
+        mount_xml(path: 'vms', status: 202, body: '<vm/>')
+        vm = SDK::Vm.new
+        @service.add_from_scratch(vm)
+      end
+    end
+  end
+
   describe '#nil?' do
     context 'getting the reference to the service' do
       it 'does not return nil' do

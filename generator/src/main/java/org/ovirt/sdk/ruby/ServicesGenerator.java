@@ -41,6 +41,7 @@ import org.ovirt.api.metamodel.concepts.PrimitiveType;
 import org.ovirt.api.metamodel.concepts.Service;
 import org.ovirt.api.metamodel.concepts.StructType;
 import org.ovirt.api.metamodel.concepts.Type;
+import org.ovirt.api.metamodel.tool.Names;
 import org.ovirt.api.metamodel.tool.SchemaNames;
 
 /**
@@ -58,6 +59,7 @@ public class ServicesGenerator implements RubyGenerator {
     protected File out;
 
     // Reference to the objects used to generate the code:
+    @Inject private Names names;
     @Inject private RubyNames rubyNames;
     @Inject private SchemaNames schemaNames;
 
@@ -137,10 +139,8 @@ public class ServicesGenerator implements RubyGenerator {
         generateClassDeclaration(service);
         buffer.addLine();
 
-        // Generate the service methods, but exclude specialized signatures, as the infrastructure of the SDK isn't yet
-        // prepared for that.
+        // Generate the service methods:
         service.methods()
-            .filter(method -> method.getBase() == null)
             .sorted()
             .forEach(this::generateMethod);
 
@@ -161,7 +161,8 @@ public class ServicesGenerator implements RubyGenerator {
     }
 
     private void generateMethod(Method method) {
-        Name name = method.getName();
+        Method base = getDeepestBase(method);
+        Name name = base.getName();
         if (ADD.equals(name)) {
             generateAddHttpPost(method);
         }
@@ -186,7 +187,7 @@ public class ServicesGenerator implements RubyGenerator {
         List<Parameter> secondaryParameters = getSecondaryParameters(method);
 
         // Generate the parameter specs:
-        Name methodName = method.getName();
+        Name methodName = getFullName(method);
         String specConstant = rubyNames.getConstantStyleName(methodName);
         generateParameterSpecs(specConstant, secondaryParameters);
 
@@ -227,7 +228,7 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addComment();
 
         // Generate the method declaration:
-        buffer.addLine("def add(%1$s, opts = {})", argName);
+        buffer.addLine("def %1$s(%2$s, opts = {})", rubyNames.getMemberStyleName(methodName), argName);
         buffer.addLine(  "internal_add(%1$s, %2$s, %3$s, opts)", argName, argType.getClassName(), specConstant);
         buffer.addLine("end");
         buffer.addLine();
@@ -249,7 +250,7 @@ public class ServicesGenerator implements RubyGenerator {
             .orElse(null);
 
         // Generate the parameter specs:
-        Name methodName = method.getName();
+        Name methodName = getFullName(method);
         String specConstant = rubyNames.getConstantStyleName(methodName);
         generateParameterSpecs(specConstant, inputParameters);
 
@@ -275,7 +276,9 @@ public class ServicesGenerator implements RubyGenerator {
         documentBuiltinParameters();
 
         // Generate the method declaration:
-        String actionPath = getPath(methodName);
+        Method deepestBase = getDeepestBase(method);
+        Name deepestBaseName = deepestBase.getName();
+        String actionPath = getPath(deepestBaseName);
         String resultArg = resultName != null? ":" + resultName: "nil";
         buffer.addLine("def %1$s(opts = {})", actionName);
         buffer.addLine(  "internal_action(:%1$s, %2$s, %3$s, opts)", actionPath, resultArg, specConstant);
@@ -300,7 +303,7 @@ public class ServicesGenerator implements RubyGenerator {
             .orElse(null);
 
         // Generate the parameters spec:
-        Name methodName = method.getName();
+        Name methodName = getFullName(method);
         String specConstant = rubyNames.getConstantStyleName(methodName);
         generateParameterSpecs(specConstant, inParameters);
 
@@ -342,7 +345,7 @@ public class ServicesGenerator implements RubyGenerator {
         List<Parameter> secondaryParameters = getSecondaryParameters(method);
 
         // Generate the parameters spec:
-        Name methodName = method.getName();
+        Name methodName = getFullName(method);
         String specConstant = rubyNames.getConstantStyleName(methodName);
         generateParameterSpecs(specConstant, secondaryParameters);
 
@@ -382,7 +385,7 @@ public class ServicesGenerator implements RubyGenerator {
         buffer.addComment();
 
         // Generate the method declaration:
-        buffer.addLine("def update(%1$s, opts = {})", argName);
+        buffer.addLine("def %1$s(%2$s, opts = {})", rubyNames.getMemberStyleName(methodName), argName);
         buffer.addLine(  "internal_update(%1$s, %2$s, %3$s, opts)", argName, argType.getClassName(), specConstant);
         buffer.addLine("end");
         buffer.addLine();
@@ -396,7 +399,7 @@ public class ServicesGenerator implements RubyGenerator {
             .collect(toList());
 
         // Generate the parameters spec:
-        Name methodName = method.getName();
+        Name methodName = getFullName(method);
         String specConstant = rubyNames.getConstantStyleName(methodName);
         generateParameterSpecs(specConstant, inParameters);
 
@@ -418,7 +421,7 @@ public class ServicesGenerator implements RubyGenerator {
         documentBuiltinParameters();
 
         // Generate the method declaration:
-        buffer.addLine("def remove(opts = {})");
+        buffer.addLine("def %1$s(opts = {})", rubyNames.getMemberStyleName(methodName));
         buffer.addLine(  "internal_remove(%1$s, opts)", specConstant);
         buffer.addLine("end");
         buffer.addLine();
@@ -646,5 +649,30 @@ public class ServicesGenerator implements RubyGenerator {
             .filter(parameter -> parameter.getType() instanceof PrimitiveType)
             .sorted()
             .collect(toList());
+    }
+
+    /**
+     * Returns the deepest base of the given method, the one that doesn't have a base itself.
+     */
+    private Method getDeepestBase(Method method) {
+        Method base = method.getBase();
+        if (base == null) {
+            return method;
+        }
+        return getDeepestBase(base);
+    }
+
+    /**
+     * Calculates the full name of a method, taking into account that the method may extend other method. For this kind
+     * of methods the full name wil be the name of the base, followed by the name of the method. For example, if the
+     * name of the base is {@code Add} and the name of the method is {@code FromSnapsot} then the full method name will
+     * be {@code AddFromSnapshot}.
+     */
+    private Name getFullName(Method method) {
+        Method base = method.getBase();
+        if (base == null) {
+            return method.getName();
+        }
+        return names.concatenate(getFullName(base), method.getName());
     }
 }
