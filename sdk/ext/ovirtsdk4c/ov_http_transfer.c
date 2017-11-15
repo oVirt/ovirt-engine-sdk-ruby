@@ -71,10 +71,21 @@ static VALUE ov_http_transfer_alloc(VALUE klass) {
     return TypedData_Wrap_Struct(klass, &ov_http_transfer_type, ptr);
 }
 
+static VALUE ov_http_transfer_inspect(VALUE self) {
+    ov_http_transfer_object* ptr;
+
+    ov_http_transfer_ptr(self, ptr);
+    return rb_sprintf("#<%"PRIsVALUE":%p>", ov_http_transfer_class, ptr);
+}
+
 void ov_http_transfer_define(void) {
     /* Define the class: */
     ov_http_transfer_class = rb_define_class_under(ov_module, "HttpTransfer", rb_cData);
 
     /* Define the constructor: */
     rb_define_alloc_func(ov_http_transfer_class, ov_http_transfer_alloc);
+
+    /* Define the methods: */
+    rb_define_method(ov_http_transfer_class, "inspect", ov_http_transfer_inspect, 0);
+    rb_define_method(ov_http_transfer_class, "to_s",    ov_http_transfer_inspect, 0);
 }

@@ -45,6 +45,24 @@ module OvirtSDK4
       raise response if response.is_a?(Exception)
       @block.call(response)
     end
+
+    #
+    # Returns a string representation of the future.
+    #
+    # @return [String] The string representation.
+    #
+    def inspect
+      "#<#{self.class.name}:#{@request.method} #{@request.url}>"
+    end
+
+    #
+    # Returns a string representation of the future.
+    #
+    # @return [String] The string representation.
+    #
+    def to_s
+      inspect
+    end
   end
 
   #
@@ -116,6 +134,24 @@ module OvirtSDK4
     def connection
       return @parent if @parent.is_a? Connection
       @parent.connection
+    end
+
+    #
+    # Returns a string representation of the service.
+    #
+    # @return [String] The string representation.
+    #
+    def inspect
+      "#<#{self.class.name}:#{absolute_path}>"
+    end
+
+    #
+    # Returns a string representation of the service.
+    #
+    # @return [String] The string representation.
+    #
+    def to_s
+      inspect
     end
 
     protected

@@ -146,6 +146,18 @@ static VALUE ov_http_response_set_message(VALUE self, VALUE value) {
     return Qnil;
 }
 
+static VALUE ov_http_response_inspect(VALUE self) {
+    ov_http_response_object* ptr;
+
+    ov_http_response_ptr(self, ptr);
+    return rb_sprintf(
+        "#<%"PRIsVALUE":%"PRIsVALUE" %"PRIsVALUE">",
+        ov_http_response_class,
+        ptr->code,
+        ptr->message
+    );
+}
+
 static VALUE ov_http_response_initialize(int argc, VALUE* argv, VALUE self) {
     VALUE opts;
 
@@ -187,6 +199,8 @@ void ov_http_response_define(void) {
     rb_define_method(ov_http_response_class, "headers=", ov_http_response_set_headers, 1);
     rb_define_method(ov_http_response_class, "message",  ov_http_response_get_message, 0);
     rb_define_method(ov_http_response_class, "message=", ov_http_response_set_message, 1);
+    rb_define_method(ov_http_response_class, "inspect",  ov_http_response_inspect,     0);
+    rb_define_method(ov_http_response_class, "to_s",     ov_http_response_inspect,     0);
 
     /* Define the symbols: */
     BODY_SYMBOL    = ID2SYM(rb_intern("body"));

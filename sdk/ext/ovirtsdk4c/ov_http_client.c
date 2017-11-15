@@ -1027,6 +1027,13 @@ static VALUE ov_http_client_wait(VALUE self, VALUE request) {
     return Qnil;
 }
 
+static VALUE ov_http_client_inspect(VALUE self) {
+    ov_http_client_object* ptr;
+
+    ov_http_client_ptr(self, ptr);
+    return rb_sprintf("#<%"PRIsVALUE":%p>", ov_http_client_class, ptr);
+}
+
 void ov_http_client_define(void) {
     CURLcode code;
 
@@ -1042,9 +1049,11 @@ void ov_http_client_define(void) {
     rb_define_method(ov_http_client_class, "initialize", ov_http_client_initialize, -1);
 
     /* Define the methods: */
-    rb_define_method(ov_http_client_class, "close", ov_http_client_close, 0);
-    rb_define_method(ov_http_client_class, "send",  ov_http_client_send,  1);
-    rb_define_method(ov_http_client_class, "wait",  ov_http_client_wait,  1);
+    rb_define_method(ov_http_client_class, "close",   ov_http_client_close,   0);
+    rb_define_method(ov_http_client_class, "inspect", ov_http_client_inspect, 0);
+    rb_define_method(ov_http_client_class, "send",    ov_http_client_send,    1);
+    rb_define_method(ov_http_client_class, "to_s",    ov_http_client_inspect, 0);
+    rb_define_method(ov_http_client_class, "wait",    ov_http_client_wait,    1);
 
     /* Define the symbols: */
     CA_FILE_SYMBOL         = ID2SYM(rb_intern("ca_file"));

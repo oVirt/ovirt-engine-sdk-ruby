@@ -387,6 +387,30 @@ module OvirtSDK4
       raise error
     end
 
+    #
+    # Returns a string representation of the connection.
+    #
+    # @return [String] The string representation.
+    #
+    def inspect
+      "#<#{self.class.name}:#{@url}>"
+    end
+
+    #
+    # Returns a string representation of the connection.
+    #
+    # @return [String] The string representation.
+    #
+    def to_s
+      inspect
+    end
+
+    #
+    # Returns a string representation of the connection.
+    #
+    # @return [String] The string representation.
+    #
+
     private
 
     #

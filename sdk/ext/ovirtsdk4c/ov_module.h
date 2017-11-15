@@ -17,10 +17,10 @@ limitations under the License.
 #ifndef __OV_MODULE_H__
 #define __OV_MODULE_H__
 
-// Module:
+/* Module: */
 extern VALUE ov_module;
 
-// Initialization function:
+/* Initialization function: */
 extern void ov_module_define(void);
 
 #endif
