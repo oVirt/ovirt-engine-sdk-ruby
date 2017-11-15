@@ -188,4 +188,32 @@ describe SDK::VmService do
       end
     end
   end
+
+  describe '#inspect' do
+    it 'contains the path' do
+      expect(@service.inspect).to include('vms/123')
+    end
+
+    it 'does not contain the user name' do
+      expect(@service.inspect).not_to include(test_user)
+    end
+
+    it 'does not contain the password' do
+      expect(@service.inspect).not_to include(test_password)
+    end
+  end
+
+  describe '#to_s' do
+    it 'contains the path' do
+      expect(@service.to_s).to include('vms/123')
+    end
+
+    it 'does not contain the user name' do
+      expect(@service.to_s).not_to include(test_user)
+    end
+
+    it 'does not contain the password' do
+      expect(@service.to_s).not_to include(test_password)
+    end
+  end
 end

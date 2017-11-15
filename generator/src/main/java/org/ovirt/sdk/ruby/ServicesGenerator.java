@@ -141,9 +141,6 @@ public class ServicesGenerator implements RubyGenerator {
         service.locators().sorted().forEach(this::generateLocator);
         generatePathLocator(service);
 
-        // Generate other methods that don't correspond to model methods or locators:
-        generateToS(service);
-
         // End class:
         buffer.addLine("end");
         buffer.addLine();
@@ -446,19 +443,6 @@ public class ServicesGenerator implements RubyGenerator {
         if (clazz != null) {
             buffer.addLine("[:%1$s, %2$s].freeze,", symbol, clazz);
         }
-    }
-
-    private void generateToS(Service service) {
-        RubyName serviceName = rubyNames.getServiceName(service);
-        buffer.addComment();
-        buffer.addComment("Returns an string representation of this service.");
-        buffer.addComment();
-        buffer.addYardTag("return", "[String]");
-        buffer.addComment();
-        buffer.addLine("def to_s");
-        buffer.addLine(  "\"#<#{%1$s}:#{absolute_path}>\"", serviceName.getClassName());
-        buffer.addLine("end");
-        buffer.addLine();
     }
 
     private void generateLocator(Locator locator) {

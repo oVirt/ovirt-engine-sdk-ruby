@@ -300,6 +300,18 @@ static VALUE ov_http_request_set_connect_timeout(VALUE self, VALUE value) {
     return Qnil;
 }
 
+static VALUE ov_http_request_inspect(VALUE self) {
+    ov_http_request_object* ptr;
+
+    ov_http_request_ptr(self, ptr);
+    return rb_sprintf(
+        "#<%"PRIsVALUE":%"PRIsVALUE" %"PRIsVALUE">",
+        ov_http_request_class,
+        ptr->method,
+        ptr->url
+    );
+}
+
 static VALUE ov_http_request_initialize(int argc, VALUE* argv, VALUE self) {
     VALUE opts;
 
@@ -361,6 +373,8 @@ void ov_http_request_define(void) {
     rb_define_method(ov_http_request_class, "timeout=",         ov_http_request_set_timeout,         1);
     rb_define_method(ov_http_request_class, "connect_timeout",  ov_http_request_get_connect_timeout, 0);
     rb_define_method(ov_http_request_class, "connect_timeout=", ov_http_request_set_connect_timeout, 1);
+    rb_define_method(ov_http_request_class, "inspect",          ov_http_request_inspect,             0);
+    rb_define_method(ov_http_request_class, "to_s",             ov_http_request_inspect,             0);
 
     /* Define the symbols for the attributes: */
     URL_SYMBOL             = ID2SYM(rb_intern("url"));
