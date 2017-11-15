@@ -2,6 +2,38 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.2.0-beta1 / Nov 15 2017
+
+Update to model 4.2.25:
+
+* Add new `S390X` value to the `Architecture` type.
+
+* Add new `DIAG288` value to the `WatchdogModel` type.
+
+* Add `OVA` value to the `ConfigurationType` enumerated type.
+
+* Add search parameters to the operation that lists jobs.
+
+* Add `auto_sync` attribute to the _OpenStack_ network provider type
+  https://bugzilla.redhat.com/1511823[#1511823].
+
+* Add operation to export a virtual machine as `OVA` file.
+
+* Add `active` and `transferred` attributes to the `ImageTransfer` type.
+
+* Add `external_provider` and `external_provider_physical_network`
+  attributes to the `Network` type.
+
+* Add `transfer_url` to the `ImageTransfer` type.
+
+* Fix input detail of the operation that exports a virtual machine: it
+  is mandatory to have the identifier or name of the destination
+  storage domain.
+
+New features:
+
+* Add support for method extensions.
+
 == 4.2.0-alpha5 / Nov 8 2017
 
 Update to model 4.2.24:
