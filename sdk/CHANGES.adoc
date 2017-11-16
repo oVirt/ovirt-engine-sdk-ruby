@@ -2,6 +2,13 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.2.0-beta2 / Nov 16 2017
+
+Bug fixes:
+
+* Don't include sensible data in `inspect`
+  https://bugzilla.redhat.com/1513620[#1513620].
+
 == 4.2.0-beta1 / Nov 15 2017
 
 Update to model 4.2.25:
