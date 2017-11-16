@@ -23,11 +23,11 @@ limitations under the License.
   <parent>
     <groupId>org.ovirt.engine.api</groupId>
     <artifactId>ruby-sdk-parent</artifactId>
-    <version>4.2.0.beta2-SNAPSHOT</version>
+    <version>4.2.0.beta2</version>
   </parent>
 
   <artifactId>ruby-sdk</artifactId>
-  <version>4.2.0.beta2-SNAPSHOT</version>
+  <version>4.2.0.beta2</version>
   <packaging>pom</packaging>
 
   <name>oVirt Ruby SDK Gem</name>
