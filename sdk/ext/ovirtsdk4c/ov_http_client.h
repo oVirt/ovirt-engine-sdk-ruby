@@ -37,7 +37,14 @@ typedef struct {
     /* The logger: */
     VALUE log;
 
-    /* This hash store the transfers that are pending. The key of the hash is the request that initiated the transfer,
+    /* The max number of requests that can be processed simultaneously by libcurl. Will be calculated multiplying the
+       max number of connections by the pipeline length: */
+    int limit;
+
+    /* This queue contains the requests that have not yet been sent to libcurl for processing: */
+    VALUE queue;
+
+    /* This hash stores the transfers that are pending. The key of the hash is the request that initiated the transfer,
        and the value is the transfer itself. */
     VALUE pending;
 

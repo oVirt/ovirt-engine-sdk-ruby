@@ -101,8 +101,8 @@ module OvirtSDK4
     #   as the names of the headers. If the same header is provided here and in the `headers` parameter of a specific
     #   method call, then the `headers` parameter of the specific method call will have precedence.
     #
-    # @option opts [Integer] :connections (0) The maximum number of connections to open to the host. If the value is
-    #   `0` (the default) then the number of connections will be unlimited.
+    # @option opts [Integer] :connections (1) The maximum number of connections to open to the host. The value must
+    #   be greater than 0.
     #
     # @option opts [Integer] :pipeline (0) The maximum number of request to put in an HTTP pipeline without waiting for
     #   the response. If the value is `0` (the default) then pipelining is disabled.
@@ -126,7 +126,7 @@ module OvirtSDK4
       @proxy_username = opts[:proxy_username]
       @proxy_password = opts[:proxy_password]
       @headers = opts[:headers]
-      @connections = opts[:connections] || 0
+      @connections = opts[:connections] || 1
       @pipeline = opts[:pipeline] || 0
 
       # Check that the URL has been provided:

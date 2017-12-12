@@ -111,6 +111,54 @@ describe SDK::Connection do
       }
       expect { SDK::Connection.new(options) }.to raise_error(ArgumentError, /url/)
     end
+
+    it 'raises exception if the maximum number of connections is zero' do
+      options = {
+        url:         test_url,
+        token:       test_token,
+        ca_file:     test_ca_file,
+        debug:       test_debug,
+        log:         test_log,
+        connections: 0
+      }
+      expect { SDK::Connection.new(options) }.to raise_error(ArgumentError, /minimum is 1/)
+    end
+
+    it 'raises exception if the maximum number of connections is negative' do
+      options = {
+        url:         test_url,
+        token:       test_token,
+        ca_file:     test_ca_file,
+        debug:       test_debug,
+        log:         test_log,
+        connections: -1
+      }
+      expect { SDK::Connection.new(options) }.to raise_error(ArgumentError, /minimum is 1/)
+    end
+
+    it 'raises exception if the maximum pipeline length is negative' do
+      options = {
+        url:      test_url,
+        token:    test_token,
+        ca_file:  test_ca_file,
+        debug:    test_debug,
+        log:      test_log,
+        pipeline: -1
+      }
+      expect { SDK::Connection.new(options) }.to raise_error(ArgumentError, /minimum is 0/)
+    end
+
+    it 'raises exception if the maximum number of connections is negative' do
+      options = {
+        url:         test_url,
+        token:       test_token,
+        ca_file:     test_ca_file,
+        debug:       test_debug,
+        log:         test_log,
+        connections: -1
+      }
+      expect { SDK::Connection.new(options) }.to raise_error(ArgumentError, /minimum is 1/)
+    end
   end
 
   describe '#authenticate' do

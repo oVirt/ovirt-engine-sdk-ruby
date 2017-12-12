@@ -64,15 +64,20 @@ static ID READ_ID;
 static ID STRING_ID;
 static ID STRING_IO_ID;
 static ID URI_ID;
+static ID WARN_ID;
+static ID WARN_Q_ID;
 static ID WRITE_ID;
 
 /* References to classes: */
-static VALUE URI_CLASS;
 static VALUE STRING_IO_CLASS;
+static VALUE URI_CLASS;
 
 /* Constants: */
 const char CR = '\x0D';
 const char LF = '\x0A';
+
+/* Version of libcurl: */
+static curl_version_info_data* libcurl_version;
 
 /* Before version 7.38.0 of libcurl the NEGOTIATE authentication method was named GSSNEGOTIATE: */
 #ifndef CURLAUTH_NEGOTIATE
@@ -83,6 +88,21 @@ const char LF = '\x0A';
    directly instead: */
 #ifndef CURLPIPE_HTTP1
 #define CURLPIPE_HTTP1 1
+#endif
+
+/* Define options that may not be available in some versions of libcurl: */
+#if LIBCURL_VERSION_NUM < 0x071e00 /* 7.30.0 */
+#define CURLMOPT_MAX_HOST_CONNECTIONS 7
+#define CURLMOPT_MAX_PIPELINE_LENGTH 8
+#define CURLMOPT_MAX_TOTAL_CONNECTIONS 13
+#endif
+
+#if LIBCURL_VERSION_NUM < 0x070f03 /* 7.16.3 */
+#define CURLMOPT_MAXCONNECTS 6
+#endif
+
+#if LIBCURL_VERSION_NUM < 0x070f00 /* 7.16.0 */
+#define CURLMOPT_PIPELINING 3
 #endif
 
 typedef struct {
@@ -131,6 +151,22 @@ static void ov_http_client_log_info(VALUE log, const char* format, ...) {
     }
 }
 
+static void ov_http_client_log_warn(VALUE log, const char* format, ...) {
+    VALUE enabled;
+    VALUE message;
+    va_list args;
+
+    if (!NIL_P(log)) {
+        enabled = rb_funcall(log, WARN_Q_ID, 0);
+        if (RTEST(enabled)) {
+            va_start(args, format);
+            message = rb_vsprintf(format, args);
+            rb_funcall(log, WARN_ID, 1, message);
+            va_end(args);
+        }
+    }
+}
+
 static void ov_http_client_check_closed(ov_http_client_object* object) {
     if (object->handle == NULL) {
         rb_raise(ov_error_class, "The client is already closed");
@@ -142,6 +178,7 @@ static void ov_http_client_mark(void* vptr) {
 
     ptr = vptr;
     rb_gc_mark(ptr->log);
+    rb_gc_mark(ptr->queue);
     rb_gc_mark(ptr->pending);
     rb_gc_mark(ptr->completed);
 }
@@ -192,6 +229,8 @@ static VALUE ov_http_client_alloc(VALUE klass) {
     ptr->handle = NULL;
     ptr->share = NULL;
     ptr->log = Qnil;
+    ptr->limit = 0;
+    ptr->queue = Qnil;
     ptr->pending = Qnil;
     ptr->completed = Qnil;
     ptr->compress = false;
@@ -567,15 +606,21 @@ static VALUE ov_http_client_initialize(int argc, VALUE* argv, VALUE self) {
         Check_Type(opt, T_FIXNUM);
         pipeline = NUM2LONG(opt);
     }
+    if (pipeline < 0) {
+        rb_raise(rb_eArgError, "The maximum pipeline length can't be %ld, minimum is 0.", pipeline);
+    }
 
     /* Get the value of the 'connections' parameter: */
     opt = rb_hash_aref(opts, CONNECTIONS_SYMBOL);
     if (NIL_P(opt)) {
-        connections = 0;
+        connections = 1;
     }
     else {
         Check_Type(opt, T_FIXNUM);
         connections = NUM2LONG(opt);
+    }
+    if (connections < 1) {
+        rb_raise(rb_eArgError, "The maximum number of connections can't be %ld, minimum is 1.", connections);
     }
 
    /* Get the value of the 'cookies' parameter. If it is a string it will be used as the path of the file where the
@@ -592,10 +637,21 @@ static VALUE ov_http_client_initialize(int argc, VALUE* argv, VALUE self) {
         ptr->cookies = NULL;
     }
 
+    /* Create the queue that contains requests that haven't been sent to libcurl yet: */
+    ptr->queue = rb_ary_new();
+
     /* Create the hash that contains the transfers are pending an completed. Both use the identity of the request
        as key. */
     ptr->completed = rb_funcall(rb_hash_new(), COMPARE_BY_IDENTITY_ID, 0);
     ptr->pending = rb_funcall(rb_hash_new(), COMPARE_BY_IDENTITY_ID, 0);
+
+    /* Calculate the max number of requests that can be handled by libcurl simultaneously. For versions of libcurl
+       newer than 7.30.0 the limit can be increased when using pipelining. For older versions it can't be increased
+       because libcurl would create additional connections for the requests that can't be pipelined. */
+    ptr->limit = connections;
+    if (pipeline > 0 && libcurl_version->version_num >= 0x071e00 /* 7.30.0 */) {
+        ptr->limit *= pipeline;
+    }
 
     /* Create the libcurl multi handle: */
     ptr->handle = curl_multi_init();
@@ -615,14 +671,47 @@ static VALUE ov_http_client_initialize(int argc, VALUE* argv, VALUE self) {
     /* Enable pipelining: */
     if (pipeline > 0) {
         curl_multi_setopt(ptr->handle, CURLMOPT_PIPELINING, CURLPIPE_HTTP1);
-#ifdef CURLMOPT_MAX_PIPELINE_LENGTH
-        curl_multi_setopt(ptr->handle, CURLMOPT_MAX_PIPELINE_LENGTH, pipeline);
-#endif
+        if (libcurl_version->version_num >= 0x071e00 /* 7.30.0 */) {
+            curl_multi_setopt(ptr->handle, CURLMOPT_MAX_PIPELINE_LENGTH, pipeline);
+        }
+        else {
+            ov_http_client_log_warn(
+                ptr->log,
+                "Can't set maximum pipeline length to %d, it isn't supported by libcurl %s. Upgrade to 7.30.0 or "
+                "newer to avoid this issue.",
+                pipeline,
+                libcurl_version->version
+            );
+        }
     }
+
+    /* Set the max number of connections: */
     if (connections > 0) {
-#ifdef CURLMOPT_MAX_HOST_CONNECTIONS
-        curl_multi_setopt(ptr->handle, CURLMOPT_MAX_HOST_CONNECTIONS, connections);
-#endif
+        if (libcurl_version->version_num >= 0x071e00 /* 7.30.0 */) {
+            curl_multi_setopt(ptr->handle, CURLMOPT_MAX_HOST_CONNECTIONS, connections);
+            curl_multi_setopt(ptr->handle, CURLMOPT_MAX_TOTAL_CONNECTIONS, connections);
+        }
+        else {
+            ov_http_client_log_warn(
+                ptr->log,
+                "Can't set maximum number of connections to %d, it isn't supported by libcurl %s. Upgrade to 7.30.0 "
+                "or newer to avoid this issue.",
+                connections,
+                libcurl_version->version
+            );
+        }
+        if (libcurl_version->version_num >= 0x070f03 /* 7.16.3 */) {
+            curl_multi_setopt(ptr->handle, CURLMOPT_MAXCONNECTS, connections);
+        }
+        else {
+            ov_http_client_log_warn(
+                ptr->log,
+                "Can't set total maximum connection cache size to %d, it isn't supported by libcurl %s. Upgrade to "
+                "7.16.3 or newer to avoid this issue.",
+                connections,
+                libcurl_version->version
+            );
+        }
     }
 
     return self;
@@ -922,7 +1011,7 @@ static void ov_http_client_prepare_handle(ov_http_client_object* client_ptr, ov_
     );
 }
 
-static VALUE ov_http_client_send(VALUE self, VALUE request) {
+static VALUE ov_http_client_submit(VALUE self, VALUE request) {
     CURL* handle;
     VALUE response;
     VALUE transfer;
@@ -992,7 +1081,26 @@ static VALUE ov_http_client_send(VALUE self, VALUE request) {
     return Qnil;
 }
 
+static VALUE ov_http_client_send(VALUE self, VALUE request) {
+    ov_http_client_object* ptr;
+
+    /* Get the pointer to the native object and check that it isn't closed: */
+    ov_http_client_ptr(self, ptr);
+    ov_http_client_check_closed(ptr);
+
+    /* If the limit hasn't been reached then submit the request directly to libcurl, otherwise put it in the queue: */
+    if (RHASH_SIZE(ptr->pending) < ptr->limit) {
+        ov_http_client_submit(self, request);
+    }
+    else {
+        rb_ary_push(ptr->queue, request);
+    }
+
+    return Qnil;
+}
+
 static VALUE ov_http_client_wait(VALUE self, VALUE request) {
+    VALUE next;
     VALUE result;
     ov_http_client_object* ptr;
     ov_http_client_wait_context context;
@@ -1001,15 +1109,24 @@ static VALUE ov_http_client_wait(VALUE self, VALUE request) {
     ov_http_client_ptr(self, ptr);
     ov_http_client_check_closed(ptr);
 
-    /* Work till the transfer has been completed: */
+    /* Work till the transfer has been completed. */
     context.handle = ptr->handle;
     context.code = CURLE_OK;
     context.cancel = false;
     for (;;) {
+        /* Move requests from the queue to libcurl: */
+        while (RARRAY_LEN(ptr->queue) > 0 && RHASH_SIZE(ptr->pending) < ptr->limit) {
+            next = rb_ary_shift(ptr->queue);
+            ov_http_client_submit(self, next);
+        }
+
+        /* Check if the response is already available, if so then return it: */
         result = rb_hash_delete(ptr->completed, request);
         if (!NIL_P(result)) {
             return result;
         }
+
+        /* If the response isn't available yet, then do some real work: */
         rb_thread_call_without_gvl(
             ov_http_client_wait_task,
             &context,
@@ -1082,6 +1199,8 @@ void ov_http_client_define(void) {
     STRING_ID              = rb_intern("string");
     STRING_IO_ID           = rb_intern("StringIO");
     URI_ID                 = rb_intern("URI");
+    WARN_ID                = rb_intern("warn");
+    WARN_Q_ID              = rb_intern("warn?");
     WRITE_ID               = rb_intern("write");
 
     /* Locate classes: */
@@ -1093,4 +1212,7 @@ void ov_http_client_define(void) {
     if (code != CURLE_OK) {
         rb_raise(ov_error_class, "Can't initialize libcurl: %s", curl_easy_strerror(code));
     }
+
+    /* Get the libcurl version: */
+    libcurl_version = curl_version_info(CURLVERSION_NOW);
 }
