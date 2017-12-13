@@ -407,9 +407,7 @@ module OvirtSDK4
     def internal_read_body(response)
       # First check if the response body is empty, as it makes no sense to check the content type if there is
       # no body:
-      if response.body.nil? || response.body.length.zero?
-        connection.raise_error(response, 'The response body is empty')
-      end
+      connection.raise_error(response, 'The response body is empty') if response.body.nil? || response.body.length.zero?
 
       # Check the content type, as otherwise the parsing will fail, and the resulting error message won't be explicit
       # about the cause of the problem:

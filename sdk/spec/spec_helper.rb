@@ -70,7 +70,7 @@ module Helpers
 
   # Truncate the log files before each run:
   [SERVER_LOG, CLIENT_LOG, ACCESS_LOG].each do |log|
-    File.open(log, 'w') {}
+    File.open(log, 'w'){}
   end
 
   def test_user

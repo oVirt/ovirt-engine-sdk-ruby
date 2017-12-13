@@ -195,9 +195,7 @@ module OvirtSDK4
       begin
         if object.is_a?(Array)
           # For arrays we can't decide which tag to use, so the 'root' parameter is mandatory in this case:
-          if root.nil?
-            raise Error, "The 'root' option is mandatory when writing arrays"
-          end
+          raise Error, "The 'root' option is mandatory when writing arrays" if root.nil?
 
           # Write the root tag, and then recursively call the method to write each of the items of the array:
           cursor.write_start(root)

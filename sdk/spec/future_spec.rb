@@ -22,7 +22,7 @@ describe SDK::Future do
     request.body = 'mybody'
     request.username = test_user
     request.password = test_password
-    SDK::Future.new(nil, request) {}
+    SDK::Future.new(nil, request){}
   end
 
   describe '#inspect' do

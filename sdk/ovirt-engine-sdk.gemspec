@@ -30,7 +30,7 @@ Gem::Specification.new do |spec|
   spec.homepage    = 'http://ovirt.org'
 
   # Ruby version:
-  spec.required_ruby_version = '>= 2.0'
+  spec.required_ruby_version = '>= 2.1'
 
   # Build time dependencies:
   spec.add_development_dependency('rake', '~> 11.3')

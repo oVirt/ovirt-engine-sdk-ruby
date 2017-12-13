@@ -275,9 +275,7 @@ module OvirtSDK4
     def follow_link(object)
       # Check that the "href" has a value, as it is needed in order to retrieve the representation of the object:
       href = object.href
-      if href.nil?
-        raise Error, "Can't follow link because the 'href' attribute doesn't have a value"
-      end
+      raise Error, "Can't follow link because the 'href' attribute doesn't have a value" if href.nil?
 
       # Check that the value of the "href" attribute is compatible with the base URL of the connection:
       prefix = URI(@url).path
