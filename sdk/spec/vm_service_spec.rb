@@ -44,6 +44,30 @@ describe SDK::VmService do
         expect(error.code).to eq(404)
       end
     end
+
+    it 'adds the `all_content` query parameter when the `all_content` parameter is set to `true`' do
+      mount_xml(path: 'vms/123', body: '<vm/>')
+      @service.get(all_content: true)
+      expect(last_request_query).to eql('all_content=true')
+    end
+
+    it 'adds the `All-Content` header when the `all_content` parameter is set to `true`' do
+      mount_xml(path: 'vms/123', body: '<vm/>')
+      @service.get(all_content: true)
+      expect(last_request_headers['all-content']).to eql(['true'])
+    end
+
+    it 'adds the `all_content` query parameter when the `all_content` parameter is set to `false`' do
+      mount_xml(path: 'vms/123', body: '<vm/>')
+      @service.get(all_content: false)
+      expect(last_request_query).to eql('all_content=false')
+    end
+
+    it 'adds the `All-Content` header when the `all_content` parameter is set to `false`' do
+      mount_xml(path: 'vms/123', body: '<vm/>')
+      @service.get(all_content: false)
+      expect(last_request_headers['all-content']).to eql(['false'])
+    end
   end
 
   describe '#start' do

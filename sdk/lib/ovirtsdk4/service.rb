@@ -175,7 +175,7 @@ module OvirtSDK4
       # Get the values of the options specific to this operation:
       specs.each do |name, kind|
         value = opts.delete(name)
-        query[name] = Writer.render(value, kind) if value
+        query[name] = Writer.render(value, kind) unless value.nil?
       end
 
       # Check the remaining options:
@@ -224,7 +224,7 @@ module OvirtSDK4
       # Get the values of the options specific to this operation:
       specs.each do |name, kind|
         value = opts.delete(name)
-        query[name] = Writer.render(value, kind) if value
+        query[name] = Writer.render(value, kind) unless value.nil?
       end
 
       # Check the remaining options:
@@ -274,7 +274,7 @@ module OvirtSDK4
       # Get the values of the options specific to this operation:
       specs.each do |name, kind|
         value = opts.delete(name)
-        query[name] = Writer.render(value, kind) if value
+        query[name] = Writer.render(value, kind) unless value.nil?
       end
 
       # Check the remaining options:
@@ -321,7 +321,7 @@ module OvirtSDK4
       # Get the values of the options specific to this operation:
       specs.each do |name, kind|
         value = opts.delete(name)
-        query[name] = Writer.render(value, kind) if value
+        query[name] = Writer.render(value, kind) unless value.nil?
       end
 
       # Check the remaining options:

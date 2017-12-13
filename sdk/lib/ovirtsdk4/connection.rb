@@ -632,7 +632,7 @@ module OvirtSDK4
       # parameter. In order to better support those older versions of the engine we need to check if this parameter is
       # included in the request, and add the corresponding header.
       unless request.query.nil?
-        all_content = request.query['all_content']
+        all_content = request.query[:all_content]
         request.headers['All-Content'] = all_content unless all_content.nil?
       end
 
