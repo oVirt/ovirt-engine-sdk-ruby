@@ -2,6 +2,16 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.2.1 / Dec 13 2017
+
+Bug fixes:
+
+* Fix handling of the `all_content` parameter
+  https://bugzilla.redhat.com/1525555[#1525555].
+
+* Limit the number of requests sent to `libcurl`
+  https://bugzilla.redhat.com/1525302[#1525302].
+
 == 4.2.0 / Dec 4 2017
 
 No chages, version `4.2.0` is identical to `4.2.0-beta2`, only the
