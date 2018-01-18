@@ -64,7 +64,7 @@ limitations under the License.
 
     <!-- Version of the metamodel and model used to generate the SDK: -->
     <metamodel.version>1.2.13</metamodel.version>
-    <model.version>4.2.25</model.version>
+    <model.version>4.2.28</model.version>
 
   </properties>
 
