@@ -2,6 +2,24 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.2.3 / Feb 20 2018
+Update to model 4.2.29 and metamodel to 1.2.17:
+
+* Expose `syncAllNetworks` command for `HostService`.
+
+* Move `VmPlacementPolicy` attribute from Vm to `VmBase`
+  https://bugzilla.redhat.com/1375678[#1375678].
+
+* Document `JobsService` as a searchable entity.
+
+* Add `lease` parameter to preview snapshot
+  https://bugzilla.redhat.com/1532577[#1532577].
+
+Bug fixes:
+
+* Update depedency on json lib
+  https://bugzilla.redhat.com/1542879[#1542879].
+
 == 4.2.2 / Jan 18 2018
 
 Update to model 4.2.28:
