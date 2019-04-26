@@ -564,7 +564,7 @@ public class ServicesGenerator implements RubyGenerator {
             buffer.addLine(  "return %1$s_service(path)", rubyNames.getMemberStyleName(name));
             buffer.addLine("end");
             buffer.addLine(
-                "return %1$s_service(path[0..(index - 1)]).service(path[(index +1)..-1])",
+                "return %1$s_service(path[0..(index - 1)]).service(path[(index + 1)..-1])",
                 rubyNames.getMemberStyleName(name)
             );
         }
