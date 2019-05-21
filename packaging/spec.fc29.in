@@ -1,9 +1,9 @@
 %global gem_name ovirt-engine-sdk
-%global gem_version 4.0.0.alpha0
+%global gem_version 4.3.0
 
 Name: rubygem-ovirt-engine-sdk4
 Summary: oVirt Engine Ruby SDK
-Version: 4.0.0
+Version: 4.3.0
 Release: 1%{?dist}
 Group: Development/Languages
 License: ASL 2.0
@@ -81,5 +81,8 @@ mv .%{gem_extdir_mri}/*.so %{buildroot}%{gem_extdir_mri}
 %{gem_docdir}
 
 %changelog
-* Fri Jan 8 2016 Juan Hernandez <juan.hernandez@redhat.com> - 4.0.0
+* Tue May 21 2019 Sandro Bonazzola <sbonazzo@redhat.com> - 4.3.0
+- Rebase on 4.3.0 for Fedora 29 support
+
+* Fri Jan  8 2016 Juan Hernandez <juan.hernandez@redhat.com> - 4.0.0
 - Initial packaging.
