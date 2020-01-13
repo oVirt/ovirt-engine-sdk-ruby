@@ -16,7 +16,6 @@
 
 require 'json'
 require 'tempfile'
-require 'thread'
 require 'uri'
 
 module OvirtSDK4
@@ -155,18 +154,18 @@ module OvirtSDK4
 
       # Create the HTTP client:
       @client = HttpClient.new(
-        insecure: @insecure,
-        ca_file: @ca_store ? @ca_store.path : nil,
-        debug: @debug,
-        log: @log,
-        timeout: @timeout,
+        insecure:        @insecure,
+        ca_file:         @ca_store ? @ca_store.path : nil,
+        debug:           @debug,
+        log:             @log,
+        timeout:         @timeout,
         connect_timeout: @connect_timeout,
-        compress: @compress,
-        proxy_url: @proxy_url,
-        proxy_username: @proxy_username,
-        proxy_password: @proxy_password,
-        connections: @connections,
-        pipeline: @pipeline
+        compress:        @compress,
+        proxy_url:       @proxy_url,
+        proxy_username:  @proxy_username,
+        proxy_password:  @proxy_password,
+        connections:     @connections,
+        pipeline:        @pipeline
       )
     end
 
@@ -232,6 +231,7 @@ module OvirtSDK4
       true
     rescue StandardError
       raise if raise_exception
+
       false
     end
 
@@ -244,7 +244,9 @@ module OvirtSDK4
     # @return [String]
     #
     def authenticate
+      # rubocop:disable Naming/MemoizedInstanceVariableName
       @token ||= create_access_token
+      # rubocop:enable Naming/MemoizedInstanceVariableName
     end
 
     #
@@ -416,14 +418,14 @@ module OvirtSDK4
     #
     # @api private
     #
-    JSON_CONTENT_TYPE_RE = %r{^\s*(application|text)/json\s*(;.*)?$}i
+    JSON_CONTENT_TYPE_RE = %r{^\s*(application|text)/json\s*(;.*)?$}i.freeze
 
     #
     # Regular expression used to check XML content type.
     #
     # @api private
     #
-    XML_CONTENT_TYPE_RE = %r{^\s*(application|text)/xml\s*(;.*)?$}i
+    XML_CONTENT_TYPE_RE = %r{^\s*(application|text)/xml\s*(;.*)?$}i.freeze
 
     #
     # The typical URL path, used just to generate informative error messages.
@@ -444,6 +446,7 @@ module OvirtSDK4
     def check_content_type(expected_re, expected_name, response)
       content_type = response.headers['content-type']
       return if expected_re =~ content_type
+
       detail = "The response content type '#{content_type}' isn't #{expected_name}"
       url = URI(@url)
       if url.path != TYPICAL_PATH
@@ -510,9 +513,9 @@ module OvirtSDK4
       request.method = :POST
       request.url = url
       request.headers = {
-        'User-Agent' => "RubySDK/#{VERSION}",
+        'User-Agent'   => "RubySDK/#{VERSION}",
         'Content-Type' => 'application/x-www-form-urlencoded',
-        'Accept' => 'application/json'
+        'Accept'       => 'application/json'
       }
       request.body = URI.encode_www_form(parameters)
 
@@ -551,8 +554,8 @@ module OvirtSDK4
         entry_point = 'token'
         parameters.merge!(
           grant_type: 'password',
-          username: @username,
-          password: @password
+          username:   @username,
+          password:   @password
         )
       end
 

@@ -25,12 +25,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Get the reference to the "vms" service:
@@ -39,7 +39,7 @@ vms_service = connection.system_service.vms_service
 # Use the "list" method of the "vms" service to search the virtual
 # machines that match a search query:
 vms = vms_service.list(
-  search: 'name=MYVM',
+  search:         'name=MYVM',
   case_sensitive: false
 )
 

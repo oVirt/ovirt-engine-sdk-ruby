@@ -24,12 +24,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # The name and value of the option that we want to add or update:
@@ -63,7 +63,7 @@ modified = original.reject { |x| x.name == name }
 
 # Add the modified option to the list of modified options:
 option = OvirtSDK4::Option.new(
-  name: name,
+  name:  name,
   value: value
 )
 modified << option

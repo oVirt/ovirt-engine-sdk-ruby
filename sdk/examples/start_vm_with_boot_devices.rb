@@ -23,12 +23,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine42.local/ovirt-engine/api',
+  url:      'https://engine42.local/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Find the root of the tree of services:

@@ -24,12 +24,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Get the reference to the "vms" service:
@@ -41,9 +41,10 @@ index = 1
 loop do
   page = vms_service.list(
     search: "page #{index}",
-    max: size
+    max:    size
   )
   break if page.empty?
+
   page.each do |vm|
     puts(vm.name)
   end

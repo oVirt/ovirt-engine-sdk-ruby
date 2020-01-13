@@ -23,12 +23,12 @@ require 'ovirtsdk4'
 
 # Create connection to the server
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Get the storage domains service
@@ -60,10 +60,10 @@ vms_service.vm_service(exported_vm.id).import(
   storage_domain: OvirtSDK4::StorageDomain.new(
     id: target_sd.id
   ),
-  cluster: OvirtSDK4::Cluster.new(
+  cluster:        OvirtSDK4::Cluster.new(
     id: cluster.id
   ),
-  vm: OvirtSDK4::Vm.new(
+  vm:             OvirtSDK4::Vm.new(
     id: exported_vm.id
   )
 )

@@ -24,12 +24,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Locate the networks service and use it to find the network:
@@ -49,7 +49,7 @@ cluster_networks_service = cluster_service.networks_service
 # Use the "add" method to assign network to cluster:
 cluster_networks_service.add(
   OvirtSDK4::Network.new(
-    id: network.id,
+    id:       network.id,
     required: true
   )
 )

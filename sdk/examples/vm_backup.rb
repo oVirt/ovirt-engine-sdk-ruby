@@ -47,12 +47,12 @@ log = Logger.new('example.log')
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: API_URL,
+  url:      API_URL,
   username: API_USER,
   password: API_PASSWORD,
-  ca_file: API_CA_FILE,
-  debug: true,
-  log: log
+  ca_file:  API_CA_FILE,
+  debug:    true,
+  log:      log
 )
 log.info('Connected to the server.')
 
@@ -91,12 +91,12 @@ snap_description = "#{data_vm.name}-backup-#{SecureRandom.uuid}"
 # this way, if something fails, the administrator will know what snapshot was used and remove it manually.
 events_service.add(
   OvirtSDK4::Event.new(
-    vm: {
+    vm:          {
       id: data_vm.id
     },
-    origin: APPLICATION_NAME,
-    severity: OvirtSDK4::LogSeverity::NORMAL,
-    custom_id: event_id,
+    origin:      APPLICATION_NAME,
+    severity:    OvirtSDK4::LogSeverity::NORMAL,
+    custom_id:   event_id,
     description: "Backup of virtual machine '#{data_vm.name}' using snapshot '#{snap_description}' is starting."
   )
 )
@@ -139,14 +139,14 @@ attachments = []
 snap_disks.each do |snap_disk|
   attachment = attachments_service.add(
     OvirtSDK4::DiskAttachment.new(
-      disk: {
-        id: snap_disk.id,
+      disk:      {
+        id:       snap_disk.id,
         snapshot: {
           id: snap.id
         }
       },
-      active: true,
-      bootable: false,
+      active:    true,
+      bootable:  false,
       interface: OvirtSDK4::DiskInterface::VIRTIO
     )
   )
@@ -183,12 +183,12 @@ log.info("Removed the snapshot '#{snap.description}'.")
 # Send an external event to indicate to the administrator that the backup of the virtual machine is completed:
 events_service.add(
   OvirtSDK4::Event.new(
-    vm: {
+    vm:          {
       id: data_vm.id
     },
-    origin: APPLICATION_NAME,
-    severity: OvirtSDK4::LogSeverity::NORMAL,
-    custom_id: event_id,
+    origin:      APPLICATION_NAME,
+    severity:    OvirtSDK4::LogSeverity::NORMAL,
+    custom_id:   event_id,
     description: "Backup of virtual machine '#{data_vm.name}' using snapshot '#{snap_description}' is completed."
   )
 )

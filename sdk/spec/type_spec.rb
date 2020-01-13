@@ -20,7 +20,7 @@ describe SDK::Type do
       @event = SDK::Event.new(
         id: 'e',
         vm: {
-          id: 'v',
+          id:               'v',
           disk_attachments: [
             {
               disk: {
@@ -146,7 +146,7 @@ describe SDK::Type do
       first = SDK::Event.new(
         id: 'ev1',
         vm: {
-          name: 'vm1',
+          name:             'vm1',
           disk_attachments: [
             SDK::DiskAttachment.new(id: 'da1'),
             SDK::DiskAttachment.new(id: 'da2')
@@ -156,7 +156,7 @@ describe SDK::Type do
       second = SDK::Event.new(
         id: 'ev1',
         vm: {
-          name: 'vm1',
+          name:             'vm1',
           disk_attachments: [
             SDK::DiskAttachment.new(id: 'da1'),
             SDK::DiskAttachment.new(id: 'da2')
@@ -170,7 +170,7 @@ describe SDK::Type do
       first = SDK::Event.new(
         id: 'ev1',
         vm: {
-          name: 'vm1',
+          name:             'vm1',
           disk_attachments: [
             SDK::DiskAttachment.new(id: 'da1'),
             SDK::DiskAttachment.new(id: 'da2')
@@ -180,7 +180,7 @@ describe SDK::Type do
       second = SDK::Event.new(
         id: 'ev1',
         vm: {
-          name: 'vm1',
+          name:             'vm1',
           disk_attachments: [
             # The order is different, da2 and then da1, instead of da1 and then da2.
             SDK::DiskAttachment.new(id: 'da2'),

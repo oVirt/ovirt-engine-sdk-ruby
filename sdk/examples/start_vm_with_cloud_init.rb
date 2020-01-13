@@ -25,12 +25,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Find the virtual machine:
@@ -55,17 +55,17 @@ write_files:
 # password for the `root` user and the network configuration:
 vm_service.start(
   use_cloud_init: true,
-  vm: {
+  vm:             {
     initialization: {
-      user_name: 'root',
-      root_password: 'redhat123',
-      host_name: 'myvm.example.com',
+      user_name:          'root',
+      root_password:      'redhat123',
+      host_name:          'myvm.example.com',
       nic_configurations: [
         {
-          name: 'eth0',
-          on_boot: true,
+          name:          'eth0',
+          on_boot:       true,
           boot_protocol: OvirtSDK4::BootProtocol::STATIC,
-          ip: {
+          ip:            {
             version: OvirtSDK4::IpVersion::V4,
             address: '192.168.0.100',
             netmask: '255.255.255.0',
@@ -73,9 +73,9 @@ vm_service.start(
           }
         }
       ],
-      dns_servers: '192.168.0.1 192.168.0.2 192.168.0.3',
-      dns_search: 'example.com',
-      custom_script: my_script
+      dns_servers:        '192.168.0.1 192.168.0.2 192.168.0.3',
+      dns_search:         'example.com',
+      custom_script:      my_script
     }
   }
 )

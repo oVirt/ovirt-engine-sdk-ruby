@@ -24,12 +24,12 @@ require 'ovirtsdk4'
 # Create the connection to the server, if sso_url is not provided the
 # default for the engine is constructed from url:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   kerberos: true,
-  sso_log: './sso.log',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  sso_log:  './sso.log',
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Get the reference to the system service:

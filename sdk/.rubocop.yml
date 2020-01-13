@@ -22,6 +22,10 @@ Metrics/CyclomaticComplexity:
   Enabled: false
 Metrics/PerceivedComplexity:
   Enabled: false
+Style/FrozenStringLiteralComment:
+  Enabled: false
+Style/SafeNavigation:
+  Enabled: false
 
 #
 # The preferred way to indent long chains of method calls in this
@@ -72,11 +76,16 @@ Style/NilComparison:
   Exclude:
     - 'spec/type_spec.rb'
 
+Layout/HashAlignment:
+  EnforcedHashRocketStyle: table
+  EnforcedColonStyle: table
+
 #
 # Exclude the generated source code and temporary files, as it isn't
 # practical to enforce style there (too many long lines, etc).
 #
 AllCops:
+  TargetRubyVersion: 2.5
   Exclude:
     - 'ext/ovirtsdk4c/extconf.rb'
     - 'lib/ovirtsdk4/readers.rb'

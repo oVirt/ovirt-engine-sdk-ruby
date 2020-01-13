@@ -89,7 +89,7 @@ describe SDK::VmService do
         mount_xml(
           path: 'vms/123/start',
           body:
-            '<action>' \
+                '<action>' \
               '<fault>' \
                 '<reason>myreason</reason>' \
                 '<detail>mydetail</detail>' \
@@ -109,10 +109,10 @@ describe SDK::VmService do
     context 'when the server returns an fault instead of an action' do
       it 'raises an error containing the information of the fault' do
         mount_xml(
-          path: 'vms/123/start',
+          path:   'vms/123/start',
           status: 400,
           body:
-            '<fault>' \
+                  '<fault>' \
               '<reason>myreason</reason>' \
               '<detail>mydetail</detail>' \
             '</fault>'

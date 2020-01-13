@@ -23,12 +23,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Get the reference to the networks service:
@@ -38,16 +38,16 @@ networks_service = connection.system_service.networks_service
 # called "mydatacenter", with VLAN tag 100 and MTU 1500.
 networks_service.add(
   OvirtSDK4::Network.new(
-    name: 'mynetwork',
+    name:        'mynetwork',
     description: 'My logical network',
     data_center: {
       name: 'mydatacenter'
     },
-    vlan: {
+    vlan:        {
       id: '100'
     },
-    usages: [OvirtSDK4::NetworkUsage::VM],
-    mtu: 1500
+    usages:      [OvirtSDK4::NetworkUsage::VM],
+    mtu:         1500
   )
 )
 

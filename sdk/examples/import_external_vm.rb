@@ -23,12 +23,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Get the reference to the service that manages import of external virtual machines:
@@ -37,18 +37,18 @@ imports_service = connection.system_service.external_vm_imports_service
 # Initiate the import of VM 'myvm' from VMware:
 imports_service.add(
   OvirtSDK4::ExternalVmImport.new(
-    name: 'myvm',
-    provider: OvirtSDK4::ExternalVmProviderType::VMWARE,
-    username: 'wmware_user',
-    password: 'wmware123',
-    url: 'vpx://wmware_user@vcenter-host/DataCenter/Cluster/esxi-host?no_verify=1',
-    cluster: {
+    name:           'myvm',
+    provider:       OvirtSDK4::ExternalVmProviderType::VMWARE,
+    username:       'wmware_user',
+    password:       'wmware123',
+    url:            'vpx://wmware_user@vcenter-host/DataCenter/Cluster/esxi-host?no_verify=1',
+    cluster:        {
       name: 'mycluster'
     },
     storage_domain: {
       name: 'mydata'
     },
-    sparse: true
+    sparse:         true
   )
 )
 

@@ -32,6 +32,7 @@ end
 
 def read_index
   return File.read(INDEX_TXT).to_i if File.exist?(INDEX_TXT)
+
   nil
 end
 
@@ -43,12 +44,12 @@ end
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Find the root of the tree of services:

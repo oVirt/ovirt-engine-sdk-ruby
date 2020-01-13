@@ -23,12 +23,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Get the reference to the root of the services tree:
@@ -42,9 +42,9 @@ vm = vms_service.list(search: 'name=myvm').first
 # overwrite a virtual machine that has already been exported before.
 vm_service = vms_service.vm_service(vm.id)
 vm_service.export(
-  exclusive: true,
+  exclusive:         true,
   discard_snapshots: true,
-  storage_domain: {
+  storage_domain:    {
     name: 'myexport'
   }
 )

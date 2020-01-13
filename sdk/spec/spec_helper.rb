@@ -34,6 +34,7 @@ SDK = OvirtSDK4
 # when PUT request is sent.
 module WEBrick
   module HTTPServlet
+    # The class which does the alias (comment necessary or rubocop fails)
     class ProcHandler
       alias do_PUT do_POST
     end
@@ -124,7 +125,9 @@ module Helpers
   end
 
   def test_log
+    # rubocop:disable Naming/MemoizedInstanceVariableName
     @log ||= Logger.new(CLIENT_LOG)
+    # rubocop:enable Naming/MemoizedInstanceVariableName
   end
 
   def test_connection_options
@@ -151,7 +154,7 @@ module Helpers
       response.content_type = APPLICATION_JSON
       response.body = JSON.generate(
         error_code: 0,
-        error: "The HTTP method should be '#{expected_method}', but it is '#{actual_method}'"
+        error:      "The HTTP method should be '#{expected_method}', but it is '#{actual_method}'"
       )
       return false
     end
@@ -164,7 +167,7 @@ module Helpers
       response.content_type = APPLICATION_JSON
       response.body = JSON.generate(
         error_code: 0,
-        error: "The 'Content-Type' header should be '#{expected_content_type}', but it is '#{actual_content_type}'"
+        error:      "The 'Content-Type' header should be '#{expected_content_type}', but it is '#{actual_content_type}'"
       )
       return false
     end
@@ -177,7 +180,7 @@ module Helpers
       response.content_type = APPLICATION_JSON
       response.body = JSON.generate(
         error_code: 0,
-        error: "The query string should be '#{expected_query}', but it is '#{actual_query}'"
+        error:      "The query string should be '#{expected_query}', but it is '#{actual_query}'"
       )
       return false
     end
@@ -197,13 +200,13 @@ module Helpers
 
     # Create the web server:
     @server = WEBrick::HTTPServer.new(
-      BindAddress: test_host,
-      Port: test_port,
-      SSLEnable: true,
-      SSLPrivateKey: key,
+      BindAddress:    test_host,
+      Port:           test_port,
+      SSLEnable:      true,
+      SSLPrivateKey:  key,
       SSLCertificate: crt,
-      Logger: server_log,
-      AccessLog: [[access_log, WEBrick::AccessLog::COMBINED_LOG_FORMAT]]
+      Logger:         server_log,
+      AccessLog:      [[access_log, WEBrick::AccessLog::COMBINED_LOG_FORMAT]]
     )
 
     # Create the handler for password authentication requests:
@@ -219,7 +222,7 @@ module Helpers
         response.content_type = APPLICATION_JSON
         response.body = JSON.generate(
           error_code: 0,
-          error: "The user name should be '#{expected_user}', but it is '#{actual_user}'"
+          error:      "The user name should be '#{expected_user}', but it is '#{actual_user}'"
         )
         next
       end
@@ -232,7 +235,7 @@ module Helpers
         response.content_type = APPLICATION_JSON
         response.body = JSON.generate(
           error_code: 0,
-          error: "The password should be '#{expected_password}', but it is '#{actual_password}'"
+          error:      "The password should be '#{expected_password}', but it is '#{actual_password}'"
         )
         next
       end
@@ -271,7 +274,7 @@ module Helpers
         response.content_type = APPLICATION_JSON
         response.body = JSON.generate(
           error_code: 0,
-          error: "The token should be '#{expected_token}', but it is '#{actual_token}'"
+          error:      "The token should be '#{expected_token}', but it is '#{actual_token}'"
         )
         next
       end

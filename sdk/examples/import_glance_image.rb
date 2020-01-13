@@ -23,12 +23,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Get the root of the services tree:
@@ -56,13 +56,13 @@ image_service = images_service.image_service(image.id)
 # Import the image:
 image_service.import(
   import_as_template: true,
-  template: {
+  template:           {
     name: 'mytemplate'
   },
-  cluster: {
+  cluster:            {
     name: 'mycluster'
   },
-  storage_domain: {
+  storage_domain:     {
     name: 'mydata'
   }
 )

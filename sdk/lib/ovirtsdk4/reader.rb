@@ -51,11 +51,12 @@ module OvirtSDK4
     #
     def self.parse_boolean(text)
       return nil if text.nil?
+
       case text.downcase
       when 'false', '0'
-        return false
+        false
       when 'true', '1'
-        return true
+        true
       else
         raise Error, "The text '#{text}' isn't a valid boolean value."
       end
@@ -90,8 +91,9 @@ module OvirtSDK4
     #
     def self.parse_integer(text)
       return nil if text.nil?
+
       begin
-        return Integer(text, 10)
+        Integer(text, 10)
       rescue ArgumentError
         raise Error, "The text '#{text}' isn't a valid integer value."
       end
@@ -125,8 +127,9 @@ module OvirtSDK4
     #
     def self.parse_decimal(text)
       return nil if text.nil?
+
       begin
-        return Float(text)
+        Float(text)
       rescue ArgumentError
         raise Error, "The text '#{text}' isn't a valid decimal value."
       end
@@ -161,8 +164,9 @@ module OvirtSDK4
     #
     def self.parse_date(text)
       return nil if text.nil?
+
       begin
-        return DateTime.xmlschema(text)
+        DateTime.xmlschema(text)
       rescue ArgumentError
         raise Error, "The text '#{text}' isn't a valid date."
       end
@@ -198,6 +202,7 @@ module OvirtSDK4
     #
     def self.parse_enum(enum_module, text)
       return nil unless text
+
       values = enum_module.constants.map { |const| enum_module.const_get(const) }
       values.detect { |value| value.casecmp(text).zero? }
     end

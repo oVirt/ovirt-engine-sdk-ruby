@@ -23,12 +23,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Find the root of the tree of services:
@@ -46,12 +46,12 @@ network = networks.detect { |n| n.name == 'mynetwork' }
 profiles_service = system_service.vnic_profiles_service
 profiles_service.add(
   OvirtSDK4::VnicProfile.new(
-    name: 'myprofile',
-    pass_through: {
+    name:           'myprofile',
+    pass_through:   {
       mode: OvirtSDK4::VnicPassThroughMode::DISABLED
     },
     port_mirroring: false,
-    network: {
+    network:        {
       id: network.id
     }
   )

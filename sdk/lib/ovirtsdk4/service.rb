@@ -43,6 +43,7 @@ module OvirtSDK4
     def wait
       response = @service.connection.wait(@request)
       raise response if response.is_a?(Exception)
+
       @block.call(response)
     end
 
@@ -116,6 +117,7 @@ module OvirtSDK4
       connection.raise_error(response, body) if body.is_a?(Fault)
       if body.is_a?(Action)
         return body if body.fault.nil?
+
         connection.raise_error(response, body.fault)
       end
       raise Error, "Expected an action or a fault, but got '#{body.class.name.split('::').last}'"
@@ -133,6 +135,7 @@ module OvirtSDK4
     #
     def connection
       return @parent if @parent.is_a? Connection
+
       @parent.connection
     end
 
@@ -191,6 +194,7 @@ module OvirtSDK4
       connection.send(request)
       result = Future.new(self, request) do |response|
         raise response if response.is_a?(Exception)
+
         case response.code
         when 200
           internal_read_body(response)
@@ -241,6 +245,7 @@ module OvirtSDK4
       connection.send(request)
       result = Future.new(self, request) do |response|
         raise response if response.is_a?(Exception)
+
         case response.code
         when 200, 201, 202
           internal_read_body(response)
@@ -291,6 +296,7 @@ module OvirtSDK4
       connection.send(request)
       result = Future.new(self, request) do |response|
         raise response if response.is_a?(Exception)
+
         case response.code
         when 200
           internal_read_body(response)
@@ -337,6 +343,7 @@ module OvirtSDK4
       connection.send(request)
       result = Future.new(self, request) do |response|
         raise response if response.is_a?(Exception)
+
         check_fault(response) unless response.code == 200
       end
       result = result.wait if wait
@@ -383,6 +390,7 @@ module OvirtSDK4
       connection.send(request)
       result = Future.new(self, request) do |response|
         raise response if response.is_a?(Exception)
+
         case response.code
         when 200, 201, 202
           action = check_action(response)
@@ -428,8 +436,10 @@ module OvirtSDK4
     #
     def absolute_path
       return @path if @parent.is_a? Connection
+
       prefix = @parent.absolute_path
       return @path if prefix.empty?
+
       "#{prefix}/#{@path}"
     end
 
@@ -444,6 +454,7 @@ module OvirtSDK4
     #
     def check_bad_opts(specs, opts)
       return if opts.empty?
+
       bad_names = opts.keys
       bad_text = nice_list(bad_names)
       if bad_names.length > 1
@@ -472,9 +483,11 @@ module OvirtSDK4
     #
     def nice_list(items)
       return nil if items.empty?
+
       items = items.sort
       items = items.map { |item| "'#{item}'" }
       return items.first if items.length == 1
+
       head = items[0, items.length - 1].join(', ')
       tail = items.last
       "#{head} and #{tail}"

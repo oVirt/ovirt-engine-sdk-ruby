@@ -23,12 +23,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Get the reference to the instance types service:
@@ -39,15 +39,15 @@ instance_types_service = connection.system_service.instance_types_service
 # 2 GiB of memory the value should be 2 * 2^30.
 instance_types_service.add(
   OvirtSDK4::InstanceType.new(
-    name: 'myinstancetype',
-    description: 'My instance type',
-    memory: 2 * 2**30,
+    name:              'myinstancetype',
+    description:       'My instance type',
+    memory:            2 * 2**30,
     high_availability: {
       enabled: true
     },
-    cpu: {
+    cpu:               {
       topology: {
-        cores: 2,
+        cores:   2,
         sockets: 2
       }
     }

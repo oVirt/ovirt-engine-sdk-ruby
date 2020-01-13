@@ -24,12 +24,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Get the reference to the service that manages the MAC address pools:
@@ -38,11 +38,11 @@ pools_service = connection.system_service.mac_pools_service
 # Add a new MAC address pool:
 pool = pools_service.add(
   OvirtSDK4::MacPool.new(
-    name: 'mymacpool',
+    name:   'mymacpool',
     ranges: [
       OvirtSDK4::Range.new(
         from: '02:00:00:00:00:00',
-        to: '02:00:00:00:00:00'
+        to:   '02:00:00:00:00:00'
       )
     ]
   )

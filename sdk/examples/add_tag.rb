@@ -23,12 +23,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Get the reference to the tags service:
@@ -37,7 +37,7 @@ tags_service = connection.system_service.tags_service
 # Use the "add" method to create new tag:
 tags_service.add(
   OvirtSDK4::Tag.new(
-    name: 'mytag',
+    name:        'mytag',
     description: 'My custom tag'
   )
 )

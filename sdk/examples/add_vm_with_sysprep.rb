@@ -23,12 +23,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Find the service that manages the collection of virtual machines:
@@ -38,8 +38,8 @@ vms_service = connection.system_service.vms_service
 # starting it.
 vm = vms_service.add(
   OvirtSDK4::Vm.new(
-    name: 'myvm',
-    cluster: {
+    name:     'myvm',
+    cluster:  {
       name: 'mycluster'
     },
     template: {
@@ -71,8 +71,8 @@ unattend_xml = '
 # overriding it explicitly here. Without that the Sysprep logic won't be triggered.
 vm_service.start(
   use_sysprep: true,
-  vm: {
-    os: {
+  vm:          {
+    os:             {
       type: 'windows_7x64'
     },
     initialization: {

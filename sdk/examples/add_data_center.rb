@@ -23,12 +23,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Get the reference to the data centers service:
@@ -37,9 +37,9 @@ dcs_service = connection.system_service.data_centers_service
 # Use the "add" method to create a new data center:
 dcs_service.add(
   OvirtSDK4::DataCenter.new(
-    name: 'mydc',
+    name:        'mydc',
     description: 'My data center',
-    local: false
+    local:       false
   )
 )
 

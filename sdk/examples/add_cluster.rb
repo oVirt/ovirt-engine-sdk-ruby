@@ -23,12 +23,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Get the reference to the clusters service:
@@ -37,11 +37,11 @@ clusters_service = connection.system_service.clusters_service
 # Use the "add" method to create a cluster:
 clusters_service.add(
   OvirtSDK4::Cluster.new(
-    name: 'mycluster',
+    name:        'mycluster',
     description: 'My cluster',
-    cpu: {
+    cpu:         {
       architecture: OvirtSDK4::Architecture::X86_64,
-      type: 'Intel Conroe Family'
+      type:         'Intel Conroe Family'
     },
     data_center: {
       name: 'mydc'

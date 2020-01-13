@@ -23,12 +23,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine/ovirt-engine/api',
+  url:      'https://engine/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Get the reference to the "storage_domains" service:
@@ -54,20 +54,20 @@ vm_service = vms_service.vm_service(vm.id)
 
 # Register the VM into the system:
 vm_service.register(
-  cluster: {
+  cluster:               {
     name: 'mycluster'
   },
-  vm: {
+  vm:                    {
     name: 'exported_myvm'
   },
   vnic_profile_mappings: [{
-    source_network_name: 'mynetwork',
+    source_network_name:         'mynetwork',
     source_network_profile_name: 'mynetwork',
-    target_vnic_profile: {
+    target_vnic_profile:         {
       name: 'mynetwork'
     }
   }],
-  reassign_bad_macs: true
+  reassign_bad_macs:     true
 )
 
 # Close the connection to the server:

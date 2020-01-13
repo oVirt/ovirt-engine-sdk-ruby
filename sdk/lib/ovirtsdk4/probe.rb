@@ -183,6 +183,7 @@ module OvirtSDK4
     def probe
       path = detect_path
       raise Error, 'API path not found' unless path
+
       detect_version(path).map { |version| ProbeResult.new(version: version) }
     end
 
@@ -243,16 +244,15 @@ module OvirtSDK4
       @client.send(request)
       response = @client.wait(request)
       raise response if response.is_a?(Exception)
+
       response
     end
 
     def detect_path
       PATH_CANDIDATES.each do |path|
-        begin
-          response = send(path: path)
-          return path if response.code == 200
-          raise AuthError, 'Unauthorized' if response.code == 401
-        end
+        response = send(path: path)
+        return path if response.code == 200
+        raise AuthError, 'Unauthorized' if response.code == 401
       end
       nil
     end

@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-lib = File.expand_path('../lib', __FILE__)
+lib = File.expand_path('lib', __dir__)
 $LOAD_PATH.unshift(lib)
 require 'ovirtsdk4/version'
 
@@ -30,13 +30,13 @@ Gem::Specification.new do |spec|
   spec.homepage    = 'http://ovirt.org'
 
   # Ruby version:
-  spec.required_ruby_version = '>= 2.1'
+  spec.required_ruby_version = '>= 2.5'
 
   # Build time dependencies:
   spec.add_development_dependency('rake', '~> 12.3')
   spec.add_development_dependency('rake-compiler', '~> 1.0')
   spec.add_development_dependency('rspec', '~> 3.7')
-  spec.add_development_dependency('rubocop', '~> 0.52')
+  spec.add_development_dependency('rubocop', '0.79.0')
   spec.add_development_dependency('yard', '~> 0.9', '>= 0.9.12')
 
   # Run time dependencies:

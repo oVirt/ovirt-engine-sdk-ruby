@@ -25,12 +25,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine41.local/ovirt-engine/api',
+  url:      'https://engine41.local/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Get the reference to the "vms" service:
@@ -39,8 +39,8 @@ vms_service = connection.system_service.vms_service
 # Use the "clone" parameter of the "add" method to request that the
 # disks of the new virtual machine are independent of the template.
 vm = OvirtSDK4::Vm.new(
-  name: 'myclonedvm',
-  cluster: {
+  name:     'myclonedvm',
+  cluster:  {
     name: 'mycluster'
   },
   template: {

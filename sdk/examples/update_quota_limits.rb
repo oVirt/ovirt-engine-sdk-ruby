@@ -23,12 +23,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine42.example.com/ovirt-engine/api',
+  url:      'https://engine42.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Find the reference to the root of services:
@@ -49,8 +49,8 @@ quotas_service = dc_service.quotas_service
 quota = quotas_service.list.select { |q| q.name == 'myquota' }.first
 quota ||= quotas_service.add(
   OvirtSDK4::Quota.new(
-    name: 'myquota',
-    description: 'My quota',
+    name:                   'myquota',
+    description:            'My quota',
     cluster_hard_limit_pct: 20,
     cluster_soft_limit_pct: 80,
     storage_hard_limit_pct: 20,
@@ -72,9 +72,9 @@ end
 # Create the limit again with the desired values, in this example it will be 100 GiB:
 limits_service.add(
   OvirtSDK4::QuotaStorageLimit.new(
-    name: 'mydatalimit',
-    description: 'My storage domain limit',
-    limit: 100,
+    name:           'mydatalimit',
+    description:    'My storage domain limit',
+    limit:          100,
     storage_domain: {
       id: sd.id
     }

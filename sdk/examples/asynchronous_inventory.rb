@@ -44,11 +44,11 @@ end
 
 # Connection options shared by all the connections that we will use:
 connection_opts = {
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  log:      Logger.new('example.log')
 }
 
 # In order to download large collections of objects, it is convenient to use a different HTTP connection for each of
@@ -58,7 +58,7 @@ connection_opts = {
 connection = OvirtSDK4::Connection.new(
   connection_opts.merge(
     connections: connections,
-    pipeline: 0
+    pipeline:    0
   )
 )
 
@@ -117,7 +117,7 @@ connection.close
 connection = OvirtSDK4::Connection.new(
   connection_opts.merge(
     connections: connections,
-    pipeline: pipeline
+    pipeline:    pipeline
   )
 )
 

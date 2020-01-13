@@ -23,12 +23,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Get the reference to the groups service:
@@ -38,7 +38,7 @@ groups_service = connection.system_service.groups_service
 # Please note that domain name is name of the authorization provider:
 groups_service.add(
   OvirtSDK4::Group.new(
-    name: 'Developers',
+    name:   'Developers',
     domain: {
       name: 'internal-authz'
     }

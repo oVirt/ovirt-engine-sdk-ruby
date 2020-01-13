@@ -23,12 +23,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine42.example.com/ovirt-engine/api',
+  url:      'https://engine42.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Get the reference to the root of the tree of services:
@@ -49,13 +49,13 @@ snap = snaps_service.list.detect { |s| s.description == 'mysnap' }
 # Create a new virtual machine, cloning it from the snapshot:
 cloned_vm = vms_service.add(
   OvirtSDK4::Vm.new(
-    name: 'myclonedvm',
+    name:      'myclonedvm',
     snapshots: [
       {
         id: snap.id
       }
     ],
-    cluster: {
+    cluster:   {
       name: 'mycluster'
     }
   )

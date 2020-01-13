@@ -35,12 +35,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Get the reference to the root service:
@@ -66,6 +66,7 @@ vms_map.each do |vm_id, vm_name|
     disks_service = snap_service.disks_service
     disks_service.list.each do |disk|
       next unless disk.storage_domains.any?
+
       sd_id = disk.storage_domains.first.id
       sd_name = sds_map[sd_id]
       puts "#{vm_name}:#{snap_description}:#{disk.alias_}:#{sd_name}"

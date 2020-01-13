@@ -23,12 +23,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Get the reference to the hosts service:
@@ -37,11 +37,11 @@ hosts_service = connection.system_service.hosts_service
 # Add the host:
 host = hosts_service.add(
   OvirtSDK4::Host.new(
-    name: 'myhost',
-    description: 'My host',
-    address: 'node40.example.com',
+    name:          'myhost',
+    description:   'My host',
+    address:       'node40.example.com',
     root_password: 'redhat123',
-    cluster: {
+    cluster:       {
       name: 'mycluster'
     }
   )

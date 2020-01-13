@@ -24,12 +24,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Locate the virtual machines service and use it to find the virtual
@@ -47,18 +47,18 @@ disk_attachments_service = vms_service.vm_service(vm.id).disk_attachments_servic
 # be 10 * 2^30.
 disk_attachment = disk_attachments_service.add(
   OvirtSDK4::DiskAttachment.new(
-    disk: {
-      name: 'mydisk',
-      description: 'My disk',
-      format: OvirtSDK4::DiskFormat::COW,
+    disk:      {
+      name:             'mydisk',
+      description:      'My disk',
+      format:           OvirtSDK4::DiskFormat::COW,
       provisioned_size: 10 * 2**30,
-      storage_domains: [{
+      storage_domains:  [{
         name: 'mydata'
       }]
     },
     interface: OvirtSDK4::DiskInterface::VIRTIO,
-    bootable: false,
-    active: true
+    bootable:  false,
+    active:    true
   )
 )
 

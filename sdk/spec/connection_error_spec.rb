@@ -67,12 +67,12 @@ describe SDK::Connection do
 
   it 'throws an connection error when the server is down' do
     @connection = SDK::Connection.new(
-      url:       test_url,
-      username:  test_user,
-      password:  test_password,
-      ca_file:   test_ca_file,
-      debug:     test_debug,
-      log:       test_log
+      url:      test_url,
+      username: test_user,
+      password: test_password,
+      ca_file:  test_ca_file,
+      debug:    test_debug,
+      log:      test_log
     )
     expect { @connection.test(raise_exception: true) }.to raise_error(SDK::ConnectionError)
   end

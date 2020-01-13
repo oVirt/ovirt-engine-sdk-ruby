@@ -23,12 +23,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Find the root of the tree of services:
@@ -60,8 +60,8 @@ nics_service = vms_service.vm_service(vm.id).nics_service
 # Add the new network interface card:
 nics_service.add(
   OvirtSDK4::Nic.new(
-    name: 'mynic',
-    description: 'My network interface card',
+    name:         'mynic',
+    description:  'My network interface card',
     vnic_profile: {
       id: profile.id
     }

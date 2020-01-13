@@ -23,12 +23,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Get the reference to the disks service:
@@ -38,11 +38,11 @@ disks_service = connection.system_service.disks_service
 # attribute, is specified in bytes, so to create a disk of 10 GiB the
 # value should be 10 * 2^30.
 disk = disks_service.add(
-  name: 'mydisk',
-  description: 'My disk',
-  format: OvirtSDK4::DiskFormat::COW,
+  name:             'mydisk',
+  description:      'My disk',
+  format:           OvirtSDK4::DiskFormat::COW,
   provisioned_size: 10 * 2**30,
-  storage_domains: [{
+  storage_domains:  [{
     name: 'mydata'
   }]
 )

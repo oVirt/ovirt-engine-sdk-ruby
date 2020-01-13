@@ -24,15 +24,15 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine41.example.com/ovirt-engine/api',
-  username: 'admin@internal',
-  password: 'redhat123',
-  ca_file: 'ca.pem',
-  proxy_url: 'http://proxy.example.com:3128',
+  url:            'https://engine41.example.com/ovirt-engine/api',
+  username:       'admin@internal',
+  password:       'redhat123',
+  ca_file:        'ca.pem',
+  proxy_url:      'http://proxy.example.com:3128',
   proxy_username: 'myproxyuser',
   proxy_password: 'myproxypass',
-  debug: true,
-  log: Logger.new('example.log')
+  debug:          true,
+  log:            Logger.new('example.log')
 )
 
 # Get the reference to the service that manages the virtual machines:

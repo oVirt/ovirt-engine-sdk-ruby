@@ -24,12 +24,12 @@ require 'ovirtsdk4'
 
 # Create the connection to the server:
 connection = OvirtSDK4::Connection.new(
-  url: 'https://engine40.example.com/ovirt-engine/api',
+  url:      'https://engine40.example.com/ovirt-engine/api',
   username: 'admin@internal',
   password: 'redhat123',
-  ca_file: 'ca.pem',
-  debug: true,
-  log: Logger.new('example.log')
+  ca_file:  'ca.pem',
+  debug:    true,
+  log:      Logger.new('example.log')
 )
 
 # Get the reference to the root of the tree of services:
@@ -65,17 +65,17 @@ vms_service = system_service.vms_service
 # template version that we want to use:
 vm = vms_service.add(
   OvirtSDK4::Vm.new(
-    name: 'myvm',
-    cluster: {
+    name:             'myvm',
+    cluster:          {
       name: 'mycluster'
     },
-    template: {
+    template:         {
       id: template_id
     },
     disk_attachments: [{
       disk: {
-        id: disk.id,
-        format: OvirtSDK4::DiskFormat::COW,
+        id:              disk.id,
+        format:          OvirtSDK4::DiskFormat::COW,
         storage_domains: [{
           id: storage_domain.id
         }]
