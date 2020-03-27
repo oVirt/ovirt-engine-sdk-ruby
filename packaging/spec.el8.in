@@ -1,9 +1,9 @@
 %global gem_name ovirt-engine-sdk
-%global gem_version 4.0.0.alpha0
+%global gem_version 4.4.0
 
 Name: rubygem-ovirt-engine-sdk4
 Summary: oVirt Engine Ruby SDK
-Version: 4.0.0
+Version: 4.4.0
 Release: 1%{?dist}
 Group: Development/Languages
 License: ASL 2.0
@@ -27,18 +27,12 @@ Requires: %{name} = %{version}-%{release}
 This package contains documentation for %{name}.
 
 %prep
-
-# Unpack the gem:
-gem unpack %{SOURCE0}
-%setup -q -D -T -n %{gem_name}-%{gem_version}
+%setup -q -n %{gem_name}-%{gem_version}
 
 # Extract the specification of the gem:
 gem spec %{SOURCE0} -l --ruby > %{gem_name}.gemspec
 
-# Replace the version of the gem with the version of the package. This is
-# needed because the "gem_build" macro assumes that the name of the .gem file
-# is "ovirt-engine-sdk-4.0.0.gem", but it actually is
-# "ovirt-engine-sdk-4.0.0.alpha0".
+# Replace the version of the gem with the version of the package.
 sed -i 's/"%{gem_version}"/"%{version}"/' %{gem_name}.gemspec
 
 %build
@@ -54,11 +48,11 @@ gem build %{gem_name}.gemspec
 
 # Install the files:
 mkdir -p %{buildroot}%{gem_dir}
-mv .%{gem_dir}/* %{buildroot}%{gem_dir}
+mv .%{gem_dir}/* %{buildroot}%{gem_dir}/
 
 # Install the extensions:
-mkdir -p %{buildroot}%{gem_extdir_mri}/lib
-mv %{buildroot}%{gem_instdir}/lib/*.so %{buildroot}%{gem_extdir_mri}/lib
+mkdir -p %{buildroot}%{gem_extdir_mri}
+mv .%{gem_extdir_mri}/{gem.build_complete,*.so} %{buildroot}%{gem_extdir_mri}/
 
 %files
 %dir %{gem_instdir}
@@ -81,5 +75,9 @@ mv %{buildroot}%{gem_instdir}/lib/*.so %{buildroot}%{gem_extdir_mri}/lib
 %{gem_docdir}
 
 %changelog
+* Tue Mar 31 2020 Roberto Ciatti <rciatti@redhat.com> - 4.4.0
+- remove gem unpack according to fedora packaging guidelines
+- change install extensions part according to fedora packaging guidelines
+
 * Fri Jan 8 2016 Juan Hernandez <juan.hernandez@redhat.com> - 4.0.0
 - Initial packaging.

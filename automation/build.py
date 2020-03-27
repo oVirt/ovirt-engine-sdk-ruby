@@ -9,7 +9,6 @@ import shutil
 import subprocess
 import sys
 
-
 # Settings file that uses the our artifactory server as proxy for all
 # repositories:
 SETTINGS = """
@@ -44,8 +43,7 @@ def eval_command(args):
     proc = subprocess.Popen(args, stdout=subprocess.PIPE)
     output, errors = proc.communicate()
     result = proc.wait()
-    return result, output
-
+    return result, output.decode(encoding='utf-8', errors='strict')
 
 def dec_version(version):
     print("Decrementing version \"%s\"..." % version)
