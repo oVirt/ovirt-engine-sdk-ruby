@@ -1,7 +1,7 @@
 #
 # We like long lines, 120 characters:
 #
-Metrics/LineLength:
+Layout/LineLength:
   Max: 120
 
 #
