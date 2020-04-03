@@ -6,9 +6,11 @@
 *.so
 *.spec
 *.tar.gz
+*.cfg
 .bash_history
 .idea/
 exported-artifacts/
+rpmbuild/
 sdk/doc/
 sdk/lib/ovirtsdk4/readers.rb
 sdk/lib/ovirtsdk4/services.rb

@@ -48,11 +48,11 @@ gem build %{gem_name}.gemspec
 
 # Install the files:
 mkdir -p %{buildroot}%{gem_dir}
-mv .%{gem_dir}/* %{buildroot}%{gem_dir}/
+cp -a .%{gem_dir}/* %{buildroot}%{gem_dir}/
 
 # Install the extensions:
 mkdir -p %{buildroot}%{gem_extdir_mri}
-mv .%{gem_extdir_mri}/{gem.build_complete,*.so} %{buildroot}%{gem_extdir_mri}/
+cp -a .%{gem_extdir_mri}/{gem.build_complete,*.so} %{buildroot}%{gem_extdir_mri}/
 
 %files
 %dir %{gem_instdir}
