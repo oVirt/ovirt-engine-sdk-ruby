@@ -2,6 +2,27 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.4.0 / Apr 6 2020
+Update to model 4.4.14.
+
+New features:
+
+* Rubocop patch version and cop namespace changes
+
+* automation: add stdci v2 configuration
+
+* automation: prepare for el8 build, python3 support and openjdk-11
+
+* automation: add fc30, el8 spec files
+
+* packaging: change spec files according to fedora rubygem rpmbuild guidelines
+
+Deprecations:
+
+* packaging: drop fc28, fc29, el7
+
+* automation: drop fc28, fc29, el7 
+
 == 4.3.0 / Jan 16 2018
 Update to model 4.3.21.
 
