@@ -5,8 +5,6 @@ java-11-openjdk-devel
 libcurl-devel
 libxml2-devel
 maven
-python3
-python3-lxml
 redhat-rpm-config
 rpm-build
 rpmdevtools
