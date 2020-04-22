@@ -2,6 +2,46 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.3.1 / Apr 22 2020
+New features:
+
+* introduce generic initialize of vm
+
+* Add timeout to host upgrade
+  https://bugzilla.redhat.com/1728617[1728617].
+
+* Add services for labels in affinity groups
+  https://bugzilla.redhat.com/1680499[1680499].
+
+* It should be possible to specify exact v4.0 as NFS version
+  https://bugzilla.redhat.com/1690026[1690026].
+
+* Add priority to AffinityGroup type
+  https://bugzilla.redhat.com/1680498[1680498].
+
+* Add allContent to HostNic Services
+  https://bugzilla.redhat.com/1718141[1718141].
+
+* Allow setting a disk ScsiGenericIO to disabled
+  https://bugzilla.redhat.com/1714834[1714834].
+
+* Treat image transfers cancelled by user/system differently
+  https://bugzilla.redhat.com/1533362[1533362].
+
+* Add new parameters to HostsService.List and VmService.Migrate
+  https://bugzilla.redhat.com/1651406[1651406].
+
+* Add Hosted Engine disk types to content type
+  https://bugzilla.redhat.com/1663626[1663626].
+
+* Add Hosted Engine disk types to content type
+  https://bugzilla.redhat.com/1600788[1600788].
+
+Deprecations:
+
+* Announce the depreciation of Neutron agent configuration
+  https://bugzilla.redhat.com/1638675[1638675].
+
 == 4.3.0 / Jan 16 2018
 Update to model 4.3.21.
 
