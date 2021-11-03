@@ -1,5 +1,7 @@
 = oVirt Ruby SDK
 
+image:https://copr.fedorainfracloud.org/coprs/ovirt/ovirt-master-snapshot/package/rubygem-ovirt-engine-sdk4/status_image/last_build.png[https://copr.fedorainfracloud.org/coprs/ovirt/ovirt-master-snapshot/package/rubygem-ovirt-engine-sdk4/]
+
 == Introduction
 
 The oVirt Ruby SDK is a Ruby gem that simplyfies access to the oVirt
