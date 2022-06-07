@@ -8,87 +8,88 @@ on:
 
 jobs:
   build-el8:
-
     runs-on: ubuntu-latest
+  
     container:
       image: quay.io/centos/centos:stream8
 
     steps:
-    - name: prepare env
+    - name: Prepare env
       run: |
-           mkdir -p ${PWD}/tmp.repos/BUILD
-           yum install -y --setopt=tsflags=nodocs autoconf automake createrepo_c gettext-devel git systemd make git rpm-build
+           mkdir -p ${GITHUB_WORKSPACE}/tmp.repos/BUILD
+           yum install -y --setopt=tsflags=nodocs autoconf automake createrepo_c gettext-devel git systemd make git rpm-build epel-release
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
 
-    - name: make build
-      run: make -f .copr/Makefile srpm outdir="${PWD}" spec=rubygem-ovirt-engine-sdk4.spec
-
-    - name: Build RPM
-      run: rpmbuild -D "_topdir ${PWD}/tmp.repos" -D "release_suffix .$(date -u +%Y%m%d%H%M%S).git$(git rev-parse --short HEAD)" -ba rubygem-ovirt-engine-sdk4.spec
-
-    - name: Collect artifacts
+    - name: Make build
       run: |
-          mkdir -p exported-artifacts
-          find tmp.repos -iname \*rpm -exec mv "{}" exported-artifacts/ \;
-          mv ./*tar.gz exported-artifacts/
+           export EXTRA_DNF_OPT='--enablerepo=powertools'
+           export HOME=${GITHUB_WORKSPACE}
+           make -f .copr/Makefile srpm outdir="${GITHUB_WORKSPACE}" spec=rubygem-ovirt-engine-sdk4.spec
+
+    - name: Make and test rpm and gem 
+      run: |
+           export HOME=${GITHUB_WORKSPACE}
+           ./automation/check-merged.sh
 
     - name: Create DNF repository
-      run: createrepo_c exported-artifacts/
-
-    - name: test install
       run: |
-          yum install -y exported-artifacts/rubygem-ovirt-engine-sdk4*noarch.rpm
-          yum module enable -y javapackages-tools:201801
-          yum module enable -y maven:3.5
-          yum module enable -y pki-deps:10.6
-          yum module enable -y postgresql:12
-          yum --downloadonly install -y exported-artifacts/*noarch.rpm
-          yum --downloadonly install -y rubygem-ovirt-engine-sdk4
+           createrepo_c ${GITHUB_WORKSPACE}/exported-artifacts/
+
+    - name: Test install
+      run: |
+           yum install -y ${GITHUB_WORKSPACE}/exported-artifacts/rubygem-ovirt-engine-sdk4*x86_64.rpm
+           yum module enable -y javapackages-runtime:201801
+           yum module enable -y maven:3.5
+           yum module enable -y pki-deps:10.6
+           yum module enable -y postgresql:12
+           yum --downloadonly install -y ${GITHUB_WORKSPACE}/exported-artifacts/*x86_64.rpm
+           yum --downloadonly install -y rubygem-ovirt-engine-sdk4
+
     - name: Upload artifacts
       uses: ovirt/upload-rpms-action@v2
       with:
-        directory: test-artifacts
+        directory: ${GITHUB_WORKSPACE}/exported-artifacts/
 
 
   build-el9:
-
     runs-on: ubuntu-latest
+
     container:
       image: quay.io/centos/centos:stream9
 
     steps:
-    - name: prepare env
+    - name: Prepare env
       run: |
-           mkdir -p ${PWD}/tmp.repos/BUILD
-           yum install -y --setopt=tsflags=nodocs autoconf automake createrepo_c gettext-devel git systemd make git rpm-build
+           mkdir -p ${GITHUB_WORKSPACE}/tmp.repos/BUILD
+           yum install -y --setopt=tsflags=nodocs autoconf automake createrepo_c gettext-devel git systemd make git rpm-build epel-release
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
 
-    - name: make build
-      run: make -f .copr/Makefile srpm outdir="${PWD}" spec=rubygem-ovirt-engine-sdk4.spec
-
-    - name: Build RPM
-      run: rpmbuild -D "_topdir ${PWD}/tmp.repos" -D "release_suffix .$(date -u +%Y%m%d%H%M%S).git$(git rev-parse --short HEAD)" -ba rubygem-ovirt-engine-sdk4.spec
-
-    - name: Collect artifacts
+    - name: Make build
       run: |
-          mkdir -p exported-artifacts
-          find tmp.repos -iname \*rpm -exec mv "{}" exported-artifacts/ \;
-          mv ./*tar.gz exported-artifacts/
+           export EXTRA_DNF_OPT='--enablerepo=crb*,epel* rubygem-webrick' 
+           export HOME=${GITHUB_WORKSPACE}
+           make -f .copr/Makefile srpm outdir="${GITHUB_WORKSPACE}" spec=rubygem-ovirt-engine-sdk4.spec
+
+    - name: Make and test rpm and gem 
+      run: | 
+           export HOME=${GITHUB_WORKSPACE}
+           ./automation/check-merged.sh
 
     - name: Create DNF repository
-      run: createrepo_c exported-artifacts/
+      run: | 
+           createrepo_c ${GITHUB_WORKSPACE}/exported-artifacts/
 
-    - name: test install
+    - name: Test install
       run: |
-          yum install -y exported-artifacts/rubygem-ovirt-engine-sdk4*noarch.rpm
-          yum --downloadonly install -y exported-artifacts/*noarch.rpm
+           yum install -y ${GITHUB_WORKSPACE}/exported-artifacts/rubygem-ovirt-engine-sdk4*x86_64.rpm
+           yum --downloadonly install -y ${GITHUB_WORKSPACE}/exported-artifacts/*x86_64.rpm
 
     - name: Upload artifacts
       uses: ovirt/upload-rpms-action@v2
       with:
-        directory: test-artifacts
+        directory: ${GITHUB_WORKSPACE}/exported-artifacts/
 
