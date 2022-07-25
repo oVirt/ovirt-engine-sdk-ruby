@@ -430,7 +430,7 @@ void ov_xml_reader_define(void) {
     rb_require("stringio");
 
     /* Define the class: */
-    ov_xml_reader_class = rb_define_class_under(ov_module, "XmlReader", rb_cData);
+    ov_xml_reader_class = rb_define_class_under(ov_module, "XmlReader", rb_cObject);
 
     /* Define the constructor: */
     rb_define_alloc_func(ov_xml_reader_class, ov_xml_reader_alloc);

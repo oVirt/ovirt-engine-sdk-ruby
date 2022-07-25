@@ -184,7 +184,7 @@ static VALUE ov_http_response_initialize(int argc, VALUE* argv, VALUE self) {
 
 void ov_http_response_define(void) {
     /* Define the class: */
-    ov_http_response_class = rb_define_class_under(ov_module, "HttpResponse", rb_cData);
+    ov_http_response_class = rb_define_class_under(ov_module, "HttpResponse", rb_cObject);
 
     /* Define the constructor: */
     rb_define_alloc_func(ov_http_response_class, ov_http_response_alloc);
