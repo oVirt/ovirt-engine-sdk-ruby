@@ -344,7 +344,7 @@ static VALUE ov_http_request_initialize(int argc, VALUE* argv, VALUE self) {
 
 void ov_http_request_define(void) {
     /* Define the class: */
-    ov_http_request_class = rb_define_class_under(ov_module, "HttpRequest", rb_cData);
+    ov_http_request_class = rb_define_class_under(ov_module, "HttpRequest", rb_cObject);
 
     /* Define the constructor: */
     rb_define_alloc_func(ov_http_request_class, ov_http_request_alloc);

@@ -80,7 +80,7 @@ static VALUE ov_http_transfer_inspect(VALUE self) {
 
 void ov_http_transfer_define(void) {
     /* Define the class: */
-    ov_http_transfer_class = rb_define_class_under(ov_module, "HttpTransfer", rb_cData);
+    ov_http_transfer_class = rb_define_class_under(ov_module, "HttpTransfer", rb_cObject);
 
     /* Define the constructor: */
     rb_define_alloc_func(ov_http_transfer_class, ov_http_transfer_alloc);
