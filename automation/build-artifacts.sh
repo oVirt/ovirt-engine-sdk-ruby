@@ -5,7 +5,6 @@ export JAVA_HOME="${JAVA_HOME:=/usr/lib/jvm/java-11}"
 BASE_PATH="${HOME}"
 ARTIFACTS_PATH="${BASE_PATH}/exported-artifacts"
 ARTIFACTS_PREFIX="ovirt-engine-sdk-"
-MVN_SETTINGS_PATH="${BASE_PATH}/settings.xml"
 MVN_PARENT_POM_PATH="${BASE_PATH}/pom.xml"
 
 # Remove created artifacts
@@ -57,14 +56,13 @@ dec_version() {
 
 # Prepare for new build: remove several artifacts, write mvn settings and create empty artifacts folder
 cleanup_artifacts
-mvn_write_settings $MVN_SETTINGS_PATH
 mkdir $ARTIFACTS_PATH
 
 # Download and install mvn dependencies
-mvn help:evaluate -Dexpression=project.version -gs "$MVN_SETTINGS_PATH"
+mvn help:evaluate -Dexpression=project.version
 
 # Get the POM version
-POM_VERSION=$(mvn help:evaluate -Dexpression=project.version -gs "$MVN_SETTINGS_PATH" 2>/dev/null | grep -v "^\[")
+POM_VERSION=$(mvn help:evaluate -Dexpression=project.version 2>/dev/null | grep -v "^\[")
 IFS='-' read -r VERSION SNAPSHOT <<< "$POM_VERSION"
 # -------------------------
 
@@ -111,7 +109,7 @@ echo "Tarball file is ${TAR_PATH}.tar.gz"
 export PATH="${PATH}:/usr/local/bin"
 
 echo "Running Maven build ..."
-mvn package --settings=${MVN_SETTINGS_PATH} -Dsdk.version=${VERSION} -P!bundler,rpm
+mvn package -Dsdk.version=${VERSION} -P!bundler,rpm
 # ---
 
 echo "Finding built gem"
