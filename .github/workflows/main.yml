@@ -9,7 +9,7 @@ on:
 jobs:
   build-el8:
     runs-on: ubuntu-latest
-  
+
     container:
       image: quay.io/centos/centos:stream8
 
@@ -18,9 +18,7 @@ jobs:
       run: |
            mkdir -p ${GITHUB_WORKSPACE}/tmp.repos/BUILD
            yum install -y --setopt=tsflags=nodocs autoconf automake createrepo_c gettext-devel git systemd make git rpm-build epel-release
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+    - uses: ovirt/checkout-action@main
 
     - name: Make build
       run: |
@@ -28,7 +26,7 @@ jobs:
            export HOME=${GITHUB_WORKSPACE}
            make -f .copr/Makefile srpm outdir="${GITHUB_WORKSPACE}" spec=rubygem-ovirt-engine-sdk4.spec
 
-    - name: Make and test rpm and gem 
+    - name: Make and test rpm and gem
       run: |
            export HOME=${GITHUB_WORKSPACE}
            ./automation/check-merged.sh
@@ -48,9 +46,9 @@ jobs:
            yum --downloadonly install -y rubygem-ovirt-engine-sdk4
 
     - name: Upload artifacts
-      uses: ovirt/upload-rpms-action@v2
+      uses: ovirt/upload-rpms-action@main
       with:
-        directory: ${GITHUB_WORKSPACE}/exported-artifacts/
+        directory: exported-artifacts
 
 
   build-el9:
@@ -64,23 +62,21 @@ jobs:
       run: |
            mkdir -p ${GITHUB_WORKSPACE}/tmp.repos/BUILD
            yum install -y --setopt=tsflags=nodocs autoconf automake createrepo_c gettext-devel git systemd make git rpm-build epel-release
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+    - uses: ovirt/checkout-action@main
 
     - name: Make build
       run: |
-           export EXTRA_DNF_OPT='--enablerepo=crb*,epel* rubygem-webrick' 
+           export EXTRA_DNF_OPT='--enablerepo=crb*,epel* rubygem-webrick'
            export HOME=${GITHUB_WORKSPACE}
            make -f .copr/Makefile srpm outdir="${GITHUB_WORKSPACE}" spec=rubygem-ovirt-engine-sdk4.spec
 
-    - name: Make and test rpm and gem 
-      run: | 
+    - name: Make and test rpm and gem
+      run: |
            export HOME=${GITHUB_WORKSPACE}
            ./automation/check-merged.sh
 
     - name: Create DNF repository
-      run: | 
+      run: |
            createrepo_c ${GITHUB_WORKSPACE}/exported-artifacts/
 
     - name: Test install
@@ -89,7 +85,7 @@ jobs:
            yum --downloadonly install -y ${GITHUB_WORKSPACE}/exported-artifacts/*x86_64.rpm
 
     - name: Upload artifacts
-      uses: ovirt/upload-rpms-action@v2
+      uses: ovirt/upload-rpms-action@main
       with:
-        directory: ${GITHUB_WORKSPACE}/exported-artifacts/
+        directory: exported-artifacts
 
