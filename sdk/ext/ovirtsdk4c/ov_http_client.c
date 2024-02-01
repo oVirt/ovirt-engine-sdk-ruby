@@ -490,12 +490,20 @@ static int ov_http_client_debug_function(CURL* handle, curl_infotype type, char*
     /* Get the pointer to the transfer: */
     ov_http_transfer_ptr(transfer, transfer_ptr);
 
-    /* Execute the debug code with the global interpreter lock acquired, as it needs to call Ruby methods: */
+    /* The global interpreter lock may be acquired or not, so we need to check and either call the task directly
+       or else call it after acquiring the lock. Note that the `ruby_thread_has_gvl_p` function that we ue to
+       check if the GVL is acquired is marked as experimental, and not defined in `thread.h`, so it may be
+       removed at any time, but I didn't find any other way to check if the GVL is acquired. */
     context.client = transfer_ptr->client;
     context.type = type;
     context.data = data;
     context.size = size;
-    rb_thread_call_with_gvl(ov_http_client_debug_task, &context);
+    if (ruby_thread_has_gvl_p()) {
+      ov_http_client_debug_task(&context);
+    }
+    else {
+      rb_thread_call_with_gvl(ov_http_client_debug_task, &context);
+    }
     return 0;
 }
 
