@@ -69,7 +69,7 @@ Style/DateTime:
 # to itself. Rubocop doesn't like these tests, but we want them anyhow,
 # so we exclude that spec.
 #
-Lint/UselessComparison:
+Lint/BinaryOperatorWithIdenticalOperands:
   Exclude:
     - 'spec/type_spec.rb'
 Style/NilComparison:
@@ -95,3 +95,21 @@ AllCops:
     - 'lib/ovirtsdk4/version.rb'
     - 'pkg/**/*'
     - 'tmp/**/*'
+
+#
+# This things used to work fine before upgrading Rubocop, and we don't want
+# to address them now. At some point we should remove these lines, check the
+# result and fix the code accordingly.
+#
+Style/RedundantFileExtensionInRequire:
+  Enabled: False
+Style/OptionalBooleanParameter:
+  Enabled: False
+Naming/VariableNumber:
+  Enabled: False
+Style/AccessorGrouping:
+  Enabled: False
+Style/SingleArgumentDig:
+  Enabled: False
+Style/ZeroLengthPredicate:
+  Enabled: False
