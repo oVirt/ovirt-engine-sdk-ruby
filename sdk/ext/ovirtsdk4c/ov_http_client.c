@@ -34,6 +34,9 @@ limitations under the License.
 #include "ov_http_response.h"
 #include "ov_http_transfer.h"
 
+/* thread.c (export) */
+extern int ruby_thread_has_gvl_p(void);
+
 /* Class: */
 VALUE ov_http_client_class;
 
