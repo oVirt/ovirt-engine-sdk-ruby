@@ -1006,7 +1006,7 @@ static void ov_http_client_prepare_handle(ov_http_client_object* client_ptr, ov_
 
     /* Set the headers: */
     if (!NIL_P(request_ptr->headers)) {
-        rb_hash_foreach(request_ptr->headers, ov_http_client_add_header, (VALUE) headers);
+        rb_hash_foreach(request_ptr->headers, (int (*)(VALUE, VALUE, VALUE)) ov_http_client_add_header, (VALUE) headers);
     }
     curl_easy_setopt(handle, CURLOPT_HTTPHEADER, *headers);
 
