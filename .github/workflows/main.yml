@@ -7,50 +7,6 @@ on:
     branches: [master]
 
 jobs:
-  build-el8:
-    runs-on: ubuntu-latest
-
-    container:
-      image: quay.io/centos/centos:stream8
-
-    steps:
-    - name: Prepare env
-      run: |
-           mkdir -p ${GITHUB_WORKSPACE}/tmp.repos/BUILD
-           yum install -y --setopt=tsflags=nodocs autoconf automake createrepo_c gettext-devel git systemd make git rpm-build epel-release
-    - uses: ovirt/checkout-action@main
-
-    - name: Make build
-      run: |
-           export EXTRA_DNF_OPT='--enablerepo=powertools'
-           export HOME=${GITHUB_WORKSPACE}
-           make -f .copr/Makefile srpm outdir="${GITHUB_WORKSPACE}" spec=rubygem-ovirt-engine-sdk4.spec
-
-    - name: Make and test rpm and gem
-      run: |
-           export HOME=${GITHUB_WORKSPACE}
-           ./automation/check-merged.sh
-
-    - name: Create DNF repository
-      run: |
-           createrepo_c ${GITHUB_WORKSPACE}/exported-artifacts/
-
-    - name: Test install
-      run: |
-           yum install -y ${GITHUB_WORKSPACE}/exported-artifacts/rubygem-ovirt-engine-sdk4*x86_64.rpm
-           yum module enable -y javapackages-runtime:201801
-           yum module enable -y maven:3.5
-           yum module enable -y pki-deps:10.6
-           yum module enable -y postgresql:12
-           yum --downloadonly install -y ${GITHUB_WORKSPACE}/exported-artifacts/*x86_64.rpm
-           yum --downloadonly install -y rubygem-ovirt-engine-sdk4
-
-    - name: Upload artifacts
-      uses: ovirt/upload-rpms-action@main
-      with:
-        directory: exported-artifacts
-
-
   build-el9:
     runs-on: ubuntu-latest
 
@@ -88,4 +44,3 @@ jobs:
       uses: ovirt/upload-rpms-action@main
       with:
         directory: exported-artifacts
-
