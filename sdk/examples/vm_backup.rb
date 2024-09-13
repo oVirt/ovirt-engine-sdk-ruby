@@ -60,7 +60,7 @@ log.info('Connected to the server.')
 system_service = connection.system_service
 
 # Get the reference to the service that we will use to send events to the audit log:
-events_service = system_service.events_service()
+events_service = system_service.events_service
 
 # In order to send events we need to also send unique integer ids. These should usually come from an external
 # database, but in this example we # will just generate them from the current time in seconds since Jan 1st 1970.
