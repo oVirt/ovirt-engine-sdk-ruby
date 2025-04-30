@@ -27,7 +27,7 @@ VALUE ov_http_transfer_class;
 static void ov_http_transfer_mark(void* vptr) {
     ov_http_transfer_object* ptr;
 
-    ptr = vptr;
+    ptr = (ov_http_transfer_object*)vptr;
     rb_gc_mark(ptr->client);
     rb_gc_mark(ptr->request);
     rb_gc_mark(ptr->response);
@@ -38,7 +38,7 @@ static void ov_http_transfer_mark(void* vptr) {
 static void ov_http_transfer_free(void* vptr) {
     ov_http_transfer_object* ptr;
 
-    ptr = vptr;
+    ptr = (ov_http_transfer_object*)vptr;
     xfree(ptr);
 }
 
@@ -48,7 +48,7 @@ rb_data_type_t ov_http_transfer_type = {
         .dmark = ov_http_transfer_mark,
         .dfree = ov_http_transfer_free,
         .dsize = NULL,
-        .reserved = { NULL, NULL }
+        .reserved = { NULL }
     },
 #ifdef RUBY_TYPED_FREE_IMMEDIATELY
     .parent = NULL,
@@ -75,7 +75,7 @@ static VALUE ov_http_transfer_inspect(VALUE self) {
     ov_http_transfer_object* ptr;
 
     ov_http_transfer_ptr(self, ptr);
-    return rb_sprintf("#<%"PRIsVALUE":%p>", ov_http_transfer_class, ptr);
+    return rb_sprintf("#<%" PRIsVALUE ":%p>", ov_http_transfer_class, ptr);
 }
 
 void ov_http_transfer_define(void) {

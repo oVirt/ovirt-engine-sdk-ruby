@@ -72,7 +72,7 @@ rb_data_type_t ov_xml_reader_type = {
         .dmark = ov_xml_reader_mark,
         .dfree = ov_xml_reader_free,
         .dsize = NULL,
-        .reserved = { NULL, NULL }
+        .reserved = { NULL }
     },
 #ifdef RUBY_TYPED_FREE_IMMEDIATELY
     .parent = NULL,

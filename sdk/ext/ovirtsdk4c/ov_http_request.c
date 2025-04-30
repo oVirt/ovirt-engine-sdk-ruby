@@ -45,7 +45,7 @@ static VALUE CONNECT_TIMEOUT_SYMBOL;
 static void ov_http_request_mark(void* vptr) {
     ov_http_request_object* ptr;
 
-    ptr = vptr;
+    ptr = (ov_http_request_object*)vptr;
     rb_gc_mark(ptr->method);
     rb_gc_mark(ptr->url);
     rb_gc_mark(ptr->query);
@@ -62,7 +62,7 @@ static void ov_http_request_mark(void* vptr) {
 static void ov_http_request_free(void* vptr) {
     ov_http_request_object* ptr;
 
-    ptr = vptr;
+    ptr = (ov_http_request_object*)vptr;
     xfree(ptr);
 }
 
@@ -72,7 +72,7 @@ rb_data_type_t ov_http_request_type = {
         .dmark = ov_http_request_mark,
         .dfree = ov_http_request_free,
         .dsize = NULL,
-        .reserved = { NULL, NULL }
+        .reserved = { NULL }
     },
 #ifdef RUBY_TYPED_FREE_IMMEDIATELY
     .parent = NULL,
@@ -305,7 +305,7 @@ static VALUE ov_http_request_inspect(VALUE self) {
 
     ov_http_request_ptr(self, ptr);
     return rb_sprintf(
-        "#<%"PRIsVALUE":%"PRIsVALUE" %"PRIsVALUE">",
+        "#<%" PRIsVALUE ":%" PRIsVALUE " %" PRIsVALUE ">",
         ov_http_request_class,
         ptr->method,
         ptr->url
