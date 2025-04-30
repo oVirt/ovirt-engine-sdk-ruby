@@ -133,7 +133,7 @@ typedef struct {
 
 typedef struct {
     CURLM* handle;
-    CURLcode code;
+    CURLMcode code;
     bool cancel;
 } ov_http_client_wait_context;
 
@@ -179,7 +179,7 @@ static void ov_http_client_check_closed(ov_http_client_object* object) {
 static void ov_http_client_mark(void* vptr) {
     ov_http_client_object* ptr;
 
-    ptr = vptr;
+    ptr = (ov_http_client_object*)vptr;
     rb_gc_mark(ptr->log);
     rb_gc_mark(ptr->queue);
     rb_gc_mark(ptr->pending);
@@ -190,7 +190,7 @@ static void ov_http_client_free(void* vptr) {
     ov_http_client_object* ptr;
 
     /* Get the pointer to the object: */
-    ptr = vptr;
+    ptr = (ov_http_client_object*)vptr;
 
     /* Release the resources used by libcurl: */
     if (ptr->handle != NULL) {
@@ -216,7 +216,7 @@ rb_data_type_t ov_http_client_type = {
         .dmark = ov_http_client_mark,
         .dfree = ov_http_client_free,
         .dsize = NULL,
-        .reserved = { NULL, NULL }
+        .reserved = { NULL }
     },
 #ifdef RUBY_TYPED_FREE_IMMEDIATELY
     .parent = NULL,
@@ -387,7 +387,7 @@ static void* ov_http_client_header_task(void* data) {
     }
 
     /* Parse the header and add it to the response object: */
-    pointer = memchr(buffer, ':', length);
+    pointer = (char*) memchr(buffer, ':', length);
     if (pointer != NULL) {
         name = rb_str_new(buffer, pointer - buffer);
         name = rb_funcall(name, DOWNCASE_ID, 0);
@@ -739,7 +739,7 @@ static VALUE ov_http_client_build_url( VALUE url, VALUE query) {
     if (!NIL_P(query)) {
         Check_Type(query, T_HASH);
         if (RHASH_SIZE(query) > 0) {
-            url = rb_sprintf("%"PRIsVALUE"?%"PRIsVALUE"", url, rb_funcall(URI_CLASS, ENCODE_WWW_FORM_ID, 1, query));
+            url = rb_sprintf("%" PRIsVALUE "?%" PRIsVALUE "", url, rb_funcall(URI_CLASS, ENCODE_WWW_FORM_ID, 1, query));
         }
     }
 
@@ -749,7 +749,7 @@ static VALUE ov_http_client_build_url( VALUE url, VALUE query) {
 static int ov_http_client_add_header(VALUE name, VALUE value, struct curl_slist** headers) {
     VALUE header = Qnil;
 
-    header = rb_sprintf("%"PRIsVALUE": %"PRIsVALUE"", name, value);
+    header = rb_sprintf("%" PRIsVALUE ": %" PRIsVALUE "", name, value);
     *headers = curl_slist_append(*headers, StringValueCStr(header));
 
     return ST_CONTINUE;
@@ -795,7 +795,7 @@ static void* ov_http_client_complete_task(void* data) {
         /* Send a summary of the response to the log: */
         ov_http_client_log_info(
             client_ptr->log,
-            "Received response code %"PRIsVALUE" for %"PRIsVALUE" request to URL '%"PRIsVALUE"'.",
+            "Received response code %" PRIsVALUE " for %" PRIsVALUE " request to URL '%" PRIsVALUE "'.",
             response_ptr->code,
             request_ptr->method,
             request_ptr->url
@@ -843,7 +843,7 @@ static void* ov_http_client_wait_task(void* data) {
 #endif
 
     /* The passed data is the wait context: */
-    context_ptr = data;
+    context_ptr = (ov_http_client_wait_context*) data;
 
     /* Get the timeout preferred by libcurl, or one 100 ms by default: */
     curl_multi_timeout(context_ptr->handle, &timeout);
@@ -854,7 +854,7 @@ static void* ov_http_client_wait_task(void* data) {
 #if LIBCURL_VERSION_NUM >= 0x071c00
     /* Wait till there is activity: */
     context_ptr->code = curl_multi_wait(context_ptr->handle, NULL, 0, timeout, NULL);
-    if (context_ptr->code != CURLE_OK) {
+    if (context_ptr->code != CURLM_OK) {
         return NULL;
     }
 #else
@@ -875,7 +875,7 @@ static void* ov_http_client_wait_task(void* data) {
     /* Let libcurl do its work, even if no file descriptor needs attention. This is necessary because some of its
        activities can't be monitored using file descriptors. */
     context_ptr->code = curl_multi_perform(context_ptr->handle, &pending);
-    if (context_ptr->code != CURLE_OK) {
+    if (context_ptr->code != CURLM_OK) {
         return NULL;
     }
 
@@ -893,7 +893,7 @@ static void* ov_http_client_wait_task(void* data) {
     }
 
     /* Everything worked correctly: */
-    context_ptr->code = CURLE_OK;
+    context_ptr->code = CURLM_OK;
     return NULL;
 }
 
@@ -901,7 +901,7 @@ static void ov_http_client_wait_cancel(void* data) {
     ov_http_client_wait_context* context_ptr;
 
     /* The passed data is the wait context: */
-    context_ptr = data;
+    context_ptr = (ov_http_client_wait_context*) data;
 
     /* Set the cancel flag so that the operation will be actually aborted in the next operation of the wait loop: */
     context_ptr->cancel = true;
@@ -983,7 +983,6 @@ static void ov_http_client_prepare_handle(ov_http_client_object* client_ptr, ov_
     else if (rb_eql(request_ptr->method, PUT_SYMBOL)) {
        *headers = curl_slist_append(*headers, "Expect:");
        curl_easy_setopt(handle, CURLOPT_UPLOAD, 1L);
-       curl_easy_setopt(handle, CURLOPT_PUT, 1L);
     }
     else if (rb_eql(request_ptr->method, DELETE_SYMBOL)) {
        curl_easy_setopt(handle, CURLOPT_HTTPGET, 1L);
@@ -995,7 +994,7 @@ static void ov_http_client_prepare_handle(ov_http_client_object* client_ptr, ov_
 
     /* Set authentication details: */
     if (!NIL_P(request_ptr->token)) {
-        header = rb_sprintf("Authorization: Bearer %"PRIsVALUE"", request_ptr->token);
+        header = rb_sprintf("Authorization: Bearer %" PRIsVALUE "", request_ptr->token);
         *headers = curl_slist_append(*headers, StringValueCStr(header));
     }
     else if (!NIL_P(request_ptr->username) && !NIL_P(request_ptr->password)) {
@@ -1016,7 +1015,7 @@ static void ov_http_client_prepare_handle(ov_http_client_object* client_ptr, ov_
     /* Send a summary of the request to the log: */
     ov_http_client_log_info(
         client_ptr->log,
-        "Sending %"PRIsVALUE" request to URL '%"PRIsVALUE"'.",
+        "Sending %" PRIsVALUE " request to URL '%" PRIsVALUE "'.",
         request_ptr->method,
         url
     );
@@ -1122,7 +1121,7 @@ static VALUE ov_http_client_wait(VALUE self, VALUE request) {
 
     /* Work till the transfer has been completed. */
     context.handle = ptr->handle;
-    context.code = CURLE_OK;
+    context.code = CURLM_OK;
     context.cancel = false;
     for (;;) {
         /* Move requests from the queue to libcurl: */
@@ -1147,8 +1146,8 @@ static VALUE ov_http_client_wait(VALUE self, VALUE request) {
         if (context.cancel) {
             return Qnil;
         }
-        if (context.code != CURLE_OK) {
-            rb_raise(ov_error_class, "Unexpected error while waiting: %s", curl_easy_strerror(context.code));
+        if (context.code != CURLM_OK) {
+            rb_raise(ov_error_class, "Unexpected error while waiting: %s", curl_multi_strerror(context.code));
         }
     }
 
@@ -1159,7 +1158,7 @@ static VALUE ov_http_client_inspect(VALUE self) {
     ov_http_client_object* ptr;
 
     ov_http_client_ptr(self, ptr);
-    return rb_sprintf("#<%"PRIsVALUE":%p>", ov_http_client_class, ptr);
+    return rb_sprintf("#<%" PRIsVALUE ":%p>", ov_http_client_class, ptr);
 }
 
 void ov_http_client_define(void) {

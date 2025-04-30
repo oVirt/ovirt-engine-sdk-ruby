@@ -171,8 +171,9 @@ public class RubyBuffer {
      */
     public void addLine(String format, Object ... args) {
         StringBuilder buffer = new StringBuilder();
-        Formatter formatter = new Formatter(buffer);
-        formatter.format(format, args);
+        try (Formatter formatter = new Formatter(buffer)) {
+            formatter.format(format, args);
+        }
         String line = buffer.toString();
         addLine(line);
     }
@@ -218,8 +219,9 @@ public class RubyBuffer {
      */
     public void addComment(String format, Object ... args) {
         StringBuilder buffer = new StringBuilder();
-        Formatter formatter = new Formatter(buffer);
-        formatter.format(format, args);
+        try (Formatter formatter = new Formatter(buffer)) {
+            formatter.format(format, args);
+        }
         String line = buffer.toString();
         addComment(line);
     }
@@ -236,8 +238,9 @@ public class RubyBuffer {
     public void addYardTag(String tag, String format, Object ... args) {
         // Format the text and split it into lines:
         StringBuilder text = new StringBuilder();
-        Formatter formatter = new Formatter(text);
-        formatter.format(format, args);
+        try (Formatter formatter = new Formatter(text)) {
+            formatter.format(format, args);
+        }
         String[] lines = text.toString().split("\\n");
 
         // The first line must be prefixed with the name of the tag:

@@ -66,7 +66,7 @@ rb_data_type_t ov_xml_writer_type = {
         .dmark = ov_xml_writer_mark,
         .dfree = ov_xml_writer_free,
         .dsize = NULL,
-        .reserved = { NULL, NULL }
+        .reserved = { NULL }
     },
 #ifdef RUBY_TYPED_FREE_IMMEDIATELY
     .parent = NULL,
@@ -181,7 +181,7 @@ static VALUE ov_xml_writer_string(VALUE self) {
     if (rc < 0) {
         rb_raise(ov_error_class, "Can't flush XML writer");
     }
-    return rb_funcall(ptr->io, STRING_ID, 0, NULL);
+    return rb_funcall(ptr->io, STRING_ID, 0, Qnil);
 }
 
 static VALUE ov_xml_writer_write_start(VALUE self, VALUE name) {
