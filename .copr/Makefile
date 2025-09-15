@@ -1,7 +1,7 @@
 .PHONY: installdeps srpm git_cfg_safe
 
 installdeps:
-	dnf -y install ${EXTRA_DNF_OPT} git gcc java-11-openjdk-devel libcurl-devel libxml2-devel maven redhat-rpm-config rpm-build rpmdevtools ruby \
+	dnf -y install ${EXTRA_DNF_OPT} git gcc java-21-openjdk-devel libcurl-devel libxml2-devel maven redhat-rpm-config rpm-build rpmdevtools ruby \
 		ruby-devel rubygem-rake rubygem-rake-compiler rubygem-rspec rubygems rubygems-devel
 
 git_cfg_safe:

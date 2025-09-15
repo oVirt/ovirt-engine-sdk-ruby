@@ -1,6 +1,6 @@
 #!/bin/bash -xe
 
-export JAVA_HOME="${JAVA_HOME:=/usr/lib/jvm/java-11}"
+export JAVA_HOME="${JAVA_HOME:=/usr/lib/jvm/java-21}"
 
 BASE_PATH="${PWD}"
 ARTIFACTS_PATH="${BASE_PATH}/exported-artifacts"
