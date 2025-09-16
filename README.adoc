@@ -84,7 +84,7 @@ And in Debian or Ubuntu:
 
 Once all the requirements are installed the SDK can be built as follows:
 
-  $ git clone git://gerrit.ovirt.org/ovirt-engine-sdk-ruby
+  $ git clone git@github.com:oVirt/ovirt-engine-sdk-ruby.git
   $ cd ovirt-engine-sdk-ruby
   $ mvn package
 
