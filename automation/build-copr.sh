@@ -5,27 +5,11 @@ export JAVA_HOME="${JAVA_HOME:=/usr/lib/jvm/java-21}"
 BASE_PATH="${PWD}"
 ARTIFACTS_PATH="${BASE_PATH}/exported-artifacts"
 ARTIFACTS_PREFIX="ovirt-engine-sdk-"
-MVN_SETTINGS_PATH="${BASE_PATH}/settings.xml"
 MVN_PARENT_POM_PATH="${BASE_PATH}/pom.xml"
 
 # Remove created artifacts
 cleanup_artifacts() {
   rm -rf $ARTIFACTS_PATH rpmbuild *.tar.gz *.gem *.spec
-}
-
-mvn_write_settings() {
-  cat >$1 <<EOS
-<?xml version="1.0"?>
-<settings>
-  <mirrors>
-    <mirror>
-      <id>maven-central</id>
-      <url>https://repo.maven.apache.org/maven2</url>
-      <mirrorOf>*</mirrorOf>
-    </mirror>
-  </mirrors>
-</settings>
-EOS
 }
 
 git_commit() {
@@ -51,14 +35,13 @@ dec_version() {
 
 # Prepare for new build: remove several artifacts, write mvn settings and create empty artifacts folder
 cleanup_artifacts
-mvn_write_settings $MVN_SETTINGS_PATH
 mkdir $ARTIFACTS_PATH
 
 # Download and install mvn dependencies
-mvn help:evaluate -Dexpression=project.version -gs "$MVN_SETTINGS_PATH"
+mvn help:evaluate -Dexpression=project.version
 
 # Get the POM version
-POM_VERSION=$(mvn help:evaluate -Dexpression=project.version -gs "$MVN_SETTINGS_PATH" 2>/dev/null | grep -v "^\[")
+POM_VERSION=$(mvn help:evaluate -Dexpression=project.version 2>/dev/null | grep -v "^\[")
 IFS='-' read -r VERSION SNAPSHOT <<< "$POM_VERSION"
 # -------------------------
 
@@ -105,7 +88,7 @@ echo "Tarball file is ${TAR_PATH}.tar.gz"
 export PATH="${PATH}:/usr/local/bin"
 
 echo "Running Maven build ..."
-mvn package --settings=${MVN_SETTINGS_PATH} -Dsdk.version=${VERSION} -DskipTests -P!bundler,rpm
+mvn package -Dsdk.version=${VERSION} -DskipTests -P!bundler,rpm
 # ---
 
 echo "Finding built gem"
