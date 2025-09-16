@@ -12,27 +12,6 @@ cleanup_artifacts() {
   rm -rf $ARTIFACTS_PATH rpmbuild *.tar.gz *.gem *.spec
 }
 
-mvn_write_settings() {
-  cat >$1 <<EOS
-<?xml version="1.0"?>
-<settings>
-  <mirrors>
-    <mirror>
-      <id>ovirt-artifactory</id>
-      <url>http://artifactory.ovirt.org/artifactory/ovirt-mirror</url>
-      <mirrorOf>*</mirrorOf>
-    </mirror>
-
-    <mirror>
-      <id>maven-central</id>
-      <url>https://repo.maven.apache.org/maven2</url>
-      <mirrorOf>*</mirrorOf>
-    </mirror>
-  </mirrors>
-</settings>
-EOS
-}
-
 git_commit() {
   local commit=$(git log -1 --oneline)
   (echo $commit | grep -Eq "^$1$") && echo $commit || return 1
