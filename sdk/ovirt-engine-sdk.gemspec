@@ -24,8 +24,8 @@ Gem::Specification.new do |spec|
   spec.version     = OvirtSDK4::VERSION
   spec.summary     = 'oVirt SDK'
   spec.description = 'Ruby SDK for the oVirt Engine API.'
-  spec.authors     = ['Juan Hernandez']
-  spec.email       = ['jhernand@redhat.com']
+  spec.authors     = ['oVirt Developers']
+  spec.email       = ['devel@ovirt.org']
   spec.license     = 'Apache-2.0'
   spec.homepage    = 'http://ovirt.org'
 
