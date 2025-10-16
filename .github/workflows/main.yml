@@ -7,17 +7,29 @@ on:
     branches: [master]
 
 jobs:
-  build-el9:
+  build:
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: centos-stream-9
+            container-name: stream9
+          - name: centos-stream-10
+            container-name: stream10
+
+    name: ${{ matrix.name }}
+
     container:
-      image: quay.io/centos/centos:stream9
+      image: quay.io/centos/centos:${{ matrix.container-name }}
 
     steps:
     - name: Prepare env
       run: |
            mkdir -p ${GITHUB_WORKSPACE}/tmp.repos/BUILD
-           yum install -y --setopt=tsflags=nodocs autoconf automake createrepo_c gettext-devel git systemd make git rpm-build epel-release
+           dnf install -y --setopt=tsflags=nodocs autoconf automake createrepo_c gettext-devel git systemd make git rpm-build epel-release
+
     - uses: ovirt/checkout-action@main
 
     - name: Make build
@@ -37,8 +49,8 @@ jobs:
 
     - name: Test install
       run: |
-           yum install -y ${GITHUB_WORKSPACE}/exported-artifacts/rubygem-ovirt-engine-sdk4*x86_64.rpm
-           yum --downloadonly install -y ${GITHUB_WORKSPACE}/exported-artifacts/*x86_64.rpm
+           dnf install -y ${GITHUB_WORKSPACE}/exported-artifacts/rubygem-ovirt-engine-sdk4*x86_64.rpm
+           dnf --downloadonly install -y ${GITHUB_WORKSPACE}/exported-artifacts/*x86_64.rpm
 
     - name: Upload artifacts
       uses: ovirt/upload-rpms-action@main
