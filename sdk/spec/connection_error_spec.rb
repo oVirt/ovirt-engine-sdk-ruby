@@ -24,7 +24,7 @@ describe SDK::Connection do
       debug:    test_debug,
       log:      test_log
     )
-    expect { @connection.test(raise_exception: true) }.to raise_error(SDK::ConnectionError, /host name/)
+    expect { @connection.test(raise_exception: true) }.to raise_error(SDK::ConnectionError, /host\s?name/)
   end
 
   it 'throws an connection error when the proxy address can not be resolved' do
@@ -49,7 +49,7 @@ describe SDK::Connection do
       debug:    test_debug,
       log:      test_log
     )
-    expect { @connection.test(raise_exception: true) }.to raise_error(SDK::ConnectionError, /host name/)
+    expect { @connection.test(raise_exception: true) }.to raise_error(SDK::ConnectionError, /host\s?name/)
   end
 
   it 'throws an connection error when the proxy address is incorrect' do
