@@ -1,9 +1,0 @@
----
-archs:
-  - x86_64:
-      distro: c9s
-  - ppc64le:
-      distro: c9s
-release_branches:
-  master:
-    - ovirt-master
