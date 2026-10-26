@@ -25,22 +25,10 @@ limitations under the License.
 /* Class: */
 VALUE ov_xml_writer_class;
 
-/* Identifiers: */
-static ID STRING_ID;
-static ID STRING_IO_ID;
-static ID WRITE_ID;
-
 static void ov_xml_writer_check_closed(ov_xml_writer_object* ptr) {
     if (ptr->writer == NULL) {
         rb_raise(ov_error_class, "The writer is already closed");
     }
-}
-
-static void ov_xml_writer_mark(void* vptr) {
-    ov_xml_writer_object* ptr;
-
-    ptr = vptr;
-    rb_gc_mark(ptr->io);
 }
 
 static void ov_xml_writer_free(void* vptr) {
@@ -49,11 +37,20 @@ static void ov_xml_writer_free(void* vptr) {
     /* Get the pointer: */
     ptr = vptr;
 
-    /* Free the libxml writer, the buffer is automatically closed: */
+    /* Free the libxml writer. xmlFreeTextWriter also frees the internal output
+       buffer. For xmlNewTextWriterMemory writers that output buffer does NOT own
+       the xmlBufferPtr — we free it separately below. */
     if (ptr->writer != NULL) {
         xmlTextWriterPtr tmp = ptr->writer;
         ptr->writer = NULL;
         xmlFreeTextWriter(tmp);
+    }
+
+    /* Free the xmlBuffer that was passed to xmlNewTextWriterMemory. */
+    if (ptr->buf != NULL) {
+        xmlBufferPtr tmp = ptr->buf;
+        ptr->buf = NULL;
+        xmlBufferFree(tmp);
     }
 
     /* Free this object: */
@@ -63,7 +60,7 @@ static void ov_xml_writer_free(void* vptr) {
 rb_data_type_t ov_xml_writer_type = {
     .wrap_struct_name = "OVXMLWRITER",
     .function = {
-        .dmark = ov_xml_writer_mark,
+        .dmark = NULL,
         .dfree = ov_xml_writer_free,
         .dsize = NULL,
         .reserved = { NULL }
@@ -79,46 +76,15 @@ static VALUE ov_xml_writer_alloc(VALUE klass) {
     ov_xml_writer_object* ptr;
 
     ptr = ALLOC(ov_xml_writer_object);
-    ptr->io = Qnil;
+    ptr->buf = NULL;
     ptr->writer = NULL;
     return TypedData_Wrap_Struct(klass, &ov_xml_writer_type, ptr);
-}
-
-static int ov_xml_writer_callback(void *context, const char *buffer, int length) {
-    VALUE count;
-    VALUE data;
-    ov_xml_writer_object* ptr;
-
-    /* Get the pointer: */
-    ptr = context;
-
-    /* Do nothing if the writer is already closed: */
-    if (ptr->writer == NULL) {
-        return 0;
-    }
-
-    /* Convert the buffer to a Ruby string and write it to the IO object, using the "write" method: */
-    data = rb_str_new(buffer, length);
-    count = rb_funcall(ptr->io, WRITE_ID, 1, data);
-
-    return NUM2INT(count);
-}
-
-static VALUE ov_xml_writer_create_string_io() {
-    VALUE sio_class;
-    VALUE sio_obj;
-
-    sio_class = rb_const_get(rb_cObject, STRING_IO_ID);
-    sio_obj = rb_class_new_instance(0, NULL, sio_class);
-    return sio_obj;
 }
 
 static VALUE ov_xml_writer_initialize(int argc, VALUE* argv, VALUE self) {
     VALUE indent;
     VALUE io;
-    VALUE io_class;
     ov_xml_writer_object* ptr;
-    xmlOutputBufferPtr buffer;
 
     /* Get the pointer to the object: */
     ov_xml_writer_ptr(self, ptr);
@@ -130,35 +96,24 @@ static VALUE ov_xml_writer_initialize(int argc, VALUE* argv, VALUE self) {
     io = argc > 0? argv[0]: Qnil;
     indent = argc > 1? argv[1]: Qnil;
 
-    /* The first parameter can be an IO object or nil. If it is nil then we need to create a IO object where we can
-       write the generated XML. */
-    if (NIL_P(io)) {
-        ptr->io = ov_xml_writer_create_string_io();
-    }
-    else {
-        io_class = rb_class_of(io);
-        if (io_class == rb_cIO) {
-            ptr->io = io;
-        }
-        else {
-            rb_raise(
-                ov_error_class,
-                "The type of the 'io' parameter must be 'IO', but it is '%"PRIsVALUE"'",
-                io_class
-            );
-        }
-    }
+    /* The io parameter is accepted for API compatibility but ignored: the writer
+       always accumulates output in an xmlBuffer owned by libxml2. Using
+       xmlNewTextWriterMemory avoids the allocator mismatch that occurs with
+       xmlOutputBufferCreateBuffer on libxml2 >= 2.13 when nokogiri has redirected
+       xmlFree to Ruby's xfree via xmlMemSetup. */
+    (void)io;
 
-    /* Create the libxml buffer that writes to the IO object: */
-    buffer = xmlOutputBufferCreateIO(ov_xml_writer_callback, NULL, ptr, NULL);
-    if (buffer == NULL) {
+    /* Create the xmlBuffer that will accumulate the generated XML: */
+    ptr->buf = xmlBufferCreate();
+    if (ptr->buf == NULL) {
         rb_raise(ov_error_class, "Can't create XML buffer");
     }
 
-    /* Create the libxml writer: */
-    ptr->writer = xmlNewTextWriter(buffer);
+    /* Create the writer backed directly by the xmlBuffer: */
+    ptr->writer = xmlNewTextWriterMemory(ptr->buf, 0);
     if (ptr->writer == NULL) {
-        xmlOutputBufferClose(buffer);
+        xmlBufferFree(ptr->buf);
+        ptr->buf = NULL;
         rb_raise(ov_error_class, "Can't create XML writer");
     }
 
@@ -181,7 +136,7 @@ static VALUE ov_xml_writer_string(VALUE self) {
     if (rc < 0) {
         rb_raise(ov_error_class, "Can't flush XML writer");
     }
-    return rb_funcall(ptr->io, STRING_ID, 0, Qnil);
+    return rb_str_new((const char*)xmlBufferContent(ptr->buf), xmlBufferLength(ptr->buf));
 }
 
 static VALUE ov_xml_writer_write_start(VALUE self, VALUE name) {
@@ -269,15 +224,23 @@ static VALUE ov_xml_writer_close(VALUE self) {
 
     ov_xml_writer_ptr(self, ptr);
     ov_xml_writer_check_closed(ptr);
-    xmlFreeTextWriter(ptr->writer);
+
+    /* Free the writer. For xmlNewTextWriterMemory writers, xmlFreeTextWriter
+       does NOT free the xmlBufferPtr — we own that and free it separately. */
+    xmlTextWriterPtr tmp = ptr->writer;
     ptr->writer = NULL;
+    xmlFreeTextWriter(tmp);
+
+    if (ptr->buf != NULL) {
+        xmlBufferPtr btmp = ptr->buf;
+        ptr->buf = NULL;
+        xmlBufferFree(btmp);
+    }
+
     return Qnil;
 }
 
 void ov_xml_writer_define(void) {
-    /* Load required modules: */
-    rb_require("stringio");
-
     /* Define the class: */
     ov_xml_writer_class = rb_define_class_under(ov_module, "XmlWriter", rb_cObject);
 
@@ -293,9 +256,4 @@ void ov_xml_writer_define(void) {
     rb_define_method(ov_xml_writer_class, "write_element", ov_xml_writer_write_element, 2);
     rb_define_method(ov_xml_writer_class, "write_end", ov_xml_writer_write_end, 0);
     rb_define_method(ov_xml_writer_class, "write_start", ov_xml_writer_write_start, 1);
-
-    /* Create method identifiers: */
-    STRING_ID = rb_intern("string");
-    STRING_IO_ID = rb_intern("StringIO");
-    WRITE_ID = rb_intern("write");
 }

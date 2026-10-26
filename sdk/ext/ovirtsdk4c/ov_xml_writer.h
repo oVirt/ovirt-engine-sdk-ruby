@@ -27,7 +27,7 @@ extern VALUE ov_xml_writer_class;
 
 /* Content: */
 typedef struct {
-    VALUE io;
+    xmlBufferPtr buf;
     xmlTextWriterPtr writer;
 } ov_xml_writer_object;
 
